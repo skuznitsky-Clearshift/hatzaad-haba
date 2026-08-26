@@ -1,0 +1,3053 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FDF6E3">
+
+<title>הצעד הבא</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+<style>
+:root{
+  --paper:#FDF6E3; --paper2:#F7EDD6; --surface:#FFFDF6;
+  --ink:#3B2C20; --soft:#7A6455; --faint:#A08D79;
+  --line:#E7D8B8; --line2:#F0E5CC;
+  --green:#6FA05B; --green-d:#5A8449;
+  --orange:#E08A3E; --blue:#4E82A0; --purple:#9C71B4;
+  --pink:#D88585; --gold:#C99A2E; --teal:#4F9689;
+  --sh:0 1px 0 rgba(59,44,32,.05), 0 8px 24px -14px rgba(59,44,32,.4);
+  --sh2:0 2px 0 rgba(59,44,32,.10), 0 14px 30px -16px rgba(59,44,32,.5);
+}
+html{direction:rtl}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Assistant','Rubik','Segoe UI',system-ui,-apple-system,sans-serif;
+  font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+button,input,select{font-family:inherit;color:inherit;font-size:inherit}
+button{border:none;background:none;cursor:pointer;padding:0}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:8px}
+h1,h2,h3{margin:0;line-height:1.25;font-weight:700}
+p{margin:0}
+
+/* ---------- app frame ---------- */
+#app{max-width:600px;margin:0 auto;min-height:100%;position:relative}
+.scr{display:none;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
+.scr.on{display:block;animation:in .26s ease}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.top{display:flex;align-items:center;gap:10px;margin-bottom:16px;min-height:44px}
+.top .ttl{font-size:20px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top .sub{font-size:13px;color:var(--faint);font-weight:400}
+.back{width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;flex:none;box-shadow:var(--sh);font-size:20px;color:var(--soft)}
+.back:active{transform:scale(.92)}
+.iconb{width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;flex:none;box-shadow:var(--sh);font-size:17px}
+
+/* ---------- buttons ---------- */
+.btn{background:var(--green);color:#fff;font-weight:700;font-size:17px;padding:14px 26px;border-radius:16px;
+  box-shadow:0 3px 0 var(--green-d);transition:transform .12s,box-shadow .12s;display:inline-flex;
+  align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn:active{transform:translateY(3px);box-shadow:0 0 0 var(--green-d)}
+.btn.full{display:flex;width:100%}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:var(--sh)}
+.btn.ghost:active{transform:translateY(2px)}
+.btn.orange{background:var(--orange);box-shadow:0 3px 0 #B96D2A}
+.btn.sm{font-size:15px;padding:10px 18px;border-radius:13px}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--sh)}
+.card+.card{margin-top:12px}
+.lbl{font-size:11.5px;font-weight:700;letter-spacing:.09em;color:var(--faint)}
+
+/* ---------- kids shelf ---------- */
+.shelf{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kidc{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:14px 12px 12px;
+  box-shadow:var(--sh);display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .14s}
+.kidc:active{transform:scale(.96)}
+.kidc svg{width:88px;height:108px;display:block}
+.kidc .nm{font-size:19px;font-weight:700;margin-top:4px}
+.kidc .ag{font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.kidc .tag{font-size:11.5px;margin-top:6px;padding:3px 10px;border-radius:99px;background:var(--paper2);
+  color:var(--soft);font-weight:600}
+.kidc .tag.due{background:#F6E2CB;color:#A65E1E}
+.addk{background:transparent;border:2px dashed var(--line);border-radius:22px;min-height:190px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--faint);font-weight:700}
+.addk .plus{font-size:34px;line-height:1}
+
+/* ---------- hero recommendation ---------- */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--sh2);
+  border-top:5px solid var(--orange);position:relative;overflow:hidden}
+.hero .eyeb{font-size:11.5px;font-weight:700;letter-spacing:.08em;color:var(--orange);margin-bottom:5px}
+.hero h2{font-size:22px;margin-bottom:6px}
+.hero .why{font-size:15px;color:var(--soft);line-height:1.5}
+.hero.empty{border-top-color:var(--green)}
+.hero.empty .eyeb{color:var(--green)}
+
+/* progress bar */
+.pb{display:flex;align-items:center;gap:10px;margin-top:14px}
+.pbt{flex:1;height:9px;border-radius:99px;background:var(--line2);overflow:hidden}
+.pbf{height:100%;border-radius:99px;background:var(--green);transition:width .5s ease}
+.pb small{font-size:12.5px;color:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.meta{font-size:12.5px;color:var(--faint);margin-top:9px;font-variant-numeric:tabular-nums}
+
+/* ---------- domain rings ---------- */
+.rings{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px;margin-top:14px}
+.ring{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:11px 6px 9px;
+  box-shadow:var(--sh);display:flex;flex-direction:column;align-items:center;gap:5px;transition:transform .14s}
+.ring:active{transform:scale(.95)}
+.ring.locked{opacity:.5;box-shadow:none;background:var(--paper2)}
+.ring svg{width:52px;height:52px;display:block}
+.ring .rn{font-size:12px;font-weight:700;text-align:center;line-height:1.25}
+.ring .rl{font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.ring .pv{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ---------- week strip ---------- */
+.week{display:flex;gap:6px;justify-content:space-between;margin-top:12px}
+.wd{flex:1;text-align:center}
+.wd i{display:block;height:30px;border-radius:10px;background:var(--line2);margin-bottom:4px}
+.wd.hit i{background:var(--green)}
+.wd.today i{box-shadow:inset 0 0 0 2px var(--orange)}
+.wd span{font-size:10.5px;color:var(--faint)}
+
+/* ---------- level map ---------- */
+.lmap{display:flex;gap:8px;margin:4px 0 16px;flex-wrap:wrap}
+.ln{flex:1;min-width:64px;border-radius:13px;padding:9px 8px;text-align:center;border:1px solid var(--line);
+  background:var(--surface);font-size:12px;font-weight:700;color:var(--faint)}
+.ln b{display:block;font-size:16px;line-height:1.2}
+.ln.done{background:var(--green);border-color:var(--green);color:#fff}
+.ln.now{background:var(--orange);border-color:var(--orange);color:#fff}
+.ln.prev{background:#F6E2CB;border-color:#E8C79E;color:#A65E1E}
+
+/* ---------- activity rows ---------- */
+.arow{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--sh);
+  display:block;width:100%;text-align:start;margin-bottom:10px;transition:transform .14s}
+.arow:active{transform:scale(.985)}
+.arow .ah{display:flex;align-items:flex-start;gap:10px}
+.arow .at{font-size:16.5px;font-weight:700;flex:1;line-height:1.35}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;flex:none;margin-top:2px}
+.pill.ripe{background:#DCEBD3;color:#3F6B2E}
+.pill.paused{background:#F3DDD8;color:#A6503C}
+.pill.go{background:#F6E2CB;color:#A65E1E}
+.pill.rest{background:var(--paper2);color:var(--soft)}
+.pill.prev{background:#EADCF0;color:#6B4580}
+
+/* ---------- sheet (activity detail) ---------- */
+.sect{margin-top:18px}
+.sect h3{font-size:12px;letter-spacing:.09em;color:var(--faint);margin-bottom:6px}
+.sect p,.sect li{font-size:15.5px;line-height:1.62;color:var(--ink)}
+.sect ol{margin:0;padding-inline-start:20px}
+.sect ol li{margin-bottom:6px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.fact{background:var(--paper2);border-radius:13px;padding:10px 8px;text-align:center}
+.fact .fl{font-size:10.5px;color:var(--faint);font-weight:700;letter-spacing:.05em}
+.fact .fv{font-size:14px;font-weight:700;margin-top:2px}
+.vary{display:grid;gap:8px;margin-top:8px}
+.vbox{border:1px solid var(--line);border-radius:13px;padding:11px 13px;background:var(--paper2)}
+.vbox b{font-size:13px;display:block;margin-bottom:1px}
+.vbox span{font-size:14.5px;color:var(--soft)}
+
+/* rating buttons */
+.rate{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.rb{border:2px solid var(--line);background:var(--surface);border-radius:15px;padding:13px 6px;font-weight:700;
+  font-size:15px;transition:transform .12s}
+.rb:active{transform:scale(.94)}
+.rb small{display:block;font-size:11px;font-weight:400;color:var(--faint);margin-top:1px}
+.rb.easy{border-color:#CFE3C4} .rb.ok{border-color:#E8C79E} .rb.hard{border-color:#E8CFC8}
+
+/* ---------- checklist ---------- */
+.chk{display:flex;gap:11px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);
+  border-radius:15px;padding:13px;margin-bottom:9px;width:100%;text-align:start;transition:transform .12s}
+.chk:active{transform:scale(.985)}
+.chk .bx{width:26px;height:26px;border-radius:9px;border:2px solid var(--line);flex:none;display:flex;
+  align-items:center;justify-content:center;font-size:16px;color:#fff;margin-top:1px}
+.chk.yes .bx{background:var(--green);border-color:var(--green)}
+.chk.yes{border-color:#CFE3C4}
+.chk span{font-size:15.5px;line-height:1.5}
+
+/* ---------- wizard ---------- */
+.field{margin-bottom:15px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.05em;margin-bottom:5px}
+.field input{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);
+  font-size:17px;box-shadow:var(--sh)}
+.field input:focus{outline:none;border-color:var(--green)}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:13px;border-radius:14px;border:2px solid var(--line);background:var(--surface);
+  font-weight:700;font-size:16px}
+.seg button.on{border-color:var(--green);background:#EFF5EA}
+.dob{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:8px}
+.dob input{text-align:center;font-variant-numeric:tabular-nums}
+
+/* avatar editor */
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:40px;height:40px;border-radius:50%;border:3px solid transparent;box-shadow:var(--sh);flex:none}
+.sw.on{border-color:var(--ink)}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{padding:9px 15px;border-radius:99px;border:2px solid var(--line);background:var(--surface);font-size:14.5px;font-weight:600}
+.chip.on{border-color:var(--green);background:#EFF5EA}
+.preview{display:flex;justify-content:center;margin:6px 0 16px}
+.preview svg{width:150px;height:185px}
+
+/* ---------- misc ---------- */
+.banner{background:#F6E2CB;border:1px solid #E8C79E;border-radius:16px;padding:14px 16px;margin-bottom:14px;
+  display:flex;gap:12px;align-items:center}
+.banner .bt{flex:1;font-size:14.5px;color:#7A4715;line-height:1.45}
+.banner b{color:#6B3D11}
+.note{background:var(--paper2);border-radius:14px;padding:13px 15px;font-size:14px;color:var(--soft);line-height:1.55;margin-top:16px}
+.empty{text-align:center;color:var(--faint);padding:36px 20px;font-size:15px}
+.jday{margin-bottom:14px}
+.jday .jd{font-size:12px;font-weight:700;color:var(--faint);letter-spacing:.05em;margin-bottom:5px}
+.jitem{display:flex;gap:9px;align-items:baseline;font-size:14.5px;padding:7px 0;border-bottom:1px solid var(--line2)}
+.jitem .jr{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;flex:none}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);background:var(--ink);
+  color:var(--paper);padding:13px 22px;border-radius:99px;font-weight:700;font-size:15px;z-index:99;
+  opacity:0;transition:all .3s ease;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.cele{position:fixed;inset:0;z-index:98;display:none;align-items:center;justify-content:center;
+  background:rgba(253,246,227,.94);text-align:center;padding:28px}
+.cele.on{display:flex;animation:in .3s ease}
+.cele .cin{max-width:340px}
+.cele h2{font-size:30px;margin-bottom:10px}
+.cele p{font-size:17px;color:var(--soft);margin-bottom:22px}
+.stars{font-size:46px;margin-bottom:14px;letter-spacing:6px}
+
+/* ---------- welcome / profile ---------- */
+.hello{text-align:center;padding:34px 4px 10px}
+.hello .mark{font-size:52px;line-height:1;margin-bottom:12px}
+.hello h1{font-size:32px;margin-bottom:8px}
+.hello p{font-size:16px;color:var(--soft);max-width:30em;margin:0 auto}
+.code{
+  font-family:'Heebo','Courier New',monospace;font-size:30px;font-weight:700;
+  letter-spacing:.22em;text-align:center;direction:ltr;
+  background:var(--paper2);border:2px dashed var(--line);border-radius:16px;
+  padding:16px 10px;margin:10px 0;user-select:all;
+}
+.code.input{letter-spacing:.18em;font-size:26px;border-style:solid;background:var(--surface);width:100%;text-transform:uppercase}
+.xfer{
+  width:100%;min-height:96px;font-family:'Heebo',monospace;font-size:11px;direction:ltr;
+  border:1px solid var(--line);border-radius:13px;padding:10px;background:var(--paper2);
+  color:var(--soft);resize:vertical;word-break:break-all;
+}
+</style>
+
+</head>
+<body>
+
+
+<script>document.documentElement.setAttribute("dir","rtl");document.documentElement.lang="he";</script>
+<div id="app">
+
+  <!-- 0 · welcome / profile -->
+  <div class="scr" id="s-welcome">
+    <div id="wc-body"></div>
+  </div>
+
+  <!-- 1 · kids shelf -->
+  <div class="scr" id="s-kids">
+    <div class="top">
+      <div style="flex:1">
+        <div class="ttl">הצעד הבא</div>
+        <div class="sub">מה עושים היום עם כל אחד</div>
+      </div>
+      <button class="iconb" id="b-settings" aria-label="הגדרות">⚙</button>
+    </div>
+    <div class="shelf" id="shelf"></div>
+  </div>
+
+  <!-- 2 · new child wizard -->
+  <div class="scr" id="s-new">
+    <div class="top"><button class="back" data-back="s-kids" aria-label="חזרה">→</button><div class="ttl" id="wiz-ttl">ילד חדש</div></div>
+    <div id="wiz-body"></div>
+  </div>
+
+  <!-- 3 · child home -->
+  <div class="scr" id="s-child">
+    <div class="top"><button class="back" data-back="s-kids" aria-label="חזרה">→</button>
+      <div style="flex:1;min-width:0"><div class="ttl" id="ch-name"></div><div class="sub" id="ch-age"></div></div>
+      <button class="iconb" id="b-journal" aria-label="יומן">📖</button></div>
+    <div id="ch-body"></div>
+  </div>
+
+  <!-- 4 · domain -->
+  <div class="scr" id="s-domain">
+    <div class="top"><button class="back" data-back="s-child" aria-label="חזרה">→</button>
+      <div style="flex:1;min-width:0"><div class="ttl" id="dm-name"></div><div class="sub" id="dm-sub"></div></div></div>
+    <div id="dm-body"></div>
+  </div>
+
+  <!-- 5 · activity -->
+  <div class="scr" id="s-act">
+    <div class="top"><button class="back" data-back="s-domain" aria-label="חזרה">→</button><div class="ttl" id="ac-ttl"></div></div>
+    <div id="ac-body"></div>
+  </div>
+
+  <!-- 6 · checkpoint -->
+  <div class="scr" id="s-check">
+    <div class="top"><button class="back" data-back="s-domain" aria-label="חזרה">→</button><div class="ttl">אתגר רמה</div></div>
+    <div id="ck-body"></div>
+  </div>
+
+  <!-- 7 · journal -->
+  <div class="scr" id="s-journal">
+    <div class="top"><button class="back" data-back="s-child" aria-label="חזרה">→</button><div class="ttl">יומן</div></div>
+    <div id="jr-body"></div>
+  </div>
+
+  <!-- 8 · settings -->
+  <div class="scr" id="s-settings">
+    <div class="top"><button class="back" data-back="s-kids" aria-label="חזרה">→</button><div class="ttl">הגדרות</div></div>
+    <div id="st-body"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="cele" id="cele"><div class="cin"><div class="stars" id="cele-st">⭐️⭐️⭐️</div><h2 id="cele-h"></h2><p id="cele-p"></p><button class="btn" id="cele-b">יופי</button></div></div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   הצעד הבא — כלי להורים
+   מבנה הקובץ:  part1 (מעטפת + אווטאר)  ·  content-*.js (תוכן)  ·  part2 (מנוע + מסכים)
+   ===================================================================== */
+
+/* ---------------------------------------------------------------
+   1. תחומים ושלבי גיל
+   --------------------------------------------------------------- */
+const DOMAINS = [
+  {id:'gross', n:'מוטוריקה גסה',        c:'#6FA05B', from:0},
+  {id:'fine',  n:'מוטוריקה עדינה',      c:'#4E82A0', from:0},
+  {id:'lang',  n:'שפה ותקשורת',         c:'#9C71B4', from:0},
+  {id:'social',n:'חברה ורגש',            c:'#D88585', from:0},
+  {id:'think', n:'קשב, זיכרון וחשיבה',  c:'#4F9689', from:0},
+  {id:'self',  n:'עצמאות ויום‑יום',      c:'#C99A2E', from:12},
+  {id:'num',   n:'מספרים וכמויות',       c:'#E08A3E', from:30}
+];
+
+/* שם התחום משתנה לפי שלב — אותו תחום, תוכן אחר */
+const DOMAIN_ALIAS = {
+  lang:  {6:'צלילים ואותיות', 7:'אותיות וקריאה', 8:'קריאה וכתיבה'},
+  think: {0:'קשב ומעקב', 1:'קשב ומעקב', 2:'חשיבה וחיפוש'}
+};
+
+/* גבולות בחודשים: [from, to) */
+const STAGES = [
+  {id:0, a:0,  b:4,  t:'מבט וחיבור',           s:'החודשים הראשונים'},
+  {id:1, a:4,  b:8,  t:'לתפוס ולהתהפך',        s:'4–8 חודשים'},
+  {id:2, a:8,  b:14, t:'לזוז ולהבין',           s:'8–14 חודשים'},
+  {id:3, a:14, b:24, t:'מילים וצעדים',          s:'14–24 חודשים'},
+  {id:4, a:24, b:36, t:'משפטים ומשחק',          s:'גיל שנתיים עד שלוש'},
+  {id:5, a:36, b:48, t:'צורות, צבעים וחברים',   s:'גיל שלוש עד ארבע'},
+  {id:6, a:48, b:60, t:'צלילים וכמויות',        s:'גיל ארבע עד חמש'},
+  {id:7, a:60, b:72, t:'אותיות ומספרים',        s:'השנה שלפני כיתה א׳'},
+  {id:8, a:72, b:120,t:'קריאה, חשבון ואחריות',  s:'כיתה א׳ ומעלה'}
+];
+
+/* ---------------------------------------------------------------
+   2. אווטאר פרמטרי
+   --------------------------------------------------------------- */
+const SKINS = [
+  {id:'s1', f:'#FFE6D0', d:'#F0CBAA'},
+  {id:'s2', f:'#FFDCC0', d:'#E9BE9B'},
+  {id:'s3', f:'#E8B990', d:'#CE9A6E'},
+  {id:'s4', f:'#B57F55', d:'#96653F'},
+  {id:'s5', f:'#7C5334', d:'#5F3D24'}
+];
+const HAIRS = [
+  {id:'h1', n:'בלונד',  f:'#F2C74F', d:'#E0AE38'},
+  {id:'h2', n:'חום בהיר',f:'#B98C55', d:'#98703E'},
+  {id:'h3', n:'חום',    f:'#7A5230', d:'#5E3D22'},
+  {id:'h4', n:'שחור',   f:'#3A2A22', d:'#241811'},
+  {id:'h5', n:'ג׳ינג׳י', f:'#D2703A', d:'#B0562A'},
+  {id:'h6', n:'בהיר מאוד',f:'#EEDCA8', d:'#D8C289'}
+];
+const EYES = [
+  {id:'e1', n:'חום',  c:'#6B4423'},
+  {id:'e2', n:'כחול', c:'#4E7FA8'},
+  {id:'e3', n:'ירוק', c:'#5A8558'},
+  {id:'e4', n:'אגוז', c:'#8A6B3A'}
+];
+const STYLES = [
+  {id:'long',   n:'ארוך'},
+  {id:'straight',n:'חלק עד הכתפיים'},
+  {id:'kuku',   n:'קוקו'},
+  {id:'short',  n:'קצר'},
+  {id:'curly',  n:'מתולתל'},
+  {id:'wisp',   n:'תינוק'},
+  {id:'bald',   n:'ללא'}
+];
+const SHIRTS = ['#E8A0A0','#5B8FA8','#7FB069','#F4A259','#B58BC4','#3E4A5B','#E5C04A','#D9695E'];
+const PRINTS = [
+  {id:'none',  n:'חלק'},
+  {id:'bat',   n:'באטמן'},
+  {id:'ball',  n:'כדורגל'},
+  {id:'flower',n:'פרח'},
+  {id:'star',  n:'כוכב'},
+  {id:'stripe',n:'פסים'}
+];
+
+let _uid = 0;
+function avatarSVG(av){
+  const uid = 'a' + (++_uid);
+  const sk = SKINS.find(s=>s.id===av.skin) || SKINS[1];
+  const hr = HAIRS.find(h=>h.id===av.hair) || HAIRS[0];
+  const ey = EYES.find(e=>e.id===av.eye)  || EYES[0];
+  const st = av.style || 'short';
+  const shirt = av.shirt || SHIRTS[2];
+  const baby = !!av.baby;
+
+  /* --- גוף --- */
+  const bodyPath = baby
+    ? 'M60 88 Q84 95 95 107 Q103 119 103 141 L17 141 Q17 119 25 107 Q36 95 60 88 Z'
+    : 'M60 82 L86 94 Q99 101 102 141 L18 141 Q21 101 34 94 Z';
+
+  /* --- הדפס על החולצה --- */
+  let print = '';
+  if(av.print==='bat')    print = `<ellipse cx="60" cy="112" rx="23" ry="14" fill="#F2C14E"/><path d="M45 108 L52 104 L56 110 L60 105 L64 110 L68 104 L75 108 L71 117 Q60 123 49 117 Z" fill="#22262F"/>`;
+  else if(av.print==='ball') print = `<rect x="14" y="78" width="92" height="70" fill="#004D98"/><rect x="24" y="78" width="11" height="70" fill="#A50044"/><rect x="46" y="78" width="11" height="70" fill="#A50044"/><rect x="68" y="78" width="11" height="70" fill="#A50044"/><rect x="90" y="78" width="11" height="70" fill="#A50044"/>`;
+  else if(av.print==='flower') print = `<g transform="translate(60,112)"><circle r="7" fill="#F6D66B"/>${[0,72,144,216,288].map(a=>`<ellipse cx="0" cy="-14" rx="7" ry="10" fill="#fff" transform="rotate(${a})"/>`).join('')}<circle r="6" fill="#F6D66B"/></g>`;
+  else if(av.print==='star') print = `<path d="M60 96 L66 110 L81 111 L69 120 L74 135 L60 126 L46 135 L51 120 L39 111 L54 110 Z" fill="#F6D66B"/>`;
+  else if(av.print==='stripe') print = `<g fill="#FFFFFF" opacity=".72"><rect x="10" y="96" width="100" height="8"/><rect x="10" y="112" width="100" height="8"/><rect x="10" y="128" width="100" height="8"/></g>`;
+
+  /* --- שיער אחורי --- */
+  let hairBack = '';
+  if(st==='long')      hairBack = `<path d="M20 60 Q17 114 27 140 L47 140 Q35 106 35 66 Z" fill="${hr.d}"/><path d="M100 60 Q103 114 93 140 L73 140 Q85 106 85 66 Z" fill="${hr.d}"/>`;
+  else if(st==='straight') hairBack = `<path d="M22 58 Q18 96 26 120 L41 120 Q33 94 34 64 Z" fill="${hr.d}"/><path d="M98 58 Q102 96 94 120 L79 120 Q87 94 86 64 Z" fill="${hr.d}"/>`;
+  else if(st==='curly') hairBack = `<g fill="${hr.d}">${[[26,54],[30,74],[94,54],[90,74],[36,90],[84,90]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="12"/>`).join('')}</g>`;
+  else if(st==='kuku') hairBack = `<g stroke="${hr.d}" stroke-width="4.2" fill="none" stroke-linecap="round">
+      <path d="M33 52 Q27 82 31 112"/><path d="M41 58 Q35 86 38 110"/>
+      <path d="M87 52 Q93 82 89 112"/><path d="M79 58 Q85 86 82 110"/>
+    </g>`;
+
+  /* --- שיער קדמי --- */
+  const hy = baby ? 22 : 18;
+  let hairFront = '';
+  if(st==='long')      hairFront = `<path d="M29 50 Q31 20 60 20 Q89 20 91 50 Q84 33 66 33 Q47 33 38 45 Q33 47 29 50 Z" fill="${hr.f}"/>`;
+  else if(st==='straight') hairFront = `<path d="M27 52 Q25 17 60 17 Q95 17 93 52 Q90 32 60 32 Q34 32 27 52 Z" fill="${hr.f}"/><path d="M27 52 Q26 40 30 33 L36 36 Q31 43 31 52 Z" fill="${hr.d}"/>`;
+  else if(st==='short') hairFront = `<path d="M28 50 Q26 18 60 18 Q94 18 92 50 Q88 34 72 30 Q58 42 44 34 Q33 38 28 50 Z" fill="${hr.f}"/><path d="M92 50 Q90 30 74 24 Q88 26 92 38 Z" fill="${hr.d}"/>`;
+  /* קוקו: כיפת שיער + טבעת אליפסה על קודקוד הראש — אליפסה עם חור באמצע */
+  else if(st==='kuku') hairFront = `<path d="M28 50 Q26 22 60 22 Q94 22 92 50 Q88 33 60 33 Q32 33 28 50 Z" fill="${hr.f}"/>
+      <path d="M48 24 Q60 16 72 24 Q60 21 48 24 Z" fill="${hr.f}"/>
+      <ellipse cx="60" cy="13" rx="14" ry="10.5" fill="none" stroke="${hr.f}" stroke-width="7.5"/>
+      <ellipse cx="60" cy="13" rx="14" ry="10.5" fill="none" stroke="${hr.d}" stroke-width="1.4" opacity=".55"/>`;
+  else if(st==='curly') hairFront = `<g fill="${hr.f}">${[[34,40],[46,28],[60,24],[74,28],[86,40],[52,32],[68,32]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="13"/>`).join('')}</g>`;
+  else if(st==='wisp') hairFront = `<path d="M${baby?34:32} ${hy+12} Q42 ${hy-2} 60 ${hy-2} Q78 ${hy-2} 86 ${hy+12} Q74 ${hy+5} 60 ${hy+5} Q46 ${hy+5} ${baby?34:32} ${hy+12} Z" fill="${hr.f}" opacity=".92"/><path d="M57 ${hy-3} Q63 ${hy-11} 68 ${hy-3} Q63 ${hy-1} 57 ${hy-3} Z" fill="${hr.f}"/>`;
+
+  /* --- ראש ופנים --- */
+  const hrx = baby ? 37 : 31, hry = baby ? 35 : 33, hcy = baby ? 52 : 55;
+  const ex = baby ? 14 : 12, eyy = baby ? 52 : 56, er = baby ? 6 : 5.2;
+  const mouth = baby
+    ? `<path d="M${60-11} 64 Q60 76 ${60+11} 64 Q60 70 ${60-11} 64 Z" fill="#C9705C"/><path d="M${60-11} 64 Q60 76 ${60+11} 64" stroke="#B5654A" stroke-width="2.6" fill="none" stroke-linecap="round"/>`
+    : `<path d="M52 67 Q60 75 68 67" stroke="#B5654A" stroke-width="2.8" fill="none" stroke-linecap="round"/>`;
+  const bow = (av.bow) ? `<g transform="translate(92,28) rotate(18)"><path d="M0 0 L-13 -8 L-13 8 Z" fill="#E86A8E"/><path d="M0 0 L13 -8 L13 8 Z" fill="#E86A8E"/><circle r="4.4" fill="#C94E72"/></g>` : '';
+
+  return `<svg viewBox="0 0 120 148" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${(av.alt||'דמות')}">
+  <defs><clipPath id="c${uid}"><path d="${bodyPath}"/></clipPath></defs>
+  ${hairBack}
+  <path d="${bodyPath}" fill="${shirt}"/>
+  <g clip-path="url(#c${uid})">${print}</g>
+  <path d="${bodyPath}" fill="none" stroke="rgba(0,0,0,.16)" stroke-width="2"/>
+  ${baby?'':`<path d="M49 85 L60 96 L71 85" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`}
+  <rect x="${baby?51:52}" y="${baby?76:72}" width="${baby?18:16}" height="${baby?14:16}" rx="7" fill="${sk.d}"/>
+  <ellipse cx="${baby?22:23}" cy="${baby?112:110}" rx="${baby?8:7}" ry="12" fill="${sk.f}" transform="rotate(15 ${baby?22:23} ${baby?112:110})"/>
+  <ellipse cx="${baby?98:97}" cy="${baby?112:110}" rx="${baby?8:7}" ry="12" fill="${sk.f}" transform="rotate(-15 ${baby?98:97} ${baby?112:110})"/>
+  <ellipse cx="60" cy="${hcy}" rx="${hrx}" ry="${hry}" fill="${sk.f}"/>
+  ${hairFront}
+  <path d="M${60-ex-6} ${eyy-11} Q${60-ex} ${eyy-15} ${60-ex+6} ${eyy-11}" stroke="${hr.d}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".8"/>
+  <path d="M${60+ex-6} ${eyy-11} Q${60+ex} ${eyy-15} ${60+ex+6} ${eyy-11}" stroke="${hr.d}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".8"/>
+  <ellipse cx="${60-ex}" cy="${eyy}" rx="${er}" ry="${er+1}" fill="${ey.c}"/>
+  <ellipse cx="${60+ex}" cy="${eyy}" rx="${er}" ry="${er+1}" fill="${ey.c}"/>
+  ${baby?`<circle cx="${60-ex}" cy="${eyy}" r="2.6" fill="#20303D"/><circle cx="${60+ex}" cy="${eyy}" r="2.6" fill="#20303D"/>`:''}
+  <circle cx="${60-ex-2}" cy="${eyy-2.5}" r="1.9" fill="#fff"/>
+  <circle cx="${60+ex-2}" cy="${eyy-2.5}" r="1.9" fill="#fff"/>
+  <ellipse cx="${60-(baby?27:22)}" cy="${eyy+9}" rx="5.4" ry="3.6" fill="#F3A6A6" opacity=".65"/>
+  <ellipse cx="${60+(baby?27:22)}" cy="${eyy+9}" rx="5.4" ry="3.6" fill="#F3A6A6" opacity=".65"/>
+  ${mouth}
+  ${bow}
+</svg>`;
+}
+
+/* ---------------------------------------------------------------
+   3. מאגר התוכן — נטען מקובצי content-*.js
+   --------------------------------------------------------------- */
+const LEVELS = [];
+function L(o){ LEVELS.push(o); }
+
+/* ============================================================
+   שלב 0 · מבט וחיבור · 0–4 חודשים
+   ============================================================ */
+
+L({id:'s0.think.1', st:0, dm:'think', ix:1, t:'מבט שנצמד', acts:[
+  {id:'a', t:'מעקב עיניים אחרי עצם', reps:8, pace:5, dur:'3 דקות', gear:'הפנים שלכם, או כרטיס שחור־לבן',
+   why:'מעקב חלק אחרי עצם נע הוא הצעד הראשון של הקשב: התינוק {בוחר|בוחרת} על מה להסתכל {ומחזיק|ומחזיקה} את הבחירה. עליו נבנים אחר כך הושטת יד מדויקת ומעקב אחרי כיוון המבט שלכם.',
+   how:['{שוכב|שוכבת} על הגב, ער{|ה} ורגוע{|ה}. הפנים שלכם או צעצוע במרחק 20–30 ס"מ.','כשהמבט ננעל — הזיזו לאט מאוד לצד אחד, כשתי שניות לכל 10 ס"מ. עצרו ותנו {לו|לה} להדביק.','אותו דבר לצד השני, ואז מעלה־מטה. חמישה מעברים בסך הכול.'],
+   ok:'העיניים זזות יחד ובאופן חלק לפחות עד קו האמצע. מעבר לאמצע זה בונוס בגיל הזה, לא דרישה.',
+   trap:'להזיז מהר מדי. תינוק שמאבד את העצם פשוט מסיט מבט, וזה נראה ככישלון בעוד שזו רק מהירות.',
+   easy:'להשאיר את העצם במקום עד שהמבט ננעל, ואז לזוז חמישה סנטימטרים בלבד.',
+   hard:'להוסיף קול קטן מהצד ולראות אם {הוא מפנה|היא מפנה} את הראש, לא רק את העיניים.'},
+  {id:'b', t:'ניגודיות שחור־לבן', reps:6, pace:4, dur:'2 דקות', gear:'כרטיס פסים או משבצות שחור־לבן',
+   why:'הראייה בחודשים הראשונים חדה רק בניגודיות גבוהה. דפוסים חדים הם מה שהמוח באמת קולט, וצבעי פסטל כמעט לא נרשמים.',
+   how:['הציגו כרטיס במרחק 25 ס"מ, ישר מול העיניים.','המתינו — לפעמים לוקח{|ת} חמש שניות עד שהמבט נתפס.','החליפו דפוס אחרי חצי דקה. פסים, משבצות, ספירלה.'],
+   ok:'המבט נעצר על הדפוס לפחות חמש שניות.',
+   trap:'להזיז את הכרטיס בזמן שמסתכל{|ת}. תנו {לו|לה} להתבונן בלי הפרעה.',
+   easy:'פסים עבים בלבד — הכי קל לקלוט.',
+   hard:'לתלות את הדפוס בצד המיטה ולראות אם {הוא מסובב|היא מסובבת} את הראש כדי לחפש אותו.'},
+  {id:'c', t:'לחפש מאיפה בא הקול', reps:8, pace:4, dur:'2 דקות', gear:'רעשן, או הקול שלכם',
+   why:'חיבור בין מה ששומעים למה שרואים הוא הבסיס של תשומת לב לעולם — ובהמשך של הבנת שפה.',
+   how:['{שוכב|שוכבת} על הגב. עמדו מחוץ לשדה הראייה, בצד.','השמיעו קול רך ומתמשך — קשקוש רעשן, או השם שלו בקול שקט.','חכו. אם אין תגובה — התקרבו קצת. כשמפנה — הראו את הפנים ותנו חיוך.'],
+   ok:'עוצר{|ת} את התנועה ומנסה להפנות עיניים או ראש לכיוון הקול.',
+   trap:'קול חזק ופתאומי. זה מבהיל ומייצר בכי במקום סקרנות.',
+   easy:'לעמוד קרוב מאוד, במרחק חצי מטר, ולדבר במקום להשתמש בצעצוע.',
+   hard:'להתחלף בין הצדדים ולראות אם {הוא מחפש|היא מחפשת} לשני הכיוונים באותה מידה.'}
+], ck:{t:'המבט עובד', items:[
+  'עוקב{|ת} אחרי עצם נע עד קו האמצע, בעיניים ולא בקפיצות',
+  'נוע{ץ|צת} מבט בדפוס ניגודי לחמש שניות לפחות',
+  'עוצר{|ת} תנועה או מפנה ראש לכיוון קול',
+  'מתמקד{|ת} בפנים שלכם ממרחק של כ־30 ס"מ',
+  'מסתכל{|ת} על היד שלו כשהיא נכנסת לשדה הראייה'
+]}});
+
+L({id:'s0.gross.1', st:0, dm:'gross', ix:1, t:'לשלוט בראש', acts:[
+  {id:'a', t:'זמן בטן', reps:20, pace:10, dur:'2 דקות', gear:'שטיח או מגבת',
+   why:'זמן בטן הוא התרגיל היחיד שבונה את שרירי הצוואר והגב שיאפשרו התהפכות, ישיבה וזחילה. הוא גם מונע שיטוח של הראש מאחור.',
+   how:['אחרי כל החתלה — דקה על הבטן על משטח יציב.','רדו לרצפה מולו, פנים אל פנים. הפנים שלכם הן המוטיבציה.','להתחיל מדקה ולהגיע בהדרגה לעשר דקות מצטברות ביום.'],
+   ok:'מרי{ם|מה} את הראש ל־45 מעלות ומחזיק{|ה} כמה שניות.',
+   trap:'לוותר בגלל בכי. במקום — לקצר לחצי דקה ולהרבות בפעמים, או להתחיל על החזה שלכם בשכיבה.',
+   easy:'על החזה שלכם, כשאתם שוכבים נשענים — אותה עבודה בזווית קלה יותר.',
+   hard:'להניח צעצוע בצד ולראות אם {הוא מסתובב|היא מסתובבת} כדי לראות אותו.'},
+  {id:'b', t:'להחזיק זקוף על הכתף', reps:14, pace:7, dur:'3 דקות', gear:'הכתף שלכם',
+   why:'עמידה זקופה נות{ן|נת} שדה ראייה חדש ומאמנת את הצוואר בזווית אחרת מזמן בטן — שני הכיוונים נחוצים.',
+   how:['החזיקו על הכתף עם יד תומכת מאחורי הראש.','הרפו את התמיכה לשניות בודדות בכל פעם.','הסתובבו לאט בחדר כדי שיהיה מה לראות.'],
+   ok:'מחזיק{|ה} את הראש יציב לכמה שניות בלי תמיכה.',
+   trap:'לשחרר את היד לגמרי מוקדם מדי. היד נשארת מאחור, רק לא נוגעת.',
+   easy:'ישיבה מוטה על הברכיים שלכם, גב נשען עליכם.',
+   hard:'להחזיק זקוף מול מראה — התגובה למראה מאריכה את הזמן.'},
+  {id:'c', t:'משיכה עדינה לישיבה', reps:10, pace:5, dur:'2 דקות', gear:'שום דבר',
+   why:'זו גם בדיקה וגם תרגיל: כמה הראש נגרר אחורה בזמן משיכה מספר{|ת} בדיוק כמה חוזק צוואר כבר יש.',
+   how:['{שוכב|שוכבת} על הגב. אחזו בזרועות או בכתפיים.','משכו לאט מאוד לישיבה, תוך ספירה עד חמש.','שבו רגע ואז החזירו לאט. שלוש פעמים.'],
+   ok:'הראש נגרר פחות מבהתחלה, ולקראת גיל שלושה חודשים הוא כמעט בקו אחד עם הגוף.',
+   trap:'למשוך מהר או מהידיים בלבד לפני גיל חודשיים. לאט, ומהכתפיים.',
+   easy:'למשוך רק חצי דרך ולחזור.',
+   hard:'לעצור באמצע הדרך ולהמתין שנייה — זו עבודה איזומטרית לצוואר.'}
+], ck:{t:'הראש נשלט', items:[
+  'מרי{ם|מה} את הראש ל־45 מעלות בזמן בטן ומחזיק{|ה} כמה שניות',
+  'מחזיק{|ה} ראש יציב לכמה שניות בישיבה זקופה נתמכת',
+  'הראש כמעט לא נגרר במשיכה עדינה לישיבה',
+  'צובר{|ת} עשר דקות זמן בטן ביום, מפוזר לאורך היום',
+  'מסובב{|ת} את הראש לשני הצדדים באותה קלות'
+]}});
+
+L({id:'s0.fine.1', st:0, dm:'fine', ix:1, t:'היד נפתחת', acts:[
+  {id:'a', t:'לפתוח את האגרוף', reps:14, pace:7, dur:'2 דקות', gear:'הידיים שלכם',
+   why:'תינוק נולד עם אגרוף קמוץ. פתיחת כף היד היא התנאי לכל אחיזה שתבוא אחר כך.',
+   how:['עסו בעדינות מהמרפק כלפי כף היד, ואז מהאמצע כלפי כל אצבע.','פתחו את כף היד והעבירו את האגודל שלכם על המרכז.','שימו את האצבע שלכם בכף היד — ותנו {לו|לה} לתפוס.'],
+   ok:'כף היד נפתחת בקלות והאגרוף פחות קמוץ לאורך היום.',
+   trap:'לכפות פתיחה בכוח. עיסוי איטי משיג את זה לבד.',
+   easy:'רק ליטוף של גב כף היד — זה מייצר פתיחה רפלקסיבית.',
+   hard:'לשים בד קל בכף היד ולראות כמה זמן {הוא מחזיק|היא מחזיקה}.'},
+  {id:'b', t:'רעשן ביד', reps:10, pace:5, dur:'3 דקות', gear:'רעשן קל, טבעת בד',
+   why:'הרגע שבו התינוק מגלה שהיד שלו יוצרת רעש הוא הקשר הראשון בין פעולה לתוצאה — התחלה של סיבה ומסובב{|ת}.',
+   how:['שימו רעשן קל בכף היד וסגרו עליו את האצבעות.','נערו יחד את היד בעדינות כדי שישמע את הקול.','אחרי כמה ימים — הניחו את הרעשן קרוב ותנו {לו|לה} לנסות להגיע אליו.'],
+   ok:'מחזיק{|ה} רעשן לכמה שניות ומזיז{|ה} את היד בכוונה.',
+   trap:'רעשן כבד. משקל עודף מפיל את היד ומתסכל.',
+   easy:'טבעת בד רכה במקום רעשן קשיח.',
+   hard:'לתלות צעצוע מעל, כדי שיצטרך לבעוט או להכות בו כדי להשמיע קול.'},
+  {id:'c', t:'מרקמים על העור', reps:10, pace:5, dur:'3 דקות', gear:'בדים שונים, ספוג, מברשת רכה',
+   why:'קלט מגע מגוון בונה את מפת הגוף במוח — הבסיס לתנועה מדויקת ולוויסות חושי בהמשך.',
+   how:['העבירו בעדינות בדים שונים על הידיים, הרגליים והבטן: פרווה, כותנה, סאטן.','אמרו בקול מה זה: "רך", "חלק", "מחוספס".','עצרו כשמפנה מבט או מתחיל{|ה} להתלונן — זה סימן שדי.'],
+   ok:'מגיב{|ה} בסקרנות — פותח{|ת} כף יד, נעצר{|ת}, מסתכל{|ת} — ולא בהימנעות.',
+   trap:'להמשיך למרות סימני עומס. הפניית מבט היא בקשה להפסקה.',
+   easy:'מרקם אחד בלבד, ורק על כפות הידיים.',
+   hard:'להוסיף טמפרטורות — כף יד קרירה מול חמימה, בעדינות.'}
+], ck:{t:'הידיים מתעוררות', items:[
+  'כף היד נפתחת בקלות ואינה קמוצה רוב הזמן',
+  'תופס{|ת} חפץ שמניחים בכף ידו ומחזיק{|ה} כמה שניות',
+  'מביא{|ה} ידיים למרכז הגוף ולפה',
+  'מזיז{|ה} את היד בכוונה כדי להשמיע קול',
+  'מגיב{|ה} במבט או בשקט לקלט מגע חדש'
+]}});
+
+L({id:'s0.lang.1', st:0, dm:'lang', ix:1, t:'קול ותור', acts:[
+  {id:'a', t:'שיחה עם הפסקות', reps:20, pace:10, dur:'3 דקות', gear:'שום דבר',
+   why:'החלפת תורות היא השלד של שיחה, והיא נלמדת חודשים לפני המילה הראשונה. תינוק שחוו איתו שתיקות שמחכות לו — מדבר{|ת} מוקדם יותר.',
+   how:['פנים אל פנים, במרחק 25 ס"מ. אמרו משפט קצר.','שתקו וחכו חמש שניות מלאות. זה מרגיש ארוך — זה בדיוק העניין.','כל קול שיוצא — ענו עליו כאילו אמר משהו: "באמת? ספר לי עוד".'],
+   ok:'משמיע{|ה} קול בתוך ההפסקה, ולא רק כשאתם מדברים.',
+   trap:'למלא את השתיקה. ההפסקה היא התרגיל.',
+   easy:'לחקות את הקול ש{הוא כבר משמיע|היא כבר משמיעה} — זה כמעט תמיד מייצר תגובה.',
+   hard:'לבנות רצף של שלוש החלפות ברצף בלי לאבד את הקשר.'},
+  {id:'b', t:'לשיר ולדבר לאורך היום', reps:20, pace:10, dur:'תוך כדי', gear:'שום דבר',
+   why:'כמות המילים שתינוק שומע{|ת} בשנה הראשונה מנבאת אוצר מילים בגיל שלוש. החתלה ורחצה הן הזדמנויות מובנות.',
+   how:['תארו בקול מה קורה: "עכשיו מורידים את החולצה. עכשיו מים חמימים".','שירו את אותם שירים שוב ושוב — החזרה היא מה שעובד, לא הגיוון.','דברו בטון גבוה ומוארך — זו לא שטות, זה מה שהמוח התינוקי קולט הכי טוב.'],
+   ok:'נרגע{|ת} או מתעורר{|ת} לקול שלכם, ומזהה את הנעימה של שיר מוכר.',
+   trap:'להשמיע מוזיקה במקום לדבר. הקלטה לא מחליפה קול חי שמגיב.',
+   easy:'לבחור שיר אחד ולשיר אותו בכל החתלה.',
+   hard:'לעצור באמצע שיר מוכר ולראות אם יש תגובה של ציפייה.'},
+  {id:'c', t:'לחקות פרצוף', reps:12, pace:6, dur:'2 דקות', gear:'שום דבר',
+   why:'חיקוי הבעה הוא הצעד הראשון של חיקוי בכלל — והחיקוי הוא איך שנלמדת שפה ואיך שנלמד כמעט כל דבר.',
+   how:['פנים אל פנים, ער{|ה} ורגוע{|ה}. הוציאו לשון לאט והחזיקו.','המתינו — התגובה יכולה לקחת עשרים שניות.','נסו גם פה פעור ורחב, וגם גבות מורמות.'],
+   ok:'מנסה לחקות אפילו חלקית — פה נפתח, לשון זזה.',
+   trap:'לוותר אחרי חמש שניות. עיבוד בגיל הזה איטי מאוד.',
+   easy:'לחקות אתם את ההבעה של{ו|ה} קודם — ואז {הוא לרוב עונה|היא לרוב עונה}.',
+   hard:'לחכות לתור — הבעה, המתנה, הבעה — ולבנות רצף.'}
+], ck:{t:'יש שיחה', items:[
+  'משמיע{|ה} קולות גרוניים בתגובה לדיבור שלכם',
+  'ממתי{ן|נה} בהפסקה ואז משמיע{|ה} קול — יש החלפת תורות',
+  'נרגע{|ת} לשמע הקול שלכם עוד לפני שרואה אתכם',
+  'מנסה לחקות הבעת פנים, גם אם חלקית',
+  'מגיב{|ה} בשמחה לשיר מוכר — פרצוף, תנועה או קול'
+]}});
+
+L({id:'s0.social.1', st:0, dm:'social', ix:1, t:'החיוך הראשון', acts:[
+  {id:'a', t:'פנים אל פנים בלי הסחות', reps:20, pace:10, dur:'4 דקות', gear:'שום דבר',
+   why:'החיוך החברתי — חיוך שמופנה אליכם בתגובה אליכם — הוא אבן הדרך החברתית הראשונה, והוא נבנה מזמן פנים אל פנים.',
+   how:['בחרו רגע ער ורגוע, לא רעב ולא עייף.','מרחק 25–30 ס"מ, בלי טלפון בשדה הראייה.','חייכו, דברו, עצרו, המתינו. חזרו.'],
+   ok:'מחיי{ך|כת} אליכם בתגובה, ולא רק מתוך שינה או נוחות.',
+   trap:'לעשות את זה עם טלפון ביד. התינוק רואה בדיוק לאן הפנים שלכם מופנות.',
+   easy:'לבחור את הרגע שאחרי אכילה — הכי קל לתפוס בו מבט.',
+   hard:'להשהות רגע בלי הבעה ולראות אם {הוא מנסה|היא מנסה} להחזיר אתכם למשחק.'},
+  {id:'b', t:'לענות על כל קול', reps:20, pace:10, dur:'תוך כדי', gear:'שום דבר',
+   why:'כשקול מקבל תגובה עקבית, התינוק לומד שיש לו השפעה על העולם. זה הבסיס של ביטחון ושל תקשורת.',
+   how:['כל קול, גם קטן — ענו עליו: מבט, חיוך, מילה.','אמרו את מה שנראה ש{הוא מרגיש|היא מרגישה}: "אתה עייף", "זה היה מפתיע".','גם כשאתם עסוקים — ענו בקול מהחדר השני.'],
+   ok:'משמיע{|ה} יותר קולות כשאתם בסביבה מאשר כשלבד.',
+   trap:'לענות רק לבכי. הקולות השמחים הם אלה שצריכים חיזוק.',
+   easy:'לענות בחיקוי מדויק של הקול — זה כמעט תמיד עובד.',
+   hard:'לבנות דיאלוג של ארבע החלפות.'},
+  {id:'c', t:'להירגע יחד', reps:20, pace:10, dur:'תוך כדי', gear:'מנשא, כיסא נדנדה',
+   why:'ויסות רגשי נלמד מבחוץ פנימה: התינוק לומד להירגע כי מישהו מרגיע אותו שוב ושוב, באותה דרך.',
+   how:['בחרו רצף קבוע: הרמה, קרבה לחזה, קול נמוך, נדנוד איטי.','אותו רצף בכל פעם — הצפי הוא מה שמרגיע.','אחרי הרגעה — רגע של שקט משותף לפני שממשיכים.'],
+   ok:'נרגע{|ת} מהר יותר עם הזמן, ולעיתים כבר מהקול לפני המגע.',
+   trap:'להחליף שיטה כל דקה כשלא עובד. תנו לכל שיטה שתי דקות.',
+   easy:'מגע עור אל עור — הכי מהיר ברוב המקרים.',
+   hard:'לתת רגע קצר של ניסיון עצמי לפני שאתם מתערבים — רק אם הבכי אינו במצוקה.'}
+], ck:{t:'יש קשר', items:[
+  'מחיי{ך|כת} אליכם בתגובה לחיוך שלכם',
+  'נוע{ץ|צת} מבט בפנים שלכם ומחזיק{|ה} אותו',
+  'משמיע{|ה} יותר קולות בנוכחותכם מאשר לבד',
+  'נרגע{|ת} ברצף הרגעה קבוע, ולעיתים כבר מהקול',
+  'מגיב{|ה} אחרת אליכם מאשר לאדם זר'
+]}});
+
+/* ============================================================
+   שלב 4 · משפטים ומשחק{|ת} · גיל שנתיים עד שלוש
+   ============================================================ */
+
+L({id:'s4.lang.1', st:4, dm:'lang', ix:1, t:'ממילה למשפט', acts:[
+  {id:'a', t:'להרחיב כל מילה', reps:20, pace:8, dur:'תוך כדי', gear:'שום דבר',
+   why:'זו הטכניקה היחידה שהוכחה כמאיצה מעבר ממילה בודדת למשפט: לחזור על מה שנאמר ולהוסיף מילה אחת. לא שתיים — אחת.',
+   how:['{אומר|אומרת} "מים" — אתם עונים "רוצה מים".','{אומר|אומרת} "רוצה מים" — אתם עונים "רוצה מים קרים".','תמיד מילה אחת מעבר לאורך הנוכחי, ובלי לבקש חזרה.'],
+   ok:'מתחיל{|ה} להשתמש בצירופים של שתיים־שלוש מילים מיוזמת{ו|ה}.',
+   trap:'לבקש "תגיד: רוצה מים". תיקון מפורש מוריד{|ה} את כמות הדיבור, לא מעלה.',
+   easy:'לחזור בדיוק על מה שנאמר, בלי להוסיף — עצם ההדהוד מעודד עוד דיבור.',
+   hard:'להוסיף מילת יחס או תיאור: "רוצה מים קרים בכוס הכחולה".'},
+  {id:'b', t:'לקרוא לכל דבר בשם', reps:20, pace:8, dur:'תוך כדי', gear:'הבית, הרחוב',
+   why:'אוצר מילים בגיל שנתיים מנבא הבנת הנקרא בכיתה ג׳. השם של החפץ נבנה מחזרה בהקשר, לא מכרטיסיות.',
+   how:['תארו מה אתם עושים בזמן שאתם עושים: "פותחים את המקרר, מוציאים גבינה".','שאלו "איפה ה…" ולא "מה זה" — הצבעה קלה יותר מהפקה.','כשמצביע{|ה} — תנו את השם ומשפט קצר עליו.'],
+   ok:'מבי{ן|נה} הרבה יותר ממה ש{אומר|אומרת}, ומצביע{|ה} נכון על עשרה חפצים מבוקשים.',
+   trap:'לבחון. "מה זה?" שוב ושוב הופ{ך|כת} שיחה למבחן.',
+   easy:'לצמצם לשלושה חפצים בסיבוב, ולחזור עליהם ימים.',
+   hard:'לבקש חפץ לפי תכונה: "תביא את הכדור הקטן".'},
+  {id:'c', t:'ספר כל יום, אותו ספר', reps:20, pace:10, dur:'8 דקות', gear:'ספרי קרטון',
+   why:'החזרה על אותו ספר היא מה שעובד בגיל הזה — היא מאפשרת לחזות מה יקרה, וזה מה שהופך מאזין לשותף.',
+   how:['תנו {לו|לה} להחזיק ולהפוך דפים, גם לא בסדר.','אל תקראו את הטקסט — דברו על התמונות ושאלו "איפה הכלב".','עצרו לפני מילה מוכרת בסוף משפט ותנו {לו|לה} להשלים.'],
+   ok:'מביא{|ה} ספר ביוזמת{ו|ה} ומשלי{ם|מה} מילה בסוף משפט מוכר.',
+   trap:'להתעקש לסיים את הספר. שלושה עמודים בקשב שווים יותר מספר{|ת} שלם בכפייה.',
+   easy:'ספר עם דש להרמה או מרקמים — הפעולה מחזיק{|ה} את הקשב.',
+   hard:'לשאול "מה יקרה עכשיו?" לפני שהופכים דף.'}
+], ck:{t:'מדבר{|ת} במשפטים', items:[
+  'משתמש{|ת} בצירופים של שתי מילים לפחות, מיוזמתו',
+  'מצביע{|ה} נכון על עשרה חפצים כשמבקשים בשם',
+  'ממלא{|ת} הוראה פשוטה בת שני שלבים',
+  'משלי{ם|מה} מילה בסוף משפט מוכר בספר',
+  'קורא{|ת} בשם לשלושה בני משפחה'
+]}});
+
+L({id:'s4.gross.1', st:4, dm:'gross', ix:1, t:'לרוץ, לקפוץ, לטפס', acts:[
+  {id:'a', t:'לרוץ ולעצור', reps:12, pace:5, dur:'8 דקות', gear:'מרחב פתוח',
+   why:'עצירה יזומה מאמנת בלימה — היכולת לעצור פעולה שכבר התחילה. זו אותה מיומנות שתשמש אחר כך להתאפקות.',
+   how:['משחק{|ת} "אור אדום אור ירוק" — רצים ועוצרים על מילה.','להוסיף שינוי כיוון: "עכשיו אחורה".','לסיים בריצה חופשית בלי כללים.'],
+   ok:'עוצר{|ת} תוך שנייה מהמילה, ור{ץ|צה} בלי ליפול בשינוי כיוון.',
+   trap:'לשחק בחלל צר. צריך מקום כדי שהריצה תהיה אמיתית.',
+   easy:'הליכה מהירה במקום ריצה.',
+   hard:'להוסיף מילה שלישית — "לקפוא על רגל אחת".'},
+  {id:'b', t:'קפיצה בשתי רגליים', reps:12, pace:5, dur:'6 דקות', gear:'סרט הדבקה, כריות',
+   why:'קפיצה בשתי רגליים היא אבן דרך מוטורית של גיל שנתיים, והיא דורשת כוח, תזמון ואומץ בו־זמנית.',
+   how:['להתחיל בקפיצה במקום, בהחזקת ידיים.','לקפוץ מעל סרט על הרצפה — קדימה.','לקפוץ ממדרגה נמוכה לתוך הידיים שלכם, ואז לבד.'],
+   ok:'קופ{ץ|צת} ומנתק{|ת} את שתי הרגליים מהרצפה בו־זמנית.',
+   trap:'לצפות לקפיצה גבוהה. ניתוק של סנטימטר הוא כבר הצלחה מלאה.',
+   easy:'לקפוץ על מיטה או מזרן — הקפיץ עוזר להרגיש את התנועה.',
+   hard:'לקפוץ קדימה למרחק מסומן, ואז מעל מכשול נמוך.'},
+  {id:'c', t:'מדרגות ברגל מתחלפת', reps:14, pace:6, dur:'תוך כדי', gear:'מדרגות',
+   why:'רגל מתחלפת דורשת העברת משקל מצד לצד — הבסיס להליכה יציבה, לריצה ולדילוג בהמשך.',
+   how:['לעלות בהחזקת מעקה, יד אחת שלכם ביד השנייה.','עודדו רגל מתחלפת: "עכשיו הרגל השנייה".','ירידה קשה יותר מעלייה — היא תגיע חודשים אחר כך.'],
+   ok:'עולה ברגל מתחלפת בהחזקת מעקה בלבד.',
+   trap:'להרים בידיים כשממהרים. זה נוח, וזה גם מבטל את התרגיל.',
+   easy:'לעלות עם שתי רגליים לכל מדרגה, בהחזקה משני הצדדים.',
+   hard:'לרדת ברגל מתחלפת, ואז בלי מעקה.'}
+], ck:{t:'הגוף זז בביטחון', items:[
+  'ר{ץ|צה} ועוצר{|ת} על פקודה בלי ליפול',
+  'קופ{ץ|צת} במקום ומנתק שתי רגליים מהרצפה',
+  'עולה מדרגות ברגל מתחלפת בהחזקת מעקה',
+  'בועט{|ת} בכדור בלי לאבד שיווי משקל',
+  'מטפס{|ת} על ספה או מתקן נמוך ויורד ממנו לבד'
+]}});
+
+L({id:'s4.fine.1', st:4, dm:'fine', ix:1, t:'האצבעות עובדות', acts:[
+  {id:'a', t:'משרבוט לצורה', reps:12, pace:5, dur:'6 דקות', gear:'טושים עבים, דף גדול',
+   why:'המעבר משרבוט אקראי לקווים בכוונה — קו, עיגול — הוא ההתחלה של כתיבה, והוא קורה בין גיל שנתיים לשלוש.',
+   how:['ציירו קו למטה ואמרו "קו". תנו {לו|לה} לנסות.','אחר כך עיגול. אמרו "סובב־סובב" תוך כדי.','שאלו מה ציירת — וכתבו את התשובה על הדף.'],
+   ok:'מצייר{|ת} קו ועיגול בכוונה, ולא רק שרבוט.',
+   trap:'לצייר בשביל{ו|ה} תמונה יפה. הדף שלו, גם אם הוא קשקוש.',
+   easy:'לצייר על לוח מחיק גדול בעמידה — כל הזרוע עובדת.',
+   hard:'להוסיף צלב, ואז לצייר פרצוף — עיגול ושתי נקודות.'},
+  {id:'b', t:'מגדל שמחזיק', reps:12, pace:5, dur:'6 דקות', gear:'קוביות',
+   why:'בניית מגדל דורשת שחרור מבוקר של האחיזה — הרבה יותר קשה מלתפוס, וזה מה שמאמן דיוק.',
+   how:['בנו יחד. אתם קוביה, {הוא קוביה|היא קוביה}.','ספרו בקול בזמן שמניחים.','ואז — להפיל. ההפלה היא חצי מהכיף וזה בסדר גמור.'],
+   ok:'בונה מגדל של שש קוביות ומעלה שעומד.',
+   trap:'ליישר בשביל{ו|ה}. תנו למגדל ליפול וללמד.',
+   easy:'קוביות גדולות או קופסאות.',
+   hard:'לבנות לפי דוגמה — שורה, גשר, ריבוע.'},
+  {id:'c', t:'פלסטלינה ובצק', reps:12, pace:5, dur:'10 דקות', gear:'בצק, מערוך, קופיץ',
+   why:'לישה וצביטה בונות את שרירי כף היד שיחזיקו עיפרון בעוד שנתיים. אין דרך יעילה מזו בגיל הזה.',
+   how:['ללוש, לגלגל נקניקיות, לצבוט כדורים קטנים.','לתקוע בתוך הבצק פסטה, קיסמים, כפתורים — ואז להוציא.','לחתוך בקופיץ פלסטיק.'],
+   ok:'מגלגל{|ת} כדור ונקניק, ומצליח{|ה} לצבוט חתיכות קטנות.',
+   trap:'להשאיר בצק יבש. בצק קשה מתסכל ולא נלוש.',
+   easy:'בצק ביתי רך יותר, וכלים גדולים.',
+   hard:'להכין צורה מוכרת — נחש, חילזון, איש.'}
+], ck:{t:'הידיים מדויקות', items:[
+  'מצייר{|ת} קו ועיגול בכוונה',
+  'בונה מגדל של שש קוביות שעומד',
+  'מגלגל{|ת} כדור ונקניק מבצק',
+  'הופ{ך|כת} דפים בספר אחד־אחד',
+  'מכניס{|ה} פריטים לפתח צר — קופה, בקבוק'
+]}});
+
+L({id:'s4.social.1', st:4, dm:'social', ix:1, t:'לצד ואז עם', acts:[
+  {id:'a', t:'לתת שם לרגש', reps:20, pace:8, dur:'תוך כדי', gear:'שום דבר',
+   why:'גיל שנתיים הוא שיא ההתפרצויות, כי יש הרבה רגש ואין מילים. כל מילה שנכנסת מוריד{|ה} התפרצות אחת.',
+   how:['בזמן הסערה: "אתה כועס. רצית את הכדור". בלי הסבר, בלי מוסר{|ת}.','אחרי שנרגע — לחזור על הסיפור בשתי מילים.','לתת שם גם לרגשות טובים: "אתה שמח", "התרגשת".'],
+   ok:'מתחיל{|ה} להשתמש במילה של רגש, גם אם באיחור.',
+   trap:'להסביר בזמן ההתקף. אין קליטה — רק נוכחות ומילה אחת.',
+   easy:'להצביע על ציור פרצופים ולבחור.',
+   hard:'לזהות רגש אצל מישהו אחר: "למה הוא בוכה?"'},
+  {id:'b', t:'משחק{|ת} כאילו', reps:14, pace:6, dur:'10 דקות', gear:'בובה, כוס, טלפון צעצוע',
+   why:'משחק{|ת} סמלי הוא מדד לחשיבה מופשטת — היכולת שדבר אחד ייצג דבר אחר. זה גם הבסיס למשחק חברתי.',
+   how:['האכילו בובה יחד, שימו אותה לישון, שימו פלסטר.','השתמשו בחפץ אחד בתור אחר: קוביה בתור טלפון.','תנו {לו|לה} להוביל ופשוט הצטרפו.'],
+   ok:'מאכיל{|ה} או מרדי{ם|מה} בובה מיוזמת{ו|ה}.',
+   trap:'לתקן את התסריט. אין דרך נכונה לשחק.',
+   easy:'להתחיל אתם ולתת {לו|לה} להשלים את הפעולה.',
+   hard:'לשרשר שלוש פעולות — להאכיל, לרחוץ, להשכיב.'},
+  {id:'c', t:'תור ושיתוף', reps:14, pace:6, dur:'8 דקות', gear:'צעצוע אחד',
+   why:'שיתוף אמיתי לא קיים בגיל שנתיים, ותור כן. מתחילים מהתור, והשיתוף מגיע{|ה} ממנו.',
+   how:['משחק{|ת} גלגול כדור — "התור שלי, התור שלך".','להשתמש בטיימר קצר כשיש צעצוע אחד ושני ילדים.','לומר בקול מה קורה: "עכשיו יעל, ואז אתה".'],
+   ok:'מוסר{|ת} צעצוע כשאומרים שהתור נגמר, לפעמים בלי בכי.',
+   trap:'לדרוש שיתוף מלא. זה לא מתאי{ם|מה} לגיל, וזה מייצר קרבות מיותרים.',
+   easy:'תור של עשר שניות בלבד, עם טיימר שרואים.',
+   hard:'תור בין שני ילדים בלי מבוגר בין לבין.'}
+], ck:{t:'משחק{|ת} לצד אחרים', items:[
+  'משתמש{|ת} במילה של רגש, גם אם באיחור',
+  'מאכיל{|ה} או מרדי{ם|מה} בובה מיוזמתו',
+  'מוסר{|ת} צעצוע בסוף תור בלי התפרצות, לפעמים',
+  'מסתכל{|ת} על ילד אחר ומחקה משהו שעשה',
+  'נרגע{|ת} עם מבוגר מוכר תוך כמה דקות'
+]}});
+
+L({id:'s4.think.1', st:4, dm:'think', ix:1, t:'להתאים ולמיין', acts:[
+  {id:'a', t:'צורה לחור שלה', reps:12, pace:5, dur:'6 דקות', gear:'קופסת צורות, פאזל ידיות',
+   why:'התאמת צורה דורשת לראות, לסובב מנטלית ולבצע — שלושה דברים בו־זמנית. זו חשיבה, לא רק מוטוריקה.',
+   how:['התחילו עם שלוש צורות בלבד — עיגול, ריבוע, משולש.','אם נתקע{|ת} — סובבו את הקופסה, לא את היד של{ו|ה}.','הוסיפו צורות בהדרגה.'],
+   ok:'מתאי{ם|מה} שלוש צורות בלי ניסוי וטעייה ארוך.',
+   trap:'להכניס בשביל{ו|ה} כשמתעכב. ההתעכבות היא הלמידה.',
+   easy:'עיגול בלבד — הוא נכנס בכל זווית.',
+   hard:'שש צורות, ופאזל ידיות עם תמונות.'},
+  {id:'b', t:'למיין לפי צבע', reps:12, pace:5, dur:'6 דקות', gear:'שתי קערות, פריטים בשני צבעים',
+   why:'מיון הוא הפעולה הראשונה של קטגוריזציה — הבסיס לכל חשיבה מסודרת שתבוא אחר כך.',
+   how:['שתי קערות בלבד, שני צבעים בולטים.','הדגימו שלושה פריטים ואז תנו {לו|לה} להמשיך.','אמרו את הצבע בקול בכל פעם.'],
+   ok:'ממיי{ן|נת} שני צבעים נכון ברוב הפריטים.',
+   trap:'לצפות שידע את שמות הצבעים. מיון קודם, שמות אחר כך.',
+   easy:'להתחיל בהתאמה לזוגות — פריט לפריט זהה.',
+   hard:'שלושה צבעים, ואז מיון לפי גודל.'},
+  {id:'c', t:'איפה זה התחבא', reps:12, pace:5, dur:'5 דקות', gear:'צעצוע, מגבת, כוסות',
+   why:'קביעות עצם מתפתחת לזיכרון עבודה — לזכור איפה משהו נמצא גם כשלא רואים אותו.',
+   how:['החביאו צעצוע מתחת למגבת מול העיניים.','אחר כך שתי מגבות — לזכור מתחת לאיזו.','ולבסוף — להחביא בחדר ולתת רמז מילולי.'],
+   ok:'מוצא{|ת} חפץ שהוחבא מתחת לאחת משתי כיסויים.',
+   trap:'להחביא טוב מדי. המטרה היא הצלחה, לא אתגר.',
+   easy:'להשאיר חלק מהצעצוע גלוי.',
+   hard:'להחביא בלי שיראה, ולתת רמז: "זה ליד הדלת".'}
+], ck:{t:'מבי{ן|נה} את העולם', items:[
+  'מתאי{ם|מה} שלוש צורות לחורים המתאימים',
+  'ממיי{ן|נת} שני צבעים לשתי קבוצות',
+  'מוצא{|ת} חפץ שהוחבא מתחת לאחד משני כיסויים',
+  'מרכיב{|ה} פאזל ידיות של ארבעה חלקים',
+  'מחקה פעולה שראה אתכם עושים אתמול'
+]}});
+
+L({id:'s4.self.1', st:4, dm:'self', ix:1, t:'אני לבד', acts:[
+  {id:'a', t:'לאכול עם כלים', reps:20, pace:10, dur:'תוך כדי', gear:'כף, מזלג ילדים, כוס פתוחה',
+   why:'אכילה עצמאית היא מוטוריקה עדינה בתחפושת, והיא גם המקום שבו ילד מרגיש לראשונה שהוא מנהל את עצמו.',
+   how:['כף לכל ארוחה, גם כשמלוכלך. סינר גדול ועיתון מתחת.','כוס פתוחה קטנה עם מעט מים — לא כוס עם פיה.','לא להאכיל במקביל. או {הוא אוכל|היא אוכלת}, או אתם.'],
+   ok:'מסיי{ם|מת} ארוחה בכף לבד ברוב הפעמים.',
+   trap:'להשלים בכפית שלכם "רק כדי שיאכל". זה מבטל את הלמידה.',
+   easy:'אוכל{|ת} שנדבק לכף — פירה, יוגורט סמיך.',
+   hard:'מזלג עם חתיכות, ולמזוג לעצמו מקנקן קטן.'},
+  {id:'b', t:'לפשוט ולנסות ללבוש', reps:14, pace:6, dur:'תוך כדי', gear:'בגדים רחבים',
+   why:'הורדת בגד קלה מהלבשה, ולכן היא הצעד הראשון. משם זה מתגלגל לעצמאות מלאה תוך שנה.',
+   how:['לתת {לו|לה} להוריד גרביים וכובע לבד.','בהלבשה — אתם מתחילים, {הוא מסיים|היא מסיימת}: מכניסים ראש, {הוא מושך|היא מושכת} למטה.','לשבת על הרצפה בזמן נעליים — זה יציב יותר.'],
+   ok:'מוריד{|ה} גרביים, כובע ומכנס רחב לבד.',
+   trap:'לעשות הכול כשממהרים. עדיף בגד אחד ביום שהוא עושה לבד.',
+   easy:'רק להוציא יד משרוול שכבר שוחרר.',
+   hard:'ללבוש חולצה רחבה לבד מההתחלה.'},
+  {id:'c', t:'להכיר את הסיר', reps:14, pace:6, dur:'תוך כדי', gear:'סיר או מושב',
+   why:'בגיל הזה בונים היכרות, לא גמילה. הסימנים לבשלות מגיעים לרוב בין שנתיים לשלוש, וללחוץ לפני זה מאריך את התהליך.',
+   how:['סיר בשירותים, נגיש, בלי דרישה. לשבת עליו לבוש זה בסדר גמור.','להושיב אחרי שינה ואחרי ארוחה — הזמנים עם הסיכוי הגבוה.','חיתול רטוב — להחליף בשירותים, כדי לקשר מקום לפעולה.'],
+   ok:'יושב{|ת} על הסיר מרצון, ולפעמים מודיע{|ה} על חיתול מלוכלך.',
+   trap:'להתחיל גמילה בזמן שינוי גדול — אח חדש, מעבר דירה, גן חדש.',
+   easy:'רק לשבת לבוש, פעם ביום, בלי ציפייה.',
+   hard:'יום שלם בלי חיתול בבית, עם הצעה כל שעה.'}
+], ck:{t:'עושה בעצמ{ו|ה}', items:[
+  'אוכל{|ת} ארוחה שלמה בכף בלי עזרה',
+  'שותה מכוס פתוחה בלי לשפוך רוב הפעמים',
+  'מוריד{|ה} גרביים וכובע לבד',
+  'יושב{|ת} על הסיר מרצון',
+  'מודיע במילה או בהצבעה כשהוא רוצה משהו'
+]}});
+
+/* ============================================================
+   שלב 5 · צורות, צבעים וחברים · גיל שלוש עד ארבע
+   ============================================================ */
+
+L({id:'s5.lang.1', st:5, dm:'lang', ix:1, t:'שאלות וסיפור', acts:[
+  {id:'a', t:'לענות ברצינות על למה', reps:20, pace:8, dur:'תוך כדי', gear:'סבלנות',
+   why:'גיל שלוש הוא גיל ה"למה", וכל תשובה אמיתית מרחיבה אוצר מילים ומלמדת שסקרנות משתלמת. תשובות מתחמקות מכבות את זה.',
+   how:['ענו תשובה קצרה ואמיתית, גם אם מסובכת.','החזירו את השאלה: "מה את{ה|} חושב{|ת}?"','כשאתם לא יודעים — "לא יודע{|ת}, בוא נבדוק" זו תשובה מצוינת.'],
+   ok:'שואל{|ת} שאלות "למה" ומקשיב{|ה} לתשובה עד הסוף.',
+   trap:'"ככה זה". זו התשובה שסוגרת את הברז.',
+   easy:'לענות במשפט אחד ולעצור.',
+   hard:'לשאול אתם שאלת "למה" ולהמתין לתשובה מנומקת.'},
+  {id:'b', t:'לספר מה קרה לפי סדר', reps:14, pace:5, dur:'6 דקות', gear:'שום דבר',
+   why:'סיפור לפי סדר הוא היכולת שתשמש אחר כך בהבנת הנקרא ובכתיבה. היא נבנית בשיחות על היום, לא בשיעורים.',
+   how:['שאלו על אירוע אחד: "מה עשיתם בחצר?"','עזרו במילות קישור: "ואז?" "ומה קרה אחרי?"','חזרו על הסיפור של{ו|ה} בקול — זה מלמד מבנה.'],
+   ok:'מספר{|ת} אירוע בשלושה חלקים לפי הסדר.',
+   trap:'לשאול "איך היה בגן". שאלה רחבה מדי מקבלת "טוב".',
+   easy:'לשאול על משהו שאתם יודעים עליו, ולהתחיל את הסיפור אתם.',
+   hard:'לספר סיפור על מה שיקרה מחר — זמן עתיד קשה יותר.'},
+  {id:'c', t:'חרוזים ושירים', reps:14, pace:6, dur:'5 דקות', gear:'שירי ילדים',
+   why:'מודעות לצליל של מילה — ולא רק למשמעות שלה — היא המנבא החזק ביותר להצלחה בקריאה. מתחילים בחרוזים.',
+   how:['שירו שירים עם חריזה, ועצרו לפני המילה המתחרזת.','משחק{|ת}: "מה מתחרז עם דג?" — גם מילות שטות נחשבות.','להמציא חרוזים על שמות המשפחה.'],
+   ok:'משלי{ם|מה} מילה מתחרזת בשיר מוכר, ולפעמים {ממציא|ממציאה} חרוז.',
+   trap:'לתקן מילת שטות. "דג־מג" זה בדיוק הדבר הנכון בשלב הזה.',
+   easy:'לתת שתי אפשרויות ולשאול איזו מתחרזת.',
+   hard:'לזהות מה הצליל הראשון של מילה — הכנה ישירה לשלב הבא.'}
+], ck:{t:'מדבר{|ת} ומספר{|ת}', items:[
+  'מדבר{|ת} במשפטים של ארבע מילים ומעלה',
+  'מספר{|ת} אירוע מהיום בשלושה חלקים לפי סדר',
+  'שואל{|ת} שאלות "למה" ומקשיב לתשובה',
+  'משלי{ם|מה} מילה מתחרזת בשיר מוכר',
+  'זרים מבינים את הדיבור שלו ברוב המקרים'
+]}});
+
+L({id:'s5.num.1', st:5, dm:'num', ix:1, t:'עד חמש', acts:[
+  {id:'a', t:'מספר{|ת} אחד לכל חפץ', reps:14, pace:5, dur:'5 דקות', gear:'מדרגות, סוכריות, כפתורים',
+   why:'ילד יכול לדקלם עד עשר בלי להבין ספירה. ההתאמה של מספר{|ת} אחד לכל חפץ היא הרגע שבו זה הופ{ך|כת} לאמיתי.',
+   how:['לספור בנגיעה — אצבע על כל פריט בזמן שאומרים את המספר.','לספור מדרגות בעלייה, כפיות בעריכת שולחן.','לשאול בסוף: "אז כמה יש?" — המספר האחרון הוא התשובה.'],
+   ok:'סופר{|ת} חמישה פריטים בנגיעה בלי לדלג ובלי לספור פעמיים.',
+   trap:'לספור מהר מדי. איטי ובנגיעה — זה כל ההבדל.',
+   easy:'שלושה פריטים בשורה ישרה.',
+   hard:'שמונה פריטים מפוזרים, בלי סידור.'},
+  {id:'b', t:'כמה יש — עד שלוש', reps:12, pace:5, dur:'4 דקות', gear:'קוביה, אצבעות',
+   why:'לזהות כמות קטנה במבט אחד מפנה כוח מחשבה לפעולות מסובכות יותר. זה מתחיל{|ה} בשלוש.',
+   how:['הראו אצבעות לרגע וכסו. כמה היו?','קוביית משחק{|ת} — כמה נקודות, בלי לספור.','להראות כמות בידיים ולבקש {ממנו|ממנה} להראות אותו הדבר.'],
+   ok:'{אומר|אומרת} נכון כמויות עד שלוש בלי לספור.',
+   trap:'לעבור לחמש מוקדם מדי. שלוש ראשונה, ולאורך זמן.',
+   easy:'עד שתיים בלבד.',
+   hard:'עד חמש, בסידור אקראי.'},
+  {id:'c', t:'הרבה, מעט, שווה', reps:12, pace:5, dur:'5 דקות', gear:'שתי קבוצות של פריטים',
+   why:'ההבנה של יותר ופחות קודמת למספרים עצמם, והיא מה שהופך את המספר למידה ולא לשם.',
+   how:['שתי ערימות שונות מאוד. איפה יותר?','להשוות ואז לספור כדי לבדוק.','לחלק שווה בשווה — "אחד לך, אחד לי".'],
+   ok:'מזהה איפה יותר כשההפרש בולט, ומחלק שווה בין שניים.',
+   trap:'להתחיל בהפרש קטן. ההבדל צריך להיות ברור בעין.',
+   easy:'2 מול 8.',
+   hard:'הפרש של אחד, ואז "כמה צריך להוסיף כדי שיהיה שווה".'}
+], ck:{t:'המספר מתחיל להיות כמות', items:[
+  'סופר{|ת} חמישה פריטים בנגיעה בלי לדלג',
+  'עונה "כמה יש" אחרי שספר, בלי לספור שוב',
+  'מזהה כמות של שלושה במבט אחד',
+  'אומר{|ת} איפה יותר בין שתי ערימות שונות',
+  'מחלק פריטים שווה בשווה בין שני אנשים'
+]}});
+
+L({id:'s5.fine.1', st:5, dm:'fine', ix:1, t:'עיפרון ומספריים', acts:[
+  {id:'a', t:'לצייר בן אדם', reps:12, pace:4, dur:'6 דקות', gear:'דף, טושים',
+   why:'ציור אדם הוא מדד מקובל להתפתחות: כל איבר שנוסף מספר{|ת} על תפיסת גוף ועל דיוק. ובגיל שלוש מתחילים מראש ורגליים.',
+   how:['ציירו אתם אדם פשוט ותארו בקול: "ראש, עיניים, גוף, רגליים".','תנו {לו|לה} לצייר, ואל תתקנו.','שאלו מי זה, וכתבו את התשובה על הדף.'],
+   ok:'מצייר{|ת} עיגול עם שתי נקודות ושתי רגליים — זה בדיוק הצפוי בגיל הזה.',
+   trap:'לצפות לפרופורציות. אדם עם רגליים מהראש הוא נורמלי לחלוטין.',
+   easy:'אתם מציירים עיגול ו{הוא מוסיף|היא מוסיפה} את הפרטים.',
+   hard:'להוסיף ידיים, אצבעות, שיער ובגד.'},
+  {id:'b', t:'המספריים הראשונים', reps:12, pace:4, dur:'6 דקות', gear:'מספריים בטיחותיים, דף עבה',
+   why:'גזירה מפעילה את שתי הידיים בתפקידים שונים — הכנה ישירה לכתיבה, שבה יד אחת כותב{|ת} והשנייה מייצבת.',
+   how:['התחילו ברצועות צרות שנחתכות בפעולה אחת.','אחר כך קו ישר עבה, מסומן בטוש.','האגודל למעלה תמיד — סמנו אותו במדבקה.'],
+   ok:'גוזר{|ת} לאורך קו ישר בלי לצאת יותר מסנטימטר.',
+   trap:'מספריים קהים. הם לא בטוחים יותר — הם רק מתסכלים.',
+   easy:'רצועות שנחתכות בקליק אחד.',
+   hard:'קו גלי, ואז לגזור עיגול גדול.'},
+  {id:'c', t:'להשחיל ולהבריג', reps:12, pace:5, dur:'6 דקות', gear:'חרוזים, ברגים גדולים, מכסים',
+   why:'סיבוב פרק כף היד הוא תנועה שנדרשת למפתח, לברז ולכתיבה — והיא מתאמנת רק בסיבובים.',
+   how:['לפתוח ולסגור מכסים של צנצנות שונות.','להשחיל חרוזים גדולים על שרוך קשיח.','להבריג ולפרק צעצועי ברגים.'],
+   ok:'פותח{|ת} מכסה מוברג לבד ומשחיל{|ה} חמישה חרוזים ברצף.',
+   trap:'לתת רק חרוזים. הסיבוב הוא התרגיל שחסר לרוב הילדים.',
+   easy:'מכסים גדולים ורפויים.',
+   hard:'חרוזים קטנים על חוט רך, ורצף צבעים מוגדר.'}
+], ck:{t:'היד מדויקת', items:[
+  'מצייר{|ת} אדם עם ראש ולפחות שני איברים',
+  'גוזר{|ת} לאורך קו ישר בלי לצאת יותר מסנטימטר',
+  'פותח{|ת} וסוגר מכסה מוברג',
+  'משחיל{|ה} חמישה חרוזים ברצף',
+  'מעתיק{|ה} עיגול וקו אנכי'
+]}});
+
+L({id:'s5.gross.1', st:5, dm:'gross', ix:1, t:'איזון ראשון', acts:[
+  {id:'a', t:'לעמוד על רגל אחת', reps:14, pace:5, dur:'4 דקות', gear:'שום דבר',
+   why:'עמידה על רגל אחת היא אבן דרך של גיל שלוש, והיא הבסיס לכל מה שיבוא — דילוג, אופניים, ישיבה יציבה.',
+   how:['לעמוד על רגל אחת ולספור — המטרה בגיל הזה היא שלוש שניות.','להחליף רגל בכל פעם.','לשחק "פסל" — קופאים בתנוחה ומחזיקים.'],
+   ok:'עומד{|ת} שלוש שניות על כל רגל בנפרד.',
+   trap:'לתרגל רק על הרגל הדומיננטית.',
+   easy:'להיאחז בקיר.',
+   hard:'לספור עד עשר, או לעצום עיניים.'},
+  {id:'b', t:'לקפוץ על רגל אחת', reps:12, pace:5, dur:'5 דקות', gear:'סרט הדבקה',
+   why:'קפיצה על רגל אחת דורשת כוח ואיזון ביחד, והיא הצעד לפני דילוג — שהוא כבר תיאום בין שני צדי הגוף.',
+   how:['להתחיל בהחזקת יד, קפיצה אחת.','להגיע לשלוש קפיצות רצופות.','לקפוץ מריבוע לריבוע מסומן.'],
+   ok:'קופ{ץ|צת} שתי קפיצות רצופות על רגל אחת.',
+   trap:'לצפות לדילוג. דילוג מגיע{|ה} רק בסביבות גיל חמש.',
+   easy:'קפיצה אחת בהחזקת שתי ידיים.',
+   hard:'חמש קפיצות, ואז לקפוץ קדימה ולא במקום.'},
+  {id:'c', t:'תלת אופן וכדור', reps:12, pace:5, dur:'12 דקות', gear:'תלת אופן, כדור',
+   why:'דיווש הוא תנועה מעגלית לסירוגין — בדיוק מה שנדרש להליכה יעילה ובהמשך לאופניים.',
+   how:['תלת אופן: להתחיל בדחיפה ברגליים ואז לדוושות.','כדור: לזרוק מלמעלה, לתפוס בשתי ידיים אל החזה.','לבעוט לעבר מטרה גדולה.'],
+   ok:'מדווש{|ת} תלת אופן קדימה ומכוו{ן|נת}, ובועט{|ת} בכדור בלי ליפול.',
+   trap:'אופניים גדולים מדי. הרגליים חייבות להגיע לרצפה.',
+   easy:'לדחוף את התלת אופן מאחור בזמן שהרגליים על הדוושות.',
+   hard:'לעקוף מכשולים, ולתפוס כדור אחרי קפיצה מהרצפה.'}
+], ck:{t:'הגוף מאוזן', items:[
+  'עומד{|ת} שלוש שניות על כל רגל',
+  'קופ{ץ|צת} שתי קפיצות רצופות על רגל אחת',
+  'מדווש{|ת} תלת אופן קדימה ומכוון אותו',
+  'תופס{|ת} כדור גדול בשתי ידיים אל החזה',
+  'עולה ויורד מדרגות ברגל מתחלפת בלי מעקה'
+]}});
+
+L({id:'s5.social.1', st:5, dm:'social', ix:1, t:'חברים וכללים', acts:[
+  {id:'a', t:'לשחק עם ולא רק לצד', reps:14, pace:5, dur:'15 דקות', gear:'ילד נוסף',
+   why:'המעבר ממשחק מקביל למשחק משותף קורה בערך בגיל שלוש, והוא זקוק להזדמנויות — לא ללימוד.',
+   how:['הזמינו ילד אחד בלבד, לא קבוצה.','הציעו משחק{|ת} שדורש שניים: בניית מגדל משותף, גלגול כדור.','הישארו קרוב אבל אל תנהלו.'],
+   ok:'משחק{|ת} משחק{|ת} משותף עשר דקות ברצף עם ילד אחר.',
+   trap:'להתערב בכל חיכוך. חכו עשר שניות — לרוב הם פותרים.',
+   easy:'ילד מוכר, בבית שלכם, לזמן קצר.',
+   hard:'שלושה ילדים, במקום חדש.'},
+  {id:'b', t:'לחכות ולהתחלף', reps:14, pace:6, dur:'8 דקות', gear:'משחק{|ת} תורות פשוט',
+   why:'תור הוא הכלל החברתי הראשון שאפשר באמת ללמד, והוא מה שיאפשר להשתלב בגן ובכיתה.',
+   how:['משחקים עם תורות ברורים — דומינו, זריקת טבעות.','אמרו בקול של מי התור.','להתאמן גם בחיים: תור במגלשה, תור לדבר.'],
+   ok:'ממתי{ן|נה} לתור בלי התפרצות ברוב הפעמים.',
+   trap:'לוותר על התור שלכם. זה מלמד ש{הוא לא באמת צריך|היא לא באמת צריכה} לחכות.',
+   easy:'תורות מהירים מאוד, כל חמש שניות.',
+   hard:'משחק{|ת} שבו התור לוקח{|ת} דקה שלמה.'},
+  {id:'c', t:'רגשות בשם, גם של אחרים', reps:14, pace:6, dur:'תוך כדי', gear:'ספרים, החיים',
+   why:'זיהוי רגש אצל מישהו אחר הוא ההתחלה של אמפתיה, וזו המיומנות שקובעת יותר מכול איך ילד יתקבל חברתית.',
+   how:['בספר: "למה את{ה|} חושב{|ת} שהוא עצוב?"','בחיים: "ראית שהיא בכתה? מה קרה לה?"','לתת שם גם לרגש שלכם: "אני קצת עצבני עכשיו".'],
+   ok:'מזהה רגש אצל דמות בספר ומנמק במשפט.',
+   trap:'לדרוש התנצלות מיידית. הבנה קודמת, התנצלות אחר כך.',
+   easy:'להצביע על פרצוף בציור ולומר איזה רגש.',
+   hard:'לשאול מה אפשר לעשות כדי לעזור למי שעצוב.'}
+], ck:{t:'משחק{|ת} עם חברים', items:[
+  'משחק{|ת} משחק{|ת} משותף עשר דקות עם ילד אחר',
+  'ממתי{ן|נה} לתורו ברוב הפעמים',
+  'מזהה רגש אצל דמות בספר ומנמק',
+  'משת{ף|פת} צעצוע לפחות לפעמים בלי שביקשתם',
+  'מתנח{ם|מת} ממבוגר מוכר תוך דקות ספורות'
+]}});
+
+L({id:'s5.think.1', st:5, dm:'think', ix:1, t:'צבעים, צורות והבנה', acts:[
+  {id:'a', t:'לקרוא לצבעים בשם', reps:14, pace:6, dur:'5 דקות', gear:'החיים',
+   why:'שמות צבעים הם קטגוריה מופשטת — לא תכונה שאפשר לגעת בה — ולכן הם לוקחים זמן ומגיעים בערך בגיל שלוש.',
+   how:['התחילו בארבעה צבעים בלבד: אדום, כחול, צהוב, ירוק.','אמרו את הצבע בתוך משפט: "החולצה האדומה".','שאלו "איפה משהו אדום" — קל יותר מ"איזה צבע זה".'],
+   ok:'מצביע{|ת} נכון על ארבעה צבעים ו{מנקב|מנקבת} בשם שלושה מהם.',
+   trap:'לבחון כל הזמן. השם מגיע{|ה} מחשיפה, לא מבדיקה.',
+   easy:'שני צבעים בלבד, מנוגדים.',
+   hard:'לכלול ורוד, כתום, סגול, חום.'},
+  {id:'b', t:'פאזל שמצריך מחשבה', reps:12, pace:4, dur:'10 דקות', gear:'פאזל 12–24 חלקים',
+   why:'פאזל מאמן חשיבה מרחבית, התמדה וניסוי מסודר — ובגיל שלוש זה גם התרגיל הכי ארוך שילד מסוגל לו.',
+   how:['התחילו ב־12 חלקים עם תמונה ברורה.','הראו איך מחפשים לפי צורה ולפי צבע.','אל תרכיבו — הצביעו על אזור.'],
+   ok:'מרכיב{|ה} פאזל של 12 חלקים לבד.',
+   trap:'להרכיב כשנתקע. שאלו "איזה צבע חסר כאן" והישארו בצד.',
+   easy:'פאזל של שישה חלקים גדולים.',
+   hard:'24 חלקים, ובלי להסתכל בתמונה.'},
+  {id:'c', t:'מה לא שייך', reps:12, pace:5, dur:'5 דקות', gear:'חפצי בית',
+   why:'לזהות מה חורג מקבוצה דורש להבין את הכלל שמאחוריה — קפיצת מדרגה מעל מיון פשוט.',
+   how:['שימו שלושה כפות וסכין. מה לא שייך?','חשוב יותר מהתשובה — "למה?"','תנו {לו|לה} לבנות קבוצה ולתת לכם לנחש.'],
+   ok:'מזהה מה לא שייך ומסביר במילה או שתיים.',
+   trap:'לקבל רק את התשובה שחשבתם עליה. הסבר הגיוני אחר הוא תשובה נכונה.',
+   easy:'הבדל בולט מאוד — שלושה כדורים וספר.',
+   hard:'קבוצה לפי תכונה מופשטת — כל מה שנוסע, כל מה שאוכלים.'}
+], ck:{t:'חושב{|ת} בקטגוריות', items:[
+  'מצביע{|ה} נכון על ארבעה צבעים',
+  'מזהה עיגול, ריבוע ומשולש בשם',
+  'מרכיב{|ה} פאזל של 12 חלקים לבד',
+  'מזהה מה לא שייך בקבוצה ומסביר',
+  'מבי{ן|נה} מושגי מקום — מעל, מתחת, בתוך'
+]}});
+
+L({id:'s5.self.1', st:5, dm:'self', ix:1, t:'בגדים ושירותים', acts:[
+  {id:'a', t:'להתלבש כמעט לבד', reps:20, pace:8, dur:'תוך כדי', gear:'בגדים רחבים',
+   why:'בגיל שלוש רוב הילדים מסוגלים ללבוש בגד רחב לבד. מה שחוסם זה בדרך כלל הזמן שלנו, לא היכולת שלהם.',
+   how:['הניחו את הבגדים בסדר הלבישה.','אתם עושים את השלב הקשה — כפתור, רוכסן — {הוא את השאר|היא את השאר}.','לתת בחירה בין שתי אפשרויות, לא בין הכול.'],
+   ok:'לובש{|ת} חולצה ומכנס רחב לבד, גם אם הפוך.',
+   trap:'לבחור בגדים עם כפתורים קטנים בשלב הזה.',
+   easy:'רק שלב אחד לבד, למשל להכניס רגליים למכנס.',
+   hard:'להתלבש לגמרי לבד, כולל גרביים ונעליים.'},
+  {id:'b', t:'שירותים לבד', reps:20, pace:10, dur:'תוך כדי', gear:'שרפרף, מושב',
+   why:'שירותים עצמאיים הם תנאי לגן ולחוגים, ורוב הקושי הוא בשלבים שסביב — מכנסיים, שטיפת ידיים — ולא בפעולה עצמה.',
+   how:['לוודא שהכול נגיש: שרפרף, נייר בהישג יד.','ללמד את הרצף: להוריד, לשבת, לנגב, לשטוף.','לצייר את הרצף ולתלות על הדלת.'],
+   ok:'הול{ך|כת} לשירותים ומסתדר{|ת} לבד, אולי חוץ מניגוב.',
+   trap:'להיכנס לעזור אוטומטית. תנו {לו|לה} לקרוא לכם אם צריך.',
+   easy:'אתם בחוץ ומדריכים בקול.',
+   hard:'שירותים ציבוריים, בגן או בקניון.'},
+  {id:'c', t:'לסדר אחרי עצמי', reps:14, pace:6, dur:'5 דקות', gear:'ארגזים עם תמונות',
+   why:'סדר הוא מיומנות של מיון וזיכרון בתחפושת, והרגל שנבנה בגיל שלוש נשאר.',
+   how:['ארגז לכל סוג, עם תמונה עליו.','לסדר יחד בשיר קבוע — אותו שיר בכל פעם.','משימה אחת בכל פעם: "רק את הקוביות".'],
+   ok:'מסדר{|ת} קטגוריה אחת למקומה אחרי תזכורת אחת.',
+   trap:'לומר "תסדר את החדר". זו משימה גדולה מדי וגורמת לקיפאון.',
+   easy:'לסדר יחד, אתם פריט ו{הוא פריט|היא פריט}.',
+   hard:'לסדר שלוש קטגוריות לבד.'}
+], ck:{t:'מסתדר{|ת} בעצמ{ו|ה}', items:[
+  'לובש{|ת} חולצה ומכנס רחב לבד',
+  'הול{ך|כת} לשירותים ומסתדר{|ת} כמעט לגמרי לבד',
+  'שוט{ף|פת} ידיים לבד עם סבון',
+  'מסדר{|ת} קטגוריה אחת של צעצועים אחרי תזכורת אחת',
+  'אוכל{|ת} ארוחה שלמה במזלג בלי עזרה'
+]}});
+
+/* ============================================================
+   שלב 6 · צלילים וכמויות · גיל ארבע עד חמש
+   ============================================================ */
+
+L({id:'s6.lang.1', st:6, dm:'lang', ix:1, t:'לשמוע את הצליל', acts:[
+  {id:'a', t:'במה מתחיל{|ה} המילה', reps:10, pace:4, dur:'5 דקות', gear:'שום דבר',
+   why:'מודעות פונולוגית — לשמוע את הצלילים בתוך מילה — היא המנבא החזק ביותר להצלחה בקריאה, חזק יותר מזיהוי אותיות.',
+   how:['אמרו מילה והדגישו את הצליל הראשון: "שששולחן".','שאלו: במה מתחיל{|ה}? התשובה היא הצליל, לא שם האות.','מצאו יחד עוד מילה שמתחילה באותו צליל.'],
+   ok:'מזהה נכון צליל פותח{|ת} בארבע מילים מתוך חמש.',
+   trap:'לומר "שין" במקום "שששש". שם האות שייך לשלב הבא.',
+   easy:'לתת שתי אפשרויות: "זה מתחיל{|ה} ב־ש או ב־מ?"',
+   hard:'לשאול מה הצליל האחרון — קשה בהרבה מהראשון.'},
+  {id:'b', t:'מילים שמתחרזות', reps:10, pace:4, dur:'5 דקות', gear:'שירים',
+   why:'חריזה מלמדת שאפשר לפרק מילה לחלקים — הבסיס להברות ולקריאה.',
+   how:['אמרו זוג מתחרז ובקשו עוד אחד. מילות שטות מתקבלות בברכה.','משחק{|ת}: "מה לא מתחרז — דג, שק, פרח?"','לשיר שירים ולעצור לפני החרוז.'],
+   ok:'{ממציא|ממציאה} מילה מתחרזת, גם אם היא לא מילה אמיתית.',
+   trap:'לפסול "דג־מג". יכולת הפירוק היא מה שנמדד, לא אוצר המילים.',
+   easy:'להשלים חרוז בשיר מוכר.',
+   hard:'לזהות איזו מילה בשלישייה לא מתחרזת.'},
+  {id:'c', t:'עשר האותיות הראשונות', reps:10, pace:4, dur:'5 דקות', gear:'מגנטים או פתקים',
+   why:'עשר אותיות מוכרות היטב שוות יותר מעשרים ושתיים מעורפלות. מתחילים מהאותיות שיש להן משמעות אישית.',
+   how:['התחילו באות הראשונה של השם, ואז של בני המשפחה.','לתלות אותן על המקרר ולומר שלום לאות בכל בוקר.','לחפש אותן בחוץ על שלטים.'],
+   ok:'מזהה עשר אותיות ואת הצליל שלהן.',
+   trap:'ללמד לפי סדר הא"ב. הסדר לא עוזר לקריאה.',
+   easy:'חמש אותיות בלבד, של השמות בבית.',
+   hard:'להוסיף עוד עשר, ולכתוב את האות ולא רק לזהות.'}
+], ck:{t:'שומע{|ת} צלילים ומזהה אותיות', items:[
+  'מזהה את הצליל הפותח בארבע מילים מתוך חמש',
+  'ממציא{|ה} מילה מתחרזת',
+  'מזהה עשר אותיות ואת הצליל שלהן',
+  'כותב{|ת} את האות הראשונה של שמו',
+  'מוחא כף לפי הברות במילה בת שתי הברות'
+]}});
+
+L({id:'s6.num.1', st:6, dm:'num', ix:1, t:'עד עשר', acts:[
+  {id:'a', t:'לספור עשרה חפצים', reps:10, pace:4, dur:'5 דקות', gear:'כפתורים, מטבעות',
+   why:'ספירה מדויקת עד עשר עם התאמה חד־חד ערכית היא הבסיס שכל חשבון כיתה א׳ נשען עליו.',
+   how:['לספור בנגיעה, בפיזור ולא רק בשורה.','לשאול בסוף "כמה יש" — בלי לספור מחדש.','לספור את אותה קבוצה בסדר אחר ולראות שהמספר לא משתנה.'],
+   ok:'סופר{|ת} עשרה פריטים מפוזרים בלי לדלג.',
+   trap:'לסדר תמיד בשורה. פיזור הוא מה שמאמן.',
+   easy:'שישה פריטים בשורה.',
+   hard:'חמישה־עשר, ואז לספור אחורה.'},
+  {id:'b', t:'הספרות על הדף', reps:10, pace:4, dur:'5 דקות', gear:'כרטיסי ספרות',
+   why:'הסמל הכתוב הוא שכבה נוספת מעל הכמות. מחברים ביניהם עכשיו, כדי שבכיתה א׳ זה כבר יהיה מוכר.',
+   how:['להתאים כרטיס ספרה לערימת חפצים באותה כמות.','לחפש ספרות בסביבה — מעלית, שלט, מיקרוגל.','לכתוב ספרה באוויר ואז על דף.'],
+   ok:'מזהה את הספרות 1–10 ומתאי{ם|מה} אותן לכמות.',
+   trap:'ללמד כתיבת ספרות לפני שהכמות מובנת.',
+   easy:'1–5 בלבד.',
+   hard:'עד 20, ולכתוב ספרות בעצמו.'},
+  {id:'c', t:'יותר, פחות, בכמה', reps:8, pace:3, dur:'5 דקות', gear:'שתי ערימות',
+   why:'"בכמה יותר" הוא חיסור בלי המילה חיסור — וזו הדרך שבה זה נכנס בלי מאמץ.',
+   how:['שתי ערימות. איפה יותר?','ואז — בכמה? מזווגים אחד מול אחד ורואים מה נשאר.','להוסיף ולהוריד ולשאול שוב.'],
+   ok:'עונה "בכמה יותר" נכון בהפרש של עד שלושה.',
+   trap:'לדרוש חישוב בראש. הזיווג הפיזי הוא התרגיל.',
+   easy:'רק "איפה יותר".',
+   hard:'הפרשים עד חמישה, בלי לזווג.'}
+], ck:{t:'עשר זה כמות', items:[
+  'סופר{|ת} עשרה פריטים מפוזרים בלי לדלג',
+  'עונה "כמה יש" בלי לספור מחדש',
+  'מזהה את הספרות 1–10',
+  'מתאי{ם|מה} ספרה לכמות',
+  'אומר{|ת} בכמה ערימה אחת גדולה מהשנייה, עד הפרש של שלושה'
+]}});
+
+L({id:'s6.fine.1', st:6, dm:'fine', ix:1, t:'עיפרון שמתחיל להישמע', acts:[
+  {id:'a', t:'אחיזה בשלוש אצבעות', reps:12, pace:5, dur:'5 דקות', gear:'עפרונות קצרים',
+   why:'זה הגיל שבו האחיזה מתקבעת. תיקון עכשיו קל, תיקון בכיתה א׳ קשה בהרבה.',
+   how:['עיפרון קצר בלבד — חצי עיפרון. האצבעות מסתדרות לבד.','שתי האצבעות האחרונות מקופלות אל כף היד.','לצייר על לוח אנכי — זה מיישר{|ת} את פרק כף היד.'],
+   ok:'אוחז{|ת} בשלוש אצבעות ברוב הפעמים בלי תזכורת.',
+   trap:'להעיר שוב ושוב. תיקון פיזי אחד עדיף על עשר הערות.',
+   easy:'להשתמש בגיר שבור או בצבע קצר.',
+   hard:'לכתוב אותיות בין שתי שורות.'},
+  {id:'b', t:'לגזור צורה', reps:10, pace:4, dur:'8 דקות', gear:'מספריים, דף עבה',
+   why:'גזירה מדויקת דורשת שתי ידיים בתפקידים שונים ותכנון מראש — שתי מיומנויות שכתיבה תלויה בהן.',
+   how:['קו ישר, אחר כך גלי, ואז עיגול.','היד השנייה מסובב{|ת} את הדף.','לגזור צורות ולהדביק לקולאז׳.'],
+   ok:'גוזר{|ת} עיגול בלי לצאת יותר מרוחב אצבע.',
+   trap:'דף דק שמתקפל. עבה יותר מצליח{|ה}.',
+   easy:'קו ישר עבה בלבד.',
+   hard:'צורה עם פינות חדות.'},
+  {id:'c', t:'אדם עם שישה חלקים', reps:10, pace:4, dur:'6 דקות', gear:'דף, טושים',
+   why:'ציור אדם מתעשר עם הגיל, וכל איבר שנוסף מעיד על תפיסת גוף ועל תשומת לב לפרטים.',
+   how:['לצייר יחד ולתאר בקול: ראש, גוף, ידיים, רגליים, עיניים, פה.','לשאול "מה עוד יש לאיש?" ולתת {לו|לה} להוסיף.','לצייר את המשפחה.'],
+   ok:'מצייר{|ת} אדם עם שישה חלקים מזוהים לפחות.',
+   trap:'לתקן פרופורציות. זה לא הזמן.',
+   easy:'אתם מציירים ראש וגוף, {הוא ממשיך|היא ממשיכה}.',
+   hard:'להוסיף אצבעות, שיער, בגדים ופרטי פנים.'}
+], ck:{t:'היד מוכנה', items:[
+  'אוחז{|ת} עיפרון בשלוש אצבעות ברוב הפעמים',
+  'גוזר{|ת} עיגול בלי לצאת יותר מרוחב אצבע',
+  'מצייר{|ת} אדם עם שישה חלקים מזוהים',
+  'מעתיק{|ה} ריבוע ומשולש',
+  'כותב{|ת} את האות הראשונה של שמו'
+]}});
+
+L({id:'s6.gross.1', st:6, dm:'gross', ix:1, t:'איזון וקצב', acts:[
+  {id:'a', t:'רגל אחת וקו', reps:10, pace:4, dur:'4 דקות', gear:'סרט הדבקה',
+   why:'איזון יציב הוא הבסיס לישיבה על כיסא ולכל פעילות ספורטיבית שתבוא.',
+   how:['לעמוד על רגל אחת ולספור עד שמונה.','ללכת על קו עקב־בהונות.','משחק{|ת} פסל — קופאים ומחזיקים.'],
+   ok:'עומד{|ת} שמונה שניות על כל רגל.',
+   trap:'לתרגל רק על רגל אחת.',
+   easy:'להיאחז בקיר באצבע.',
+   hard:'לעצום עיניים או להעביר כדור תוך כדי.'},
+  {id:'b', t:'דילוג', reps:12, pace:5, dur:'6 דקות', gear:'מרחב',
+   why:'דילוג לסירוגין דורש תיאום בין שני צדי הגוף — אותו מנגנון שמשרת קריאה וכתיבה.',
+   how:['קפיצה־צעד לסירוגין. להדגים לאט.','לדלג לצלילי שיר.','זה לוקח{|ת} שבועות — זה נורמלי.'],
+   ok:'מדלג{|ת} לסירוגין לאורך חדר.',
+   trap:'לוותר מוקדם. דילוג מגיע{|ה} בין ארבע לחמש וחצי.',
+   easy:'לקפוץ על רגל אחת חמש קפיצות, ואז להחליף.',
+   hard:'לדלג תוך כדי מחיאות כף.'},
+  {id:'c', t:'כדור ומטרה', reps:10, pace:4, dur:'8 דקות', gear:'כדור, סל, מטרה',
+   why:'תפיסה וקליעה מאמנות תיאום עין־יד ותזמון, והן גם כרטיס הכניסה החברתי למשחקי חצר.',
+   how:['לזרוק מלמעלה למטרה גדולה.','לתפוס כדור מקפיצה אחת מהרצפה.','לבעוט בין שני סימנים.'],
+   ok:'תופס{|ת} כדור בינוני משני מטרים ברוב הפעמים.',
+   trap:'כדור קטן. גדול ורך מצליח{|ה}, וההצלחה מחזיק{|ה}.',
+   easy:'לתפוס אחרי קפיצה מהרצפה.',
+   hard:'לתפוס באוויר משלושה מטרים.'}
+], ck:{t:'הגוף מתואם', items:[
+  'עומד{|ת} שמונה שניות על כל רגל',
+  'הול{ך|כת} עקב־בהונות על קו ישר',
+  'מדלג{|ת} לסירוגין לאורך חדר',
+  'תופס{|ת} כדור בינוני משני מטרים',
+  'רוכב{|ת} על תלת אופן או אופניים עם גלגלי עזר בביטחון'
+]}});
+
+L({id:'s6.social.1', st:6, dm:'social', ix:1, t:'כללים וחברות', acts:[
+  {id:'a', t:'משחק{|ת} עם כללים', reps:12, pace:4, dur:'15 דקות', gear:'משחק{|ת} קופסה פשוט',
+   why:'כללים חיצוניים הם מה שילד יפגוש בגן חובה ובכיתה. ולהפסיד — זה התרגיל האמיתי.',
+   how:['לעבור על הכללים לפני שמתחילים.','לא לתת לנצח. ניצחון שניתן לא מרגיש כמו ניצחון.','להפסיד יחד: "מאכזב. בוא נשחק עוד פעם".'],
+   ok:'מסיי{ם|מת} משחק{|ת} שהפסיד{|ה} בו בלי לפרק את הלוח.',
+   trap:'להפסיק לשחק כדי למנוע בכי.',
+   easy:'משחק{|ת} מזל בלבד.',
+   hard:'משחק{|ת} עם החלטות ועם שלושה שחקנים.'},
+  {id:'b', t:'חבר אחד קבוע', reps:10, pace:3, dur:'שעה', gear:'ילד אחד',
+   why:'בגיל הזה מתחילות חברויות אמיתיות. חבר קבוע אחד תורם יותר מקבוצה גדולה.',
+   how:['הזמינו את אותו ילד שוב ושוב.','הציעו פעילות משותפת עם מטרה — לבנות משהו יחד.','אל תתערבו בחיכוכים קטנים.'],
+   ok:'{מזכיר|מזכירה} את החבר ביוזמת{ו|ה} ומחכה למפגש.',
+   trap:'לארגן יותר מדי. שעמום משותף מייצר משחק{|ת}.',
+   easy:'מפגש קצר, בבית שלכם.',
+   hard:'מפגש אצל החבר, בלעדיכם.'},
+  {id:'c', t:'מה עושים כשכועסים', reps:12, pace:5, dur:'5 דקות', gear:'דף, טושים',
+   why:'ילד שיש לו דרך מוכנה להירגע לא מגיע{|ה} להתפרצות. בונים את הדרך כשרגוע.',
+   how:['ברגע רגוע — לצייר שלוש דרכים: נשימות, חיבוק, פינה שקטה.','לתלות במקום נגיש.','בזמן כעס — להצביע, לא להסביר.'],
+   ok:'בוחר{|ת} דרך מהדף לפחות פעם אחת בלי שאמרתם.',
+   trap:'להסביר בשיא הכעס.',
+   easy:'דרך אחת, ואתם עושים אותה יחד.',
+   hard:'לזהות את הסימן המוקדם לפני ההתפרצות.'}
+], ck:{t:'מסתדר{|ת} עם אחרים', items:[
+  'מסיי{ם|מת} משחק{|ת} שהפסיד בו בלי להתפרק',
+  'ממתי{ן|נה} לתורו בלי תזכורת',
+  'משחק{|ת} עם חבר קבוע ומזכיר{|ה} אותו ביוזמתו',
+  'בוחר{|ת} דרך להירגע כשכועס',
+  'מבקש{|ת} עזרה במילים במקום לבכות או להכות'
+]}});
+
+L({id:'s6.think.1', st:6, dm:'think', ix:1, t:'קשב שמחזיק', acts:[
+  {id:'a', t:'עשר דקות ברצף', reps:12, pace:5, dur:'10 דקות', gear:'פאזל, יצירה, בנייה',
+   why:'קשב מתמשך הוא מה שיקבע איך ייראה שיעור בכיתה א׳, והוא נבנה בהדרגה — לא נולד.',
+   how:['לבחור משהו ש{הוא אוהב|היא אוהבת}, לא משהו חינוכי.','לשבת לידו בלי טלפון.','לסיים בהסכמה, לא בנטישה.'],
+   ok:'מגיע{|ה} לעשר דקות רצופות ברוב הפעמים.',
+   trap:'מסך או טלוויזיה ברקע.',
+   easy:'שש דקות, ולסיים בשיא ההנאה.',
+   hard:'חמש־עשרה דקות, או משימה שממשיכים בה מחר.'},
+  {id:'b', t:'שלוש הוראות ברצף', reps:10, pace:4, dur:'5 דקות', gear:'החיים',
+   why:'"קח את הכוס, שים במטבח, כבה את האור" — זו שפת הגן והכיתה, והיא מאמנת זיכרון עבודה.',
+   how:['לתת שלוש הוראות ברצף, פעם אחת.','לבקש לחזור עליהן בקול לפני שיוצא{|ת}.','לא לחזור באמצע — לתת שלוש שניות.'],
+   ok:'מבצע{|ת} שלוש הוראות בלי תזכורת.',
+   trap:'לחזור מיד. השהייה קצרה עושה את ההבדל.',
+   easy:'שתי הוראות.',
+   hard:'ארבע, או הוראה שצריך לזכור לעוד חמש דקות.'},
+  {id:'c', t:'למיין לפי שתי תכונות', reps:10, pace:4, dur:'6 דקות', gear:'כפתורים, לגו',
+   why:'שני קריטריונים בו־זמנית הם קפיצת מדרגה בחשיבה — והכנה לחשיבה לוגית ולטבלאות.',
+   how:['"תוציא את כל האדומים הגדולים".','שני סלים: אדום־גדול מול אדום־קטן.','{הוא בוחר|היא בוחרת} כלל ואתם מנחשים.'],
+   ok:'ממיי{ן|נת} לפי שתי תכונות ומסביר{|ה} את הכלל.',
+   trap:'יותר מדי פריטים. עשרים מספיקים.',
+   easy:'תכונה אחת בולטת.',
+   hard:'שלוש תכונות, או לנחש כלל שהמצאתם.'}
+], ck:{t:'מתמיד{|ה} וזוכר{|ת}', items:[
+  'עוסק{|ת} במשימה אחת עשר דקות רצופות',
+  'מבצע{|ת} שלוש הוראות ברצף',
+  'ממיי{ן|נת} לפי שתי תכונות ומסביר',
+  'מרכיב{|ה} פאזל של 24 חלקים ומעלה',
+  'ממשי{ך|כה} תבנית של שלושה פריטים'
+]}});
+
+L({id:'s6.self.1', st:6, dm:'self', ix:1, t:'עצמאות יומית', acts:[
+  {id:'a', t:'להתלבש לבד לגמרי', reps:16, pace:7, dur:'תוך כדי', gear:'בגדים',
+   why:'זו העצמאות שהכי בולטת בגן חובה, והיא גם חוסכת עשר דקות מכל בוקר.',
+   how:['להכין בגדים בערב.','לצאת מהחדר ולחזור אחרי חמש דקות.','בגד הפוך זה בסדר.'],
+   ok:'מתלבש{|ת} לבד ברוב הבקרים.',
+   trap:'לתקן בגד הפוך.',
+   easy:'לעשות אתם את השלב הראשון.',
+   hard:'להוסיף כפתורים ורוכסן.'},
+  {id:'b', t:'מטלה קבועה', reps:16, pace:7, dur:'5 דקות', gear:'מטלה אחת',
+   why:'מטלה קבועה — לא עזרה מדי פעם — היא מה שמייצר שייכות ואחריות.',
+   how:['לבחור יחד מטלה קטנה אחת.','זו {שלו|שלה} כל יום.','בלי תשלום ובלי מדבקות.'],
+   ok:'מבצע{|ת} את המטלה אחרי תזכורת אחת.',
+   trap:'להחליף מטלה כל שבוע.',
+   easy:'מטלה של דקה, יחד בשבוע הראשון.',
+   hard:'להוסיף מטלה שנייה.'},
+  {id:'c', t:'לנקות אחרי עצמי', reps:12, pace:5, dur:'5 דקות', gear:'ארגזים',
+   why:'הרגל של סיום פעילות בסידור הוא מה שמאפשר עצמאות אמיתית, ולא רק התחלה של דברים.',
+   how:['אותו שיר בכל סידור.','משימה אחת בכל פעם: "רק הלגו".','לסיים לפני שמתחילים משהו חדש.'],
+   ok:'מסדר{|ת} אחרי פעילות עם תזכורת אחת.',
+   trap:'"תסדר את החדר" — משימה גדולה מדי.',
+   easy:'לסדר יחד לסירוגין.',
+   hard:'לסדר את כל החדר לבד.'}
+], ck:{t:'מסתדר{|ת} לבד', items:[
+  'מתלבש{|ת} לבד לגמרי',
+  'מבצע{|ת} מטלה קבועה אחרי תזכורת אחת',
+  'מסדר{|ת} אחרי פעילות',
+  'הול{ך|כת} לשירותים ומסתדר{|ת} לבד לגמרי',
+  'מכי{ן|נה} לעצמו משהו קטן לאכול'
+]}});
+
+/* ============================================================
+   שלב 8 · קריאה, חשבון ואחריות · כיתה א׳ ומעלה
+   ============================================================ */
+
+L({id:'s8.lang.1', st:8, dm:'lang', ix:1, t:'לקרוא ולהבין', acts:[
+  {id:'a', t:'עשר דקות קריאה בקול', reps:20, pace:6, dur:'10 דקות', gear:'ספר מנוקד ברמה מתאי{ם|מה}',
+   why:'שטף קריאה נבנה מזמן טיסה על הדף. עשר דקות ביום עושות יותר מכל שיטה — אבל רק אם הספר קל מספיק.',
+   how:['ספר שבו {הוא טועה|היא טועה} בפחות ממילה אחת מכל עשר.','לא לתקן כל טעות — רק כאלה שמשנות משמעות.','לקרוא לסירוגין: עמוד {שלו|שלה}, עמוד שלכם.'],
+   ok:'קורא{|ת} משפט שלם בלי לעצור בכל מילה.',
+   trap:'ספר קשה מדי. ספר שמתסכל מלמד שקריאה היא עונש.',
+   easy:'לקרוא רק את המילה האחרונה בכל משפט.',
+   hard:'ספר בלי ניקוד, או קריאה בשקט ואז לספר מה קרה.'},
+  {id:'b', t:'מה קרה בסיפור', reps:14, pace:5, dur:'5 דקות', gear:'הספר שקראתם',
+   why:'ילד יכול לקרוא מילים בלי להבין אותן. הבנת הנקרא היא מיומנות נפרדת, וצריך לתרגל אותה בנפרד.',
+   how:['אחרי הקריאה: מי היה בסיפור, מה קרה, ואיך זה נגמר.','שאלו גם "למה" — למה הוא עשה את זה.','ואז: מה היה קורה אם...'],
+   ok:'מספר{|ת} את הסיפור בשלושה חלקים ועונה על שאלת "למה".',
+   trap:'לשאול רק שאלות של עובדות. ה"למה" הוא מה שמאמן.',
+   easy:'לשאול על העמוד האחרון בלבד.',
+   hard:'לשאול מה הדמות הרגישה ואיך יודעים.'},
+  {id:'c', t:'לכתוב משפט משלי', reps:14, pace:5, dur:'8 דקות', gear:'מחברת שורות',
+   why:'כתיבה חופשית — גם עם שגיאות — היא מה שמחבר בין הצליל לאות. שגיאות כתיב בשלב הזה הן סימן טוב, לא רע.',
+   how:['משפט אחד ביום: מה עשיתי היום.','לא לתקן כתיב. לתקן רק אם ביקש{|ה}.','לקרוא את המשפט יחד בקול בסוף.'],
+   ok:'כותב{|ת} משפט קריא בכוחות עצמ{ו|ה}, גם עם שגיאות.',
+   trap:'לתקן כל שגיאה. זה עוצר{|ת} את הכתיבה לגמרי.',
+   easy:'לכתוב שתי מילים בלבד.',
+   hard:'שלושה משפטים, ואז לקרוא ולתקן לבד.'}
+], ck:{t:'קורא{|ת} וכותב{|ת}', items:[
+  'קורא{|ת} משפט שלם ברצף בלי לעצור בכל מילה',
+  'מספר{|ת} מה קרה בסיפור בשלושה חלקים',
+  'עונה על שאלת "למה" מתוך הסיפור',
+  'כותב{|ת} משפט קריא בכוחות עצמה',
+  'קורא{|ת} בעצמה לפחות עשר דקות ביום'
+]}});
+
+L({id:'s8.num.1', st:8, dm:'num', ix:1, t:'חשבון עד עשרים', acts:[
+  {id:'a', t:'לחצות את העשר', reps:14, pace:5, dur:'8 דקות', gear:'קוביות, מטבעות',
+   why:'המעבר מעל עשר הוא הקושי המרכזי של כיתה א׳. הפתרון הוא לפרק דרך העשר: 8+5 זה 8+2 ועוד 3.',
+   how:['להשלים ל־10 ואז להוסיף את השאר, עם חפצים מול העיניים.','לומר את זה בקול: "שמונה ועוד שתיים זה עשר, ועוד שלוש זה שלוש־עשרה".','ואז בלי חפצים.'],
+   ok:'פותר{|ת} תרגילי חיבור עד 20 בשיטת המעבר דרך העשר.',
+   trap:'לספור באצבעות מ־1. זה עובד עכשיו ונשבר בכיתה ב׳.',
+   easy:'חיבור עד 10 בלבד.',
+   hard:'חיסור עם מעבר: 13 פחות 5.'},
+  {id:'b', t:'עשרות ויחידות', reps:12, pace:4, dur:'6 דקות', gear:'מקלות, קשיות, גומיות',
+   why:'ערך המקום הוא הרעיון שכל החשבון נשען עליו. אם הוא לא נכנס עכשיו, כל הכפל והחילוק אחר כך יהיו שינון.',
+   how:['לאגד עשרה מקלות בגומייה — זו עשרת אחת.','לבנות מספרים: 23 זה שתי חבילות ושלושה בודדים.','לפרק בחזרה.'],
+   ok:'בונה{|ת} מספר{|ת} דו־ספרתי מעשרות ויחידות ומסביר{|ה}.',
+   trap:'ללמד את זה בספרות בלבד. חייבים חפצים שאפשר לאגד ולפרק.',
+   easy:'עד 20 בלבד.',
+   hard:'עד 100, ולהשוות מי גדול יותר.'},
+  {id:'c', t:'בעיה במילים', reps:12, pace:4, dur:'6 דקות', gear:'החיים',
+   why:'רוב הילדים יודעים לחשב ולא יודעים להחליט מה לחשב. זה מה שמתאמן בבעיות מילוליות.',
+   how:['לספר סיפור קצר: "היו 7 עוגיות, אכלנו 3".','לשאול מה השאלה לפני שפותרים.','לצייר את הבעיה — ציור פותר{|ת} יותר מנוסחה.'],
+   ok:'מזהה אם צריך לחבר או לחסר, ומסביר{|ה} למה.',
+   trap:'ללמד מילות מפתח כמו "בסך הכול = חיבור". זה נשבר מהר.',
+   easy:'לצייר יחד את הסיפור.',
+   hard:'בעיה בשני שלבים.'}
+], ck:{t:'מחשב{|ת} עד עשרים', items:[
+  'פותר{|ת} חיבור עד 20 עם מעבר דרך העשר',
+  'פותר{|ת} חיסור עד 20',
+  'בונה מספר{|ת} דו־ספרתי מעשרות ויחידות ומסבירה',
+  'מזהה בבעיה מילולית אם לחבר או לחסר',
+  'כותב{|ת} את המספרים עד 100 נכון'
+]}});
+
+L({id:'s8.fine.1', st:8, dm:'fine', ix:1, t:'כתב יד', acts:[
+  {id:'a', t:'אות בתוך השורה', reps:16, pace:6, dur:'8 דקות', gear:'מחברת, עיפרון',
+   why:'כתב שנקרא הוא מה שמאפשר למורה להעריך ידע ולא צורה. וזה גם מה שמונע עייפות יד בשיעורים ארוכים.',
+   how:['שלוש שורות איכותיות במקום עמוד.','לבחור בסוף את האות הכי יפה ולהקיף.','הפסקה של דקה כל חמש שורות.'],
+   ok:'רוב האותיות יושבות בשורה וקריאות.',
+   trap:'לדרוש עמוד שלם. איכות על פני כמות.',
+   easy:'לכתוב בעיפרון על אותיות חיוורות.',
+   hard:'להכתיב משפט ולכתוב אותו בשורה.'},
+  {id:'b', t:'מהירות בלי לאבד קריאות', reps:12, pace:4, dur:'5 דקות', gear:'טיימר',
+   why:'בכיתה מעתיקים מהלוח בזמן מוגבל. מהירות שמגיעה על חשבון קריאות היא בעיה שמתגלה מאוחר.',
+   how:['לכתוב מילה חמש פעמים, ולמדוד כמה זמן.','לנסות לשפר, אבל רק אם עדיין קריא.','להעתיק שלוש שורות מדף מול העיניים.'],
+   ok:'מעתיק{|ה} שלוש שורות בזמן סביר ובכתב קריא.',
+   trap:'להפוך את זה לתחרות. הלחץ פוגע בכתב.',
+   easy:'להעתיק מילה אחת בכל פעם.',
+   hard:'להעתיק מלוח או מדף שנמצא במרחק.'},
+  {id:'c', t:'יצירה שדורשת דיוק', reps:12, pace:4, dur:'15 דקות', gear:'אוריגמי, חרוזים, דגמים',
+   why:'עבודת יד מדויקת בונה את אותם שרירים ואת אותה סבלנות שכתיבה דורשת — בלי להרגיש כמו עוד שיעור.',
+   how:['אוריגמי פשוט לפי הוראות מצוירות.','שרשרת חרוזים לפי דגם.','לבנות דגם לגו לפי חוברת.'],
+   ok:'עוקב{|ת} אחרי הוראות מצוירות ומסיי{ם|מת} יצירה.',
+   trap:'לעזור מוקדם מדי. תנו {לו|לה} להיתקע ולפתור.',
+   easy:'שלושה שלבים בלבד.',
+   hard:'הוראות כתובות במקום מצוירות.'}
+], ck:{t:'כותב{|ת} בנוחות', items:[
+  'רוב האותיות בשורה וקריאות',
+  'מעתיק{|ה} שלוש שורות בכתב קריא',
+  'אוחז{|ת} עיפרון נכון ולא מתעייפת אחרי חמש דקות',
+  'עוקב{|ת} אחרי הוראות מצוירות ומסיי{ם|מת} יצירה',
+  'קושר{|ת} שרוכים ומכפתר{|ת} בלי עזרה'
+]}});
+
+L({id:'s8.gross.1', st:8, dm:'gross', ix:1, t:'ספורט וסיבולת', acts:[
+  {id:'a', t:'אופניים ושחייה', reps:12, pace:3, dur:'30 דקות', gear:'אופניים, בריכה',
+   why:'שתי מיומנויות שנרכשות בגיל הזה ומשרתות לכל החיים — וכל אחת מהן היא קפיצה בביטחון העצמי.',
+   how:['אופניים: להוריד גלגלי עזר, להתחיל מהחלקה בלי דוושות.','שחייה: נשיפה במים, ואז חמישה מטרים.','להחזיק בכתפיים, לא בכידון.'],
+   ok:'רוכב{|ת} לבד, ושוחה חמישה מטרים.',
+   trap:'להחזיק בכידון — זה מאריך את התהליך.',
+   easy:'להישאר בשלב ההחלקה עד שמשעמם.',
+   hard:'לעצור בבלם בנקודה, ולשחות עשרים מטר.'},
+  {id:'b', t:'משחק{|ת} קבוצתי', reps:12, pace:4, dur:'30 דקות', gear:'כדור, ילדים',
+   why:'משחק{|ת} קבוצתי מלמד כללים, מסירה, הפסד ותפקיד — ובגיל הזה זו גם הזירה החברתית המרכזית.',
+   how:['משחק{|ת} פשוט עם כללים ברורים.','לעודד מסירה ולא רק בעיטה.','לדבר אחרי המשחק על מה היה כיף ומה היה קשה.'],
+   ok:'משחק{|ת} משחק{|ת} קבוצתי עד הסוף גם כשהקבוצה מפסידה.',
+   trap:'להתמקד בתוצאה. השאלה היא אם היה כיף.',
+   easy:'משחק{|ת} עם שלושה ילדים בלבד.',
+   hard:'חוג או קבוצה מסודרת.'},
+  {id:'c', t:'להתאמץ לאורך זמן', reps:10, pace:3, dur:'30 דקות', gear:'שביל, פארק',
+   why:'סיבולת קובעת אם ילד נשאר במשחק בחצר עד הסוף — וזה עניין חברתי לא פחות מבריאותי.',
+   how:['הליכה או ריצה של חצי שעה ברצף.','טיפוס — התרגיל השלם ביותר לגוף.','לשאת תיק קטן בטיול.'],
+   ok:'הול{ך|כת} חצי שעה ברצף בלי לבקש הפסקות תכופות.',
+   trap:'להשוות לילדים אחרים.',
+   easy:'עשרים דקות עם יעד מוסכם.',
+   hard:'שביל עולה, או ריצה של קילומטר.'}
+], ck:{t:'הגוף חזק ובטוח', items:[
+  'רוכב{|ת} על אופניים בלי גלגלי עזר',
+  'שוחה חמישה מטרים או צפה בביטחון',
+  'משחק{|ת} משחק{|ת} קבוצתי עד הסוף',
+  'הול{ך|כת} או ר{ץ|צה} חצי שעה ברציפות',
+  'קופ{ץ|צת} בחבל עשר קפיצות רצופות'
+]}});
+
+L({id:'s8.social.1', st:8, dm:'social', ix:1, t:'חברות ומריבות', acts:[
+  {id:'a', t:'לפתור ריב לבד', reps:14, pace:5, dur:'תוך כדי', gear:'ריב אמיתי',
+   why:'בכיתה אתם לא שם. שלושת הצעדים — לעצור, לומר מה אני מרגיש{|ה}, להציע פתרון — הם מה שיישאר.',
+   how:['לעצור: מה קרה, לפי כל אחד.','"אני מרגישה… אני רוצה…" — לא האשמה.','להציע פתרון. אתם מנהלים, לא פוסקים.'],
+   ok:'משתמש{|ת} ב"אני מרגיש{|ה}" לפחות פעם אחת בלי תזכורת.',
+   trap:'לפסוק מי צודק{|ת}.',
+   easy:'לתרגל על בובות אחרי שהכול נרגע{|ת}.',
+   hard:'לצאת מהחדר ולתת להם.'},
+  {id:'b', t:'חברות מחוץ לבית', reps:12, pace:4, dur:'שעתיים', gear:'חבר מהכיתה',
+   why:'חברות שנבנית מחוץ לכיתה מחזיק{|ה} בתוך הכיתה, וזה מה שמייצר תחושת שייכות בשנה הראשונה.',
+   how:['להזמין ילד מהכיתה הביתה, אחד בכל פעם.','לתת {לו|לה} להוביל את הפעילות.','לתאם מפגש אצל החבר.'],
+   ok:'{יוזם|יוזמת} קשר — מבקש{|ה} להזמין או להתקשר.',
+   trap:'לארגן כל רגע. שעמום משותף מייצר משחק{|ת}.',
+   easy:'מפגש קצר בבית שלכם.',
+   hard:'לישון אצל חבר, או מפגש עם שניים.'},
+  {id:'c', t:'שיחת סוף יום', reps:20, pace:7, dur:'6 דקות', gear:'זמן',
+   why:'ילד בכיתה א׳ פוגש הרבה דברים לבד. שיחה קבועה היא מה שמאפשר לדעת מה קרה ולעזור בזמן.',
+   how:['שאלה ספציפית: "עם מי ישבת בהפסקה".','לשאול גם מה היה קשה, לא רק מה היה כיף.','לא לפתור מיד — קודם להקשיב עד הסוף.'],
+   ok:'{מספר|מספרת} על אירוע חברתי ביוזמת{ו|ה} לפחות פעם בשבוע.',
+   trap:'לקפוץ לפתרונות. זה סוגר את השיחה הבאה.',
+   easy:'לשאול על משהו אחד ספציפי שאתם יודעים עליו.',
+   hard:'לשאול מה {הוא היה עושה|היא הייתה עושה} אחרת.'}
+], ck:{t:'מסתדר{|ת} חברתית', items:[
+  'משתמש{|ת} ב"אני מרגישה… אני רוצה…" בזמן ריב',
+  'יוז{ם|מת} קשר עם חבר מהכיתה',
+  'מספר{|ת} על אירוע חברתי מיוזמתה',
+  'מבקש{|ת} עזרה ממבוגר כשצריך',
+  'מתנצל{|ת} ומתקנת אחרי שפגעה'
+]}});
+
+L({id:'s8.think.1', st:8, dm:'think', ix:1, t:'ללמוד ללמוד', acts:[
+  {id:'a', t:'עשרים דקות של עבודה', reps:20, pace:6, dur:'20 דקות', gear:'שולחן, שיעורי בית',
+   why:'שיעורי בית בכיתה א׳ הם קצרים — והמטרה שלהם היא ההרגל, לא התוכן. ההרגל הוא מה שנבנה עכשיו.',
+   how:['אותה שעה, אותו מקום, כל יום.','טלפונים בחדר אחר, כולל שלכם.','הפסקה של שתי דקות באמצע.'],
+   ok:'יושב{|ת} עשרים דקות בקשב סביר בלי שמזכירים.',
+   trap:'לשבת ליד{ו|ה} ולתקן כל שורה. שבו קרוב, לא צמוד.',
+   easy:'עשר דקות ואז הפסקה.',
+   hard:'להתחיל לבד בלי שקוראים {לו|לה}.'},
+  {id:'b', t:'לזכור בלי להסתכל', reps:14, pace:5, dur:'6 דקות', gear:'רשימות, משחקי זיכרון',
+   why:'זיכרון עבודה הוא המשאב שנגמר ראשון בכיתה. אפשר לאמן אותו, וזה משפיע ישירות על קריאה וחשבון.',
+   how:['לזכור רשימת קניות של חמישה פריטים.','משחק{|ת} זיכרון עם 24 קלפים.','לחזור על מספר{|ת} טלפון אחרי חמש שניות.'],
+   ok:'זוכר{|ת} חמישה פריטים ברצף.',
+   trap:'לחזור על הרשימה שוב ושוב. פעם אחת ואז שקט.',
+   easy:'שלושה פריטים.',
+   hard:'שבעה פריטים, או לזכור לאחור.'},
+  {id:'c', t:'לחשוב על אסטרטגיה', reps:12, pace:4, dur:'15 דקות', gear:'שחמט, דמקה, משחקי חשיבה',
+   why:'לתכנן צעד קדימה זו מיומנות שמשרתת הכול — מפתרון בעיות בחשבון ועד ניהול ריב בחצר.',
+   how:['לשאול לפני מהלך: "מה יקרה אחרי שתעשי את זה?"','לשחק לאט ובלי לחץ זמן.','לתת {לו|לה} לנצח באמת, לא בוויתור.'],
+   ok:'עוצר{|ת} לחשוב לפני מהלך במקום לשחק מיד.',
+   trap:'לתת טיפים תוך כדי. השאלה עדיפה על העצה.',
+   easy:'משחק{|ת} עם מעט אפשרויות, כמו איקס עיגול.',
+   hard:'שחמט מלא, או משחק{|ת} שבו צריך לזכור מהלכים.'}
+], ck:{t:'לומד{|ת} בשיטה', items:[
+  'יושב{|ת} עשרים דקות של עבודה בקשב סביר',
+  'זוכר{|ת} רשימה של חמישה פריטים',
+  'עוצר{|ת} לחשוב לפני מהלך במשחק',
+  'מתחיל{|ה} משימה בלי שקוראים לה, לפעמים',
+  'מסבירה איך הגיעה לתשובה'
+]}});
+
+L({id:'s8.self.1', st:8, dm:'self', ix:1, t:'לנהל את היום', acts:[
+  {id:'a', t:'ילקוט ושגרת בוקר', reps:20, pace:7, dur:'10 דקות', gear:'רשימה על הדלת',
+   why:'ילד שמארגן את עצמו מגיע{|ה} לכיתה מוכן, ולא צריך לבקש דברים מהמורה — וזה משפיע גם על איך הוא נתפס.',
+   how:['רשימה כתובה או מצוירת על הדלת.','לארוז בערב, לא בבוקר.','לא לבדוק אחרי. אם שכחה — {הוא ירגיש|היא תרגיש}.'],
+   ok:'אורז{|ת} ילקוט לפי מערכת בלי תזכורת פריט־פריט.',
+   trap:'לבדוק בשקט ולהוסיף מה שחסר.',
+   easy:'לארוז יחד לפי הרשימה.',
+   hard:'לנהל את כל הבוקר לבד עם שעון מעורר.'},
+  {id:'b', t:'מטלות שהן שלי', reps:20, pace:7, dur:'10 דקות', gear:'לוח מטלות',
+   why:'אחריות אמיתית בבית מתורגמת לאחריות בכיתה. וילד שתורם למשפחה מרגיש חלק ממנה.',
+   how:['שתיים־שלוש מטלות קבועות.','לוח שרואים, לסמן בעצמה.','בלי תשלום — השבח הוא על התרומה.'],
+   ok:'מבצע{|ת} את המטלות ברוב הימים.',
+   trap:'לשלם על מטלות בית. זה הופ{ך|כת} תרומה לעסקה.',
+   easy:'מטלה אחת.',
+   hard:'מטלה שדורשת תכנון — להכין ארוחת ערב פשוטה.'},
+  {id:'c', t:'עצמאות ובטיחות בחוץ', reps:12, pace:4, dur:'תוך כדי', gear:'הרחוב',
+   why:'בכיתה א׳ מתחילים מרחבים בלי מבוגר צמוד. הכללים צריכים להיות מתורגלים, לא רק מוסברים.',
+   how:['לחצות כביש — לעצור, להסתכל לשני הצדדים, ללכת.','לתרגל את הדרך הביתה יחד, ואז {הוא מוביל|היא מובילה}.','לדעת שם מלא, כתובת וטלפון בעל פה.'],
+   ok:'{מוביל|מובילה} את הדרך המוכרת ויודע{|ת} את הפרטים בעל פה.',
+   trap:'להסביר בלי לתרגל.',
+   easy:'ללכת יחד ולתת {לו|לה} להחליט מתי חוצים.',
+   hard:'ללכת לבד לשכן או לחנות קרובה.'}
+], ck:{t:'מנהל{|ת} את עצמ{ו|ה}', items:[
+  'אורז{|ת} ילקוט לפי מערכת בלי תזכורת',
+  'מבצע{|ת} מטלות קבועות ברוב הימים',
+  'יודע{|ת} שם מלא, כתובת וטלפון בעל פה',
+  'חוצה כביש נכון בליווי',
+  'מתארגנת בבוקר עם תזכורת אחת בלבד'
+]}});
+
+/* ============================================================
+   שלב 7 · אותיות ומספרים · גיל 5–6 · השנה שלפני כיתה א׳
+   ============================================================ */
+
+/* ---------- אותיות וקריאה ---------- */
+L({id:'s7.lang.1', st:7, dm:'lang', ix:1, t:'מהאות לצליל', acts:[
+  {id:'a', t:'ציד אותיות בסביבה', reps:6, pace:3, dur:'5 דקות', gear:'שום דבר — רק לצאת מהבית',
+   why:'אות שנמצאת על שלט של מכולת נשארת בזיכרון אחרת מאות בדף עבודה. זה גם מלמד ש{הוא|היא} כבר {יכול|יכולה} לקרוא משהו בעולם האמיתי.',
+   how:['בחרו אות אחת ליום — "היום אנחנו ציידים של ש".','בדרך לגן, בסופר, ברחוב — מי {מוצא|מוצאת} אותה ראשון על שלט, על אריזה, על לוחית רישוי.','כשמוצאים, אמרו יחד את הצליל בקול: "ש… שששש".'],
+   ok:'{מוצא|מוצאת} לפחות שלוש פעמים את האות בלי שתראו {לו|לה} קודם.',
+   trap:'לומר את שם האות ("שין") במקום את הצליל ("שששש"). בקריאה משתמשים בצליל, ושם האות הוא שכבה נוספת שמבלבלת בהתחלה.',
+   easy:'תלו את האות על המקרר בבוקר, כדי שהצורה תהיה טרייה בעין.',
+   hard:'שתי אותיות באותו סיבוב, ואז — למצוא מילה שמתחילה באות ולא רק את האות עצמה.'},
+  {id:'b', t:'ערימת המכיר וערימת העוד־לא', reps:8, pace:3, dur:'6 דקות', gear:'22 פתקים עם אותיות דפוס',
+   why:'זה התרגיל היחיד שאומר לכם בדיוק אילו אותיות חסרות. בלעדיו מלמדים שוב ושוב את האותיות ש{הוא כבר יודע|היא כבר יודעת}.',
+   how:['הפכו את הקלפים, {הוא שולף|היא שולפת} אחד ואומר{|ת} את הצליל.','ידעה — לערימת "מכירה". לא ידעה — לערימה השנייה, בלי תיקון ובלי הסבר.','בסוף ספרו יחד כמה בערימה הגדולה. עובדים רק על הקטנה.'],
+   ok:'ערימת ה"עוד לא" מתכווצת משבוע לשבוע. 18 מתוך 22 זה כבר מצוין.',
+   trap:'לתקן תוך כדי. התיקון הופ{ך|כת} את זה משעשוע לבחינה, והקצב נשבר.',
+   easy:'להתחיל עם 10 אותיות בלבד — האותיות של השמות במשפחה.',
+   hard:'להוסיף את האותיות הסופיות (ך ם ן ף ץ) ולערבב כתב יד עם דפוס.'},
+  {id:'c', t:'לכתוב את השם', reps:8, pace:3, dur:'5 דקות', gear:'דף, עיפרון',
+   why:'השם הוא המילה הראשונה שיש בה משמעות רגשית, והוא מאמן בבת אחת זיהוי אותיות, סדר משמאל לימין, ואחיזת עיפרון.',
+   how:['כתבו את השם למעלה בדפוס גדול וברור.','{הוא מעתיק|היא מעתיקה} מתחת, אות אחת בכל פעם, ואומר{|ת} את הצליל בזמן הכתיבה.','אחרי שלוש פעמים — לכסות את המקור ולנסות מהזיכרון.'],
+   ok:'כותב{|ת} את השם מהזיכרון, האותיות מזוהות גם אם לא ישרות.',
+   trap:'לדרוש יופי. בשלב הזה נכונות הצורה חשובה, ההידור מגיע{|ה} בכיתה א׳.',
+   easy:'לכתוב את השם בעיפרון חיוור ו{הוא עובר|היא עוברת} עליו.',
+   hard:'להוסיף שם משפחה, ואז שמות של אחים.'}
+], ck:{t:'מזהה אותיות וכותב{|ת} את {שמו|שמה}', items:[
+  'אומר{|ת} את הצליל של 18 אותיות לפחות, בערבוב, בלי סדר הא"ב',
+  'כותב{|ת} את {שמו|שמה} מהזיכרון, כל האותיות מזוהות',
+  'מוצא{|ת} אות מבוקשת על שלט בחוץ בלי עזרה',
+  'אומר{|ת} מה הצליל הפותח של 4 מילים מתוך 5',
+  'מבדיל{|ה} בין אות למספר כשהם מעורבבים על השולחן'
+]}});
+
+L({id:'s7.lang.2', st:7, dm:'lang', ix:2, t:'מהברה למילה', acts:[
+  {id:'a', t:'הברות פתוחות', reps:10, pace:4, dur:'6 דקות', gear:'כרטיסיות: בָּ, מָ, שָׁ, לָ, תָ, נָ',
+   why:'זה הצעד שבו אות הופ{ך|כת} לקריאה. עיצור ועוד תנועה — וזה כל הסוד של קריאה בעברית מנוקדת.',
+   how:['הראו הברה אחת. אמרו יחד לאט: "ב… אָ… בָּ".','עברו על שש ההברות, ואז ערבבו וחזרו.','כשההיסוס נעלם, החליפו את התנועה: בָּ, בֶּ, בִּ, בּוֹ.'],
+   ok:'קורא{|ת} חמש הברות ברצף בלי לעצור באמצע כדי לחשוב.',
+   trap:'להתחיל מהברות סגורות ("בַּן"). קודם עיצור+תנועה בלבד — הסוגרת מגיע{|ה} אחר כך.',
+   easy:'שלוש הברות בלבד, ולומר את התנועה יחד ב{איתו|איתה} בקול.',
+   hard:'הברות סגורות, ואז שתי הברות שיוצרות מילה: "בָּ־נָ־נָה".'},
+  {id:'b', t:'בונים מילה', reps:8, pace:3, dur:'8 דקות', gear:'כרטיסיות הברות או אותיות',
+   why:'מכאן מתחיל{|ה} קריאה אמיתית: להרכיב ולא לזהות בעל פה. ילד שרק זוכר{|ת} מילים שלמות נתקע במילה חדשה.',
+   how:['פזרו 6–8 הברות על השולחן.','אמרו מילה קצרה — "סַבָּא", "מַיִם", "דָּג".','{הוא מרכיב|היא מרכיבה} אותה מההברות ואז קורא{|ת} בקול את מה שבנתה.'],
+   ok:'בונה שלוש מילים מתוך ארבע בלי לנחש לפי האות הראשונה.',
+   trap:'לתת מילים ארוכות מדי. שתי הברות זה המקסימום עד שזה זורם.',
+   easy:'לתת רק את ההברות של המילה המדויקת, בערבוב.',
+   hard:'להוסיף מילות מסיח, ולבקש ממנה לכתוב את המילה אחרי שבנתה.'},
+  {id:'c', t:'לקרוא את העולם', reps:8, pace:3, dur:'5 דקות', gear:'שלטים, אריזות, תפריט',
+   why:'הרגע שבו {הוא מבין|היא מבינה} שקריאה היא לא שיעור אלא כוח־על. זה מה שמייצר את המוטיבציה להמשך.',
+   how:['בסופר, תנו {לו|לה} למצוא את "חלב" על המדף.','במסעדה — לקרוא מילה אחת מהתפריט.','בבית — לקרוא את השם על החבילה שהגיעה.'],
+   ok:'מזהה 5 מילים מוכרות בסביבה במהלך שבוע.',
+   trap:'לבחור מילים בכתב מעוצב או באנגלית. בהתחלה רק דפוס עברי ברור.',
+   easy:'לתת שתי אפשרויות ולשאול איזו מהן היא המילה.',
+   hard:'לקרוא משפט שלם קצר — "פתוח היום עד 20:00".'}
+], ck:{t:'קורא{|ת} הברות ומרכיב{|ה} מילים', items:[
+  'קורא{|ת} 6 הברות פתוחות ברצף בלי היסוס ארוך',
+  'מרכיב{|ה} מילה בת שתי הברות מכרטיסיות',
+  'קורא{|ת} בעצמה 3 מילים קצרות מנוקדות שלא ראתה קודם',
+  'מזהה מילה מוכרת על שלט או אריזה בחוץ',
+  'כותב{|ת} מילה בת שתי הברות שהכתבתם, גם אם בשגיאת ניקוד'
+]}});
+
+/* ---------- מספרים וכמויות ---------- */
+L({id:'s7.num.1', st:7, dm:'num', ix:1, t:'כמות בלי לספור', acts:[
+  {id:'a', t:'כמה יש — בלי לספור', reps:8, pace:3, dur:'5 דקות', gear:'קוביית משחק{|ת} או קלפי נקודות',
+   why:'ילד שסופר כל פעם מאחת יתקשה בחשבון. היכולת לראות "שלוש" בלי לספור היא הבסיס לחיבור מהיר.',
+   how:['הראו קוביה או קלף נקודות לשנייה אחת בלבד ואז כסו.','שאלו: כמה היו? בלי לספור, בניחוש מהיר.','גלו וספרו יחד רק כדי לאמת.'],
+   ok:'צודק{|ת} בכמויות עד 5 כמעט תמיד, בלי לספור באצבע.',
+   trap:'להשאיר את הקלף גלוי. אם יש זמן לספור — התרגיל לא קורה.',
+   easy:'עד 3 נקודות בלבד, וסידור קבוע כמו על קוביה.',
+   hard:'עד 8, בפיזור אקראי, ושתי קוביות יחד.'},
+  {id:'b', t:'מי יותר', reps:6, pace:3, dur:'5 דקות', gear:'קלפים, סוכריות, כפתורים',
+   why:'השוואת כמויות היא מה שהופך מספר{|ת} משם למידה. בלי זה "7" ו"9" הם רק שתי מילים.',
+   how:['שימו שתי ערימות לא שוות.','שאלו: איפה יותר? ואיך {אתה יודע|את יודעת}?','אחר כך — בכמה יותר? זה כבר חיסור בלי לקרוא לזה כך.'],
+   ok:'עונה נכון גם כשהערימה עם פחות פריטים מפוזרת על שטח גדול יותר.',
+   trap:'לסדר תמיד בשורות מסודרות. הפיזור הוא בדיוק מה שמאמן.',
+   easy:'הפרש גדול — 2 מול 8.',
+   hard:'הפרש של אחד, ואז לשאול "כמה צריך להוסיף כדי שיהיה שווה".'},
+  {id:'c', t:'לספור קדימה ואחורה', reps:8, pace:4, dur:'4 דקות', gear:'שום דבר',
+   why:'ספירה לאחור היא הכנה ישירה לחיסור, והיא קשה בהרבה מספירה קדימה — ולכן מתאמנים עליה בנפרד.',
+   how:['לספור עד 20 קדימה, בתור, אחד־אחד לסירוגין.','לספור אחורה מ־10 עד 1 — בשירותים, במעלית, לפני שכבים לישון.','להתחיל מאמצע: "תמשיכי מ־7".'],
+   ok:'סופר{|ת} אחורה מ־10 בלי היסוס, ויודע{|ת} להמשיך מכל מספר{|ת} עד 20.',
+   trap:'לספור תמיד מ־1. ילד שיודע רק את השיר לא באמת יודע{|ת} לספור.',
+   easy:'אחורה מ־5 בלבד.',
+   hard:'אחורה מ־20, ולדלג בשתיים: 2, 4, 6…'}
+], ck:{t:'המספר הוא כמות', items:[
+  'סופר{|ת} 15 חפצים מפוזרים בלי לדלג ובלי לספור פעמיים',
+  'אומר{|ת} כמה יש בכמות עד 5 בלי לספור',
+  'מזהה מי יותר גם כשהכמות הקטנה מפוזרת רחב יותר',
+  'סופר{|ת} אחורה מ־10 עד 1 ברצף',
+  'ממשי{ך|כה} לספור מ־7 ומ־13 בלי לחזור להתחלה'
+]}});
+
+L({id:'s7.num.2', st:7, dm:'num', ix:2, t:'חיבור וחיסור עד 10', acts:[
+  {id:'a', t:'חברים של עשר', reps:10, pace:4, dur:'6 דקות', gear:'שתי ידיים',
+   why:'הזוגות שמשלימים ל־10 הם המפתח לכל החשבון של כיתה א׳. ילד שיודע אותם בעל פה לא סופר{|ת} באצבעות בכיתה ב׳.',
+   how:['הרימו 3 אצבעות ושאלו: כמה חסר ל־10?','עברו על כל הזוגות — 1 ו־9, 2 ו־8, 3 ו־7…','משחקים את זה בתור: אתם אומרים מספר{|ת}, {הוא עונה|היא עונה} את המשלים.'],
+   ok:'עונה על חמישה זוגות ברצף בלי לספור באצבעות.',
+   trap:'להתחיל בכתיבת תרגילים. הכול בעל פה ובידיים עד ש{הוא זורם|היא זורמת}.',
+   easy:'חברים של 5 קודם.',
+   hard:'חברים של 20, ואז "כמה חסר מ־7 ל־12".'},
+  {id:'b', t:'כמה נשארו', reps:8, pace:3, dur:'6 דקות', gear:'סוכריות, קוביות, מטבעות',
+   why:'חיסור נלמד הרבה יותר טוב מהעלמות אמיתית של דברים מהשולחן מאשר מסימן מינוס על דף.',
+   how:['שימו 8 פריטים. {הוא סופר|היא סופרת} אותם.','קחו 3 והחביאו ביד. כמה נשארו?','גלו ובדקו. החליפו תפקידים — {הוא לוקח|היא לוקחת} ואתם מנחשים.'],
+   ok:'עונה נכון עד 10 ברוב הפעמים בלי לספור מחדש את כל הערימה.',
+   trap:'לומר "מינוס". בשלב הזה המילים הן "לקחנו" ו"נשארו".',
+   easy:'עד 5 פריטים, ולהשאיר את מה שלקחתם גלוי בצד.',
+   hard:'לכתוב את התרגיל בספרות אחרי שפתרה: 8 − 3 = 5.'},
+  {id:'c', t:'חשבון של החיים', reps:6, pace:2, dur:'תוך כדי', gear:'המטבח, הארנק, השולחן',
+   why:'זה מה שהופך חשבון ממקצוע למשהו שימושי, וזה גם החלק שנשאר בזיכרון הכי הרבה זמן.',
+   how:['לפני ארוחה: אנחנו חמישה, יש שלוש צלחות — כמה חסר?','בקופה: זה עולה 4 שקלים, יש לך 10 — כמה יחזירו?','בדרך: נסענו 4 תחנות מתוך 7 — כמה נשארו?'],
+   ok:'{יוזם|יוזמת} חישוב לבד לפחות פעם אחת בשבוע.',
+   trap:'להפוך כל רגע לשיעור. פעם ביום זה מספיק, ויותר מזה שוחק.',
+   easy:'לתת מספרים עד 5 ולהשאיר את החפצים גלויים לספירה.',
+   hard:'שני שלבים: "צריך שתי צלחות לכל אחד, אנחנו ארבעה — כמה בסך הכול?"'}
+], ck:{t:'מחשב{|ת} עד 10', items:[
+  'יודע{|ת} חמישה מזוגות העשר בעל פה, בלי אצבעות',
+  'פותר{|ת} תרגילי חיבור עד 10 עם חפצים, נכון ברוב הפעמים',
+  'פותר{|ת} חיסור עד 10 עם חפצים, נכון ברוב הפעמים',
+  'פותר{|ת} שאלה מהחיים בעל פה — "יש שלוש, צריך חמש, כמה חסר"',
+  'מזהה וכותב{|ת} את הספרות 0–10 נכון'
+]}});
+
+/* ---------- מוטוריקה עדינה ---------- */
+L({id:'s7.fine.1', st:7, dm:'fine', ix:1, t:'היד שמחזיקה עיפרון', acts:[
+  {id:'a', t:'אחיזה נכונה וקו על שורה', reps:10, pace:4, dur:'6 דקות', gear:'עפרונות קצרים, דף משובץ',
+   why:'אחיזה שגויה שנכנסת עכשיו תלווה {אותו|אותה} שנים ותגרום לכאב יד בכיתה ב׳. עכשיו זה עוד ניתן לשינוי בקלות.',
+   how:['השתמשו בעיפרון קצר — חצי עיפרון. אצבעות פשוט לא נכנסות לאחיזה שגויה.','שלוש אצבעות מלפנים, שתי האחרונות מקופלות פנימה אל כף היד.','ציירו קווים ישרים בין שתי שורות, ואז גלים וזיגזג.'],
+   ok:'שלוש אצבעות אוחזות, פרק כף היד נשען על הדף, והקו נשאר בין השורות.',
+   trap:'לתקן במילים. תיקון פיזי אחד בהתחלה עדיף על עשר הערות תוך כדי.',
+   easy:'לצייר על לוח אנכי או על הקיר — עמידה מיישר{|ת} את פרק כף היד לבד.',
+   hard:'שורות צרות יותר, וקווים שצריך לעצור בהם בדיוק בנקודה.'},
+  {id:'b', t:'גזירה בקו מסובב{|ת}', reps:8, pace:3, dur:'8 דקות', gear:'מספריים לילדים, דפים',
+   why:'גזירה מאמנת את שתי הידיים לעבוד יחד בתפקידים שונים — בדיוק מה שנדרש בכתיבה ובקשירת שרוכים.',
+   how:['ציירו קו ישר עבה. לגזור עליו.','אחר כך קו גלי, ואז עיגול, ואז צורה עם פינות.','היד השנייה מסובב{|ת} את הדף — לא המספריים.'],
+   ok:'גוזר{|ת} עיגול בלי לצאת מהקו יותר מרוחב אצבע.',
+   trap:'לתת דף דק. דף עבה יותר מחזיק{|ה} את עצמו והגזירה מצליח{|ה}.',
+   easy:'רצועות צרות שדורשות חיתוך אחד בלבד.',
+   hard:'לגזור צורה מורכבת ולהדביק ממנה קולאז׳.'},
+  {id:'c', t:'כוח באצבעות', reps:8, pace:3, dur:'7 דקות', gear:'חרוזים, פלסטלינה, אטבי כביסה, פינצטה',
+   why:'כתיבה מתעייפת כשהשרירים הקטנים חלשים. את הכוח הזה בונים במשחק, לא בכתיבה נוספת.',
+   how:['להשחיל חרוזים על חוט — או פסטה על שרוך.','לצבוט פלסטלינה לכדורים קטנים ולגלגל נקניקיות.','להעביר פומפונים מקערה לקערה בפינצטה או באטב כביסה.'],
+   ok:'עושה חמש דקות ברצף בלי לשפשף את היד או להתלונן.',
+   trap:'להפוך את זה לשיעור. זה משחק{|ת} — ומותר לעשות אותו מול טלוויזיה.',
+   easy:'חרוזים גדולים וחוט קשיח.',
+   hard:'חרוזים זעירים, ולהשחיל לפי רצף צבעים שקבעתם.'}
+], ck:{t:'היד מוכנה לכתיבה', items:[
+  'אוחז{|ת} עיפרון בשלוש אצבעות בלי שמזכירים לה',
+  'מצייר{|ת} קו בין שתי שורות לאורך עמוד בלי לצאת',
+  'גוזר{|ת} עיגול בלי לצאת מהקו יותר מרוחב אצבע',
+  'משחיל{|ה} עשרה חרוזים ברצף בלי עזרה',
+  'מצייר{|ת} אדם עם ראש, גוף, שתי ידיים, שתי רגליים ופרצוף'
+]}});
+
+L({id:'s7.fine.2', st:7, dm:'fine', ix:2, t:'כתיבה, כפתורים ושרוכים', acts:[
+  {id:'a', t:'אותיות בתוך השורה', reps:10, pace:4, dur:'8 דקות', gear:'מחברת שורות, עיפרון',
+   why:'בכיתה א׳ המורה נות{ן|נת} שורה. אות שיודעת לשבת בשורה חוסכת חצי שנה של תסכול.',
+   how:['שתי שורות מודגשות — האות חייבת לגעת בשתיהן.','שלוש אותיות בכל פעם, לא יותר. חמש פעמים כל אחת.','אחרי כל שורה — {הוא בוחר|היא בוחרת} את האות הכי יפה ומקיפה אותה.'],
+   ok:'רוב האותיות נוגעות בשתי השורות ואינן חורגות מעליהן.',
+   trap:'לתת דף שלם. שלוש שורות טובות שוות יותר מעמוד שלם ברישול.',
+   easy:'אותיות בעיפרון חיוור להעברה מעל.',
+   hard:'להכתיב מילה שלמה ולכתוב אותה בשורה בלי דוגמה.'},
+  {id:'b', t:'כפתורים, רוכסן ושרוכים', reps:12, pace:5, dur:'תוך כדי', gear:'הבגדים שיש',
+   why:'זו העצמאות שהכי בולטת בכיתה א׳ — בשירותים, אחרי התעמלות, בחצר. וזה גם תרגיל מוטורי מצוין בפני עצמו.',
+   how:['כפתורים: מתחילים מהכפתור התחתון, שנמצא בשדה הראייה.','רוכסן: אתם מחברים למטה, {הוא מושך|היא מושכת} עד למעלה. אחר כך גם החיבור.','שרוכים: שיטת שתי הלולאות — שתי אוזני ארנב וקשר. יום אחד לכל שלב.'],
+   ok:'מתלבש{|ת} לבד לגמרי, כולל כפתורים, ומצליח{|ה} בשרוכים ברוב הפעמים.',
+   trap:'לעשות בשביל{ו|ה} כשממהרים. עדיף לצאת חמש דקות מוקדם יותר.',
+   easy:'לתרגל על בגד שמונח על השולחן ולא על הגוף.',
+   hard:'לעשות את זה בלחץ זמן קל — "עד שאני סופר{|ת} עד עשרים".'},
+  {id:'c', t:'להעתיק צורה בדיוק', reps:8, pace:3, dur:'6 דקות', gear:'דף, עיפרון, סרגל לא חובה',
+   why:'העתקת צורות מנבאת יכולת כתיבה טוב יותר מכל תרגיל אחר — כי היא דורשת לראות, לזכור ולבצע.',
+   how:['ציירו צורה: ריבוע, משולש, מעוין, ואז צלב אלכסוני.','{הוא מצייר|היא מציירת} אותה לידכם, בלי לעבור על הקווים שלכם.','משווים יחד — מה דומה, מה שונה.'],
+   ok:'מעתיק{|ה} ריבוע, משולש ומעוין כך שהם מזוהים בבירור.',
+   trap:'לצייר בשביל{ו|ה} "רק את ההתחלה". תנו {לו|לה} להיכשל ולתקן.',
+   easy:'להעתיק על נייר שקוף מעל הדוגמה.',
+   hard:'להראות את הצורה לחמש שניות, לכסות, ואז לצייר מהזיכרון.'}
+], ck:{t:'כותב{|ת} ומסתדר{|ת} עם הבגדים', items:[
+  'כותב{|ת} אות בתוך שורה, רוב האותיות בגבולות',
+  'כותב{|ת} מילה מוכתבת בלי דוגמה מול העיניים',
+  'מכפתר{|ת} ומרוכסת בגד לבד',
+  'קושר{|ת} שרוכים לבד, גם אם לאט',
+  'מעתיק{|ה} ריבוע, משולש ומעוין באופן מזוהה'
+]}});
+
+/* ---------- מוטוריקה גסה ---------- */
+L({id:'s7.gross.1', st:7, dm:'gross', ix:1, t:'שיווי משקל וקצב', acts:[
+  {id:'a', t:'רגל אחת וקו הליכה', reps:8, pace:3, dur:'4 דקות', gear:'סרט הדבקה על הרצפה',
+   why:'שיווי משקל הוא הבסיס לישיבה יציבה על כיסא. ילד שנופל מהכיסא בכיתה לא חסר קשב — חסר לו יציבה.',
+   how:['לעמוד על רגל אחת ולספור עד 10. להחליף רגל.','ללכת על קו ההדבקה עקב־בהונות בלי לרדת.','ואז אחורה על אותו קו.'],
+   ok:'עומד{|ת} 10 שניות על כל רגל, והול{ך|כת} על הקו הלוך ושוב בלי לרדת.',
+   trap:'לתרגל רק על הרגל החזקה. הרגל החלשה היא בדיוק זו שצריכה.',
+   easy:'להיאחז בקיר באצבע אחת בלבד.',
+   hard:'לעצום עיניים, או להעביר כדור מיד ליד תוך כדי עמידה.'},
+  {id:'b', t:'דילוג וקפיצה בחבל', reps:10, pace:4, dur:'6 דקות', gear:'חבל קפיצה, גיר',
+   why:'קפיצה על רגל אחת ודילוג לסירוגין דורשים תיאום בין שני צדי הגוף — אותו מנגנון שמשרת קריאה וכתיבה.',
+   how:['לקפוץ על רגל אחת חמש קפיצות, ואז להחליף.','דילוג — קפיצה־צעד לסירוגין. זה קשה, ולוקח{|ת} שבועות.','חבל: קודם להסתובב בלי לקפוץ, אחר כך לקפוץ מעל חבל שוכב{|ת}, ורק אז יחד.'],
+   ok:'מדלג{|ת} לסירוגין לאורך המסדרון, וקופ{ץ|צת} בחבל שלוש קפיצות רצופות.',
+   trap:'לוותר אחרי שבוע. דילוג וחבל לוקחים חודש ולפעמים יותר.',
+   easy:'לקפוץ בשתי רגליים מעל חבל מונח על הרצפה.',
+   hard:'לספור עשר קפיצות רצופות בחבל.'},
+  {id:'c', t:'כדור — לתפוס, למסור, לבעוט', reps:8, pace:3, dur:'8 דקות', gear:'כדור',
+   why:'תפיסת כדור באוויר דורשת מעקב עיניים, תזמון ותיאום — והיא גם כרטיס הכניסה החברתי לחצר.',
+   how:['לזרוק מקרוב, ישר לחזה. {הוא תופס|היא תופסת} בשתי ידיים.','להתרחק צעד בכל הצלחה.','להוסיף קפיצה של הכדור מהרצפה, ואז בעיטה למטרה.'],
+   ok:'תופס{|ת} כדור בינוני משלושה מטרים ברוב הפעמים.',
+   trap:'כדור קטן או קשה. כדור גדול ורך מצליח{|ה}, וההצלחה היא מה שמחזיק את זה.',
+   easy:'להתגלגל על הרצפה במקום לזרוק באוויר.',
+   hard:'תפיסה ביד אחת, או מסירה תוך כדי ריצה.'}
+], ck:{t:'הגוף מתואם', items:[
+  'עומד{|ת} 10 שניות על כל רגל בנפרד',
+  'הול{ך|כת} עקב־בהונות על קו ישר, קדימה ואחורה',
+  'מדלג{|ת} לסירוגין לאורך חדר',
+  'תופס{|ת} כדור בינוני משלושה מטרים ברוב הפעמים',
+  'עולה ויורדת מדרגות ברגל מתחלפת בלי להיאחז'
+]}});
+
+L({id:'s7.gross.2', st:7, dm:'gross', ix:2, t:'אופניים ומסלול', acts:[
+  {id:'a', t:'אופניים בלי גלגלי עזר', reps:8, pace:3, dur:'20 דקות', gear:'אופניים, קסדה, מדשאה',
+   why:'זה לא רק כיף — זו קפיצה אמיתית בביטחון העצמי, וברוב המקרים היא קורית בשלוש־ארבע פעמים.',
+   how:['הורידו את גלגלי העזר ואת הדוושות. השפילו את המושב כך שכפות הרגליים על הקרקע.','שבועיים של דחיפה ברגליים והחלקה — עד שמרימים את הרגליים לכמה שניות.','להחזיר דוושות. אתם מחזיקים בכתפיים, לא בכידון, ומשחררים בלי להודיע.'],
+   ok:'רוכב{|ת} עשרה מטרים לבד, כולל התחלה עצמאית.',
+   trap:'להחזיק בכידון. זה גונב {ממנו|ממנה} את תחושת האיזון, וזה מה שמאריך את התהליך.',
+   easy:'להישאר בשלב ההחלקה בלי דוושות עד שזה משעמם.',
+   hard:'לעצור בבלם בנקודה מסומנת, ולעקוף מכשולים.'},
+  {id:'b', t:'מסלול מכשולים', reps:8, pace:3, dur:'10 דקות', gear:'כריות, כיסאות, סרט, חישוק',
+   why:'מסלול מחבר יחד זחילה, קפיצה, איזון וזיכרון של סדר פעולות — וזה גם התרגיל שילדים מבקשים לחזור עליו.',
+   how:['בנו יחד: לזחול מתחת לכיסא, לקפוץ בין כריות, ללכת על קו, לסובב סביב עמוד.','{הוא עובר|היא עוברת} פעם אחת לאט כדי לזכור את הסדר.','ואז על זמן — ומנסים לשפר את עצמה.'],
+   ok:'זוכר{|ת} מסלול של חמש תחנות ומבצע{|ת} אותו ברצף בלי תזכורת.',
+   trap:'לבנות בשביל{ו|ה}. הבנייה המשותפת היא חצי מהערך.',
+   easy:'שלוש תחנות, ולעבור יחד.',
+   hard:'להוסיף כלל — לשאת כוס מים מלאה לאורך כל המסלול.'},
+  {id:'c', t:'להתאמץ לאורך זמן', reps:6, pace:2, dur:'20 דקות', gear:'בריכה, פארק, שביל',
+   why:'סיבולת היא לא רק בריאות — היא היכולת להישאר במשחק בחצר עד הסוף, וזה עניין חברתי לא פחות.',
+   how:['הליכה או ריצה של עשרים דקות ברצף, בלי עגלה ובלי לשאת.','שחייה: קודם להכניס פנים למים ולנשוף, ואז חמישה מטרים עם עזר.','לטפס בגן שעשועים — טיפוס הוא התרגיל השלם ביותר לגוף.'],
+   ok:'הול{ך|כת} עשרים דקות ברצף בלי לבקש לעלות על הידיים.',
+   trap:'להשוות לילדים אחרים. הסיבולת משתנה מאוד בגיל הזה.',
+   easy:'עשר דקות, עם יעד מוסכם בסוף.',
+   hard:'לשאת תיק קטן, או ללכת בשביל עולה.'}
+], ck:{t:'שולט{|ת} בגוף בשטח', items:[
+  'רוכב{|ת} על אופניים בלי גלגלי עזר עשרה מטרים לבד',
+  'זוכר{|ת} ומבצע{|ת} מסלול של חמש תחנות ברצף',
+  'הול{ך|כת} או ר{ץ|צה} עשרים דקות ברציפות',
+  'מטפס{|ת} על מתקן גבוה ויורדת ממנו בבטחה',
+  'קופ{ץ|צת} בחבל שלוש קפיצות רצופות'
+]}});
+
+/* ---------- חברה ורגש ---------- */
+L({id:'s7.social.1', st:7, dm:'social', ix:1, t:'לשחק לפי כללים', acts:[
+  {id:'a', t:'משחק{|ת} קופסה — כולל להפסיד', reps:10, pace:3, dur:'15 דקות', gear:'דומינו, מכונית, קלפים',
+   why:'כיתה א׳ מלאה בכללים ובתורות. וההפסד — ההפסד הוא התרגיל האמיתי כאן, לא המשחק.',
+   how:['בחרו משחק{|ת} קצר עם כללים ברורים. עברו על הכללים לפני שמתחילים.','אל תיתנו {לו|לה} לנצח. ילד שמרגיש שנתנו לו — לא נהנה מהניצחון.','כשמפסידה — לקבל את התסכול במילים: "מאכזב להפסיד. גם אני לא אוהב את זה". ואז לשחק שוב.'],
+   ok:'מסיי{ם|מת} משחק{|ת} שהפסידה בו בלי לפרק את הלוח, ומוכנה לסיבוב נוסף.',
+   trap:'לוותר על התור שלכם כדי למנוע בכי. זה בדיוק מה שדוחה את הלמידה.',
+   easy:'משחק{|ת} מזל בלבד, בלי אסטרטגיה, שבו ההפסד לא אישי.',
+   hard:'משחק{|ת} עם שלושה שחקנים ומשחק{|ת} שיש בו החלטות.'},
+  {id:'b', t:'מה קרה היום', reps:12, pace:5, dur:'6 דקות', gear:'שום דבר — רק זמן',
+   why:'ילד שיודע לקרוא לרגש בשם מתפרץ פחות. ובנוסף, זה מאמן סיפור לפי סדר — מיומנות שנדרשת בכיתה.',
+   how:['שאלו שאלה ספציפית: לא "איך היה" אלא "עם מי שיחקת בחצר".','בקשו סדר: מה קרה קודם, ומה אחר כך.','תנו שם לרגש: "זה נשמע שכעסת". ואז שתקו ותנו {לו|לה} לתקן אתכם.'],
+   ok:'מספר{|ת} אירוע בשלושה חלקים לפי סדר, ומשתמש{|ת} במילות רגש בלי שתציעו.',
+   trap:'לתקן את הסיפור או להשלים במקומ{ו|ה}. הסיפור שלה, גם אם מבולגן.',
+   easy:'לשאול על אירוע אחד ספציפי שאתם כבר יודעים עליו.',
+   hard:'לספר את אותו סיפור מנקודת המבט של ילד אחר שהיה שם.'},
+  {id:'c', t:'לחכות לתור', reps:10, pace:4, dur:'תוך כדי', gear:'החיים',
+   why:'המתנה היא שריר. בכיתה מחכים לתור לדבר, לתור בשירותים, לתור לקבל דף — עשרות פעמים ביום.',
+   how:['כשמבקשת משהו באמצע שיחה — "אני מסיי{ם|מת} משפט ואז אליך". ולעמוד בזה.','במשחק, לומר בקול: "עכשיו התור של אבא".','לתת המתנה מדודה — "עוד חמש דקות" עם טיימר גלוי.'],
+   ok:'מחכה שתי דקות בלי להתפרץ, כשהיא יודע{|ת} שהתור {שלו|שלה} מובטח.',
+   trap:'להבטיח ולא לעמוד. אמינות היא כל מה שהופך המתנה לאפשרית.',
+   easy:'המתנה של 30 שניות עם טיימר שרואים.',
+   hard:'להמתין בלי טיימר ובלי תזכורת.'}
+], ck:{t:'משחק{|ת} עם אחרים', items:[
+  'מסיי{ם|מת} משחק{|ת} שהפסידה בו בלי להתפרק',
+  'ממתי{ן|נה} לתורה במשחק בלי שמזכירים',
+  'מספר{|ת} אירוע מהיום בשלושה חלקים לפי הסדר',
+  'קורא{|ת} בשם לפחות לשלושה רגשות — כעס, עצב, קנאה',
+  'משת{ף|פת} חבר בצעצוע בלי שהתערבתם'
+]}});
+
+L({id:'s7.social.2', st:7, dm:'social', ix:2, t:'לפתור לבד', acts:[
+  {id:'a', t:'לפתור ריב בשלושה צעדים', reps:10, pace:4, dur:'תוך כדי', gear:'אח, חבר, ריב אמיתי',
+   why:'בכיתה א׳ אתם לא שם. הכלי הזה הוא מה שיישאר {לו|לה} כשאין מבוגר שיפסוק.',
+   how:['לעצור: "רגע. מה קרה, לפי כל אחד?"','לומר מה אני מרגיש ומה אני רוצה — במשפט אחד, לא בהאשמה.','להציע פתרון. אתם לא פוסקים — אתם רק מנהלים את שלושת הצעדים.'],
+   ok:'משתמש{|ת} בצעד השני — "אני רוצה…" — לפחות פעם אחת בלי שהזכרתם.',
+   trap:'לפסוק מי צודק{|ת}. ברגע שאתם השופט, הכלי לא נבנה.',
+   easy:'לעשות את שלושת הצעדים על בובות, אחרי שהריב נגמר והכול רגוע.',
+   hard:'לצאת מהחדר אחרי שאמרתם "תנסו את שלושת הצעדים" ולתת להם.'},
+  {id:'b', t:'להיכנס למשחק של אחרים', reps:8, pace:3, dur:'תוך כדי', gear:'גינה, גן, מגרש',
+   why:'זו המיומנות החברתית שהכי מנבאת אם ילד ימצא את מקומו בכיתה חדשה, והיא נלמדת.',
+   how:['לצפות רגע ולהבין מה המשחק — לפני שנכנסים.','לא לשאול "אפשר לשחק?" אלא להצטרף למה שקורה: "אני אביא עוד לבנים".','אם אמרו לא — לא מתעקשים. עוברים למשחק אחר וחוזרים אחר כך.'],
+   ok:'מצליח{|ה} להצטרף למשחק של ילדים שלא הכירה, לפחות פעם אחת.',
+   trap:'לדבר בשביל{ו|ה} עם הילדים האחרים. זה פותר{|ת} את הרגע והורס את הלמידה.',
+   easy:'להיכנס למשחק של ילד אחד בלבד, מוכר.',
+   hard:'קבוצה של שלושה ומעלה שכבר באמצע משחק{|ת}.'},
+  {id:'c', t:'ארגז הכלים של כשקשה', reps:10, pace:4, dur:'5 דקות', gear:'דף, טושים',
+   why:'ילד שיש לו שלוש דרכים מוכנות להירגע לא מגיע{|ה} לפיצוץ. בונים את הרשימה כשרגוע, לא באמצע ההתקף.',
+   how:['ברגע רגוע, ציירו יחד שלוש דרכים: לנשום עמוק חמש פעמים, לחבק, ללכת לפינה שקטה.','תלו את הדף במקום נגיש.','בפעם הבאה שקשה — אל תסבירו. פשוט הצביעו על הדף.'],
+   ok:'בוחר{|ת} דרך אחת מהדף לפחות פעם אחת בלי שאמרתם {לו|לה}.',
+   trap:'להסביר בזמן הסערה. בשיא הכעס אין קליטה — רק הצבעה.',
+   easy:'דרך אחת בלבד, ואתם עושים אותה יחד {איתו|איתה}.',
+   hard:'לזהות לבד את הסימן המוקדם — "אני מתחיל{|ה} לכעוס" — לפני שזה מתפוצץ.'}
+], ck:{t:'מסתדר{|ת} גם בלעדיכם', items:[
+  'משתמש{|ת} ב"אני מרגישה… אני רוצה…" בזמן ריב',
+  'מצליח{|ה} להצטרף למשחק של ילדים שלא הכירה',
+  'בוחר{|ת} לבד דרך להירגע כשמתעצבנת',
+  'מבקש{|ת} עזרה ממבוגר במילים, במקום לבכות או להכות',
+  'מתנצל{|ת} אחרי שפגעה, בלי שכפיתם'
+]}});
+
+/* ---------- קשב, זיכרון וחשיבה ---------- */
+L({id:'s7.think.1', st:7, dm:'think', ix:1, t:'לשבת ולהתמיד', acts:[
+  {id:'a', t:'רבע שעה על משימה אחת', reps:10, pace:4, dur:'15 דקות', gear:'פאזל, יצירה, משחק{|ת} בנייה',
+   why:'שיעור בכיתה א׳ הוא 45 דקות. חמש־עשרה דקות רצופות מרצון הן היעד הריאלי לפני שנכנסים לכיתה.',
+   how:['בחרו משהו ש{הוא אוהב|היא אוהבת} — לא משהו חינוכי.','שבו לידה בלי טלפון. אתם חלק מהקשב.','אם קמה באמצע — "עוד שתי דקות ואז מפסיקים". לסיים בהסכמה ולא בנטישה.'],
+   ok:'מגיע{|ה} ל־15 דקות רצופות ברוב הפעמים, בלי תזכורות.',
+   trap:'רקע של טלוויזיה או מסך בחדר. קשב לא נבנה עם רעש בצד.',
+   easy:'שמונה דקות, ולסיים בזמן שבו עוד נהנית.',
+   hard:'משימה שנמשכת יומיים — לחזור אליה מחר ולהמשיך מאותה נקודה.'},
+  {id:'b', t:'זיכרון והוראות ברצף', reps:8, pace:3, dur:'6 דקות', gear:'משחק{|ת} זיכרון, או שום דבר',
+   why:'"תיקחי את הילקוט, תוציאי את הקלמר ותשבי" — שלוש הוראות ברצף הן שפת הכיתה. זה מתאמן.',
+   how:['משחק{|ת} זיכרון עם 12 קלפים, ואז 20.','משימות שרשרת: "תביאי את הכוס, תשימי במטבח ותכבי את האור".','משחק{|ת} הטס־טס: לומר רשימה ולהוסיף פריט בכל תור.'],
+   ok:'מבצע{|ת} שלוש הוראות ברצף בלי תזכורת באמצע.',
+   trap:'לחזור על ההוראה מיד. תנו שלוש שניות של שקט — לרוב זה מגיע{|ה}.',
+   easy:'שתי הוראות, ולבקש ממנה לחזור עליהן בקול לפני שיוצאת.',
+   hard:'ארבע הוראות, או הוראה שצריך לבצע בעוד חמש דקות.'},
+  {id:'c', t:'תבניות ורצפים', reps:8, pace:3, dur:'6 דקות', gear:'קוביות, חרוזים, כפתורים',
+   why:'זיהוי תבנית הוא הבסיס של חשיבה מתמטית. זה מה שיאפשר {לו|לה} אחר כך לראות ש־2, 4, 6 ממשי{ך|כה} ל־8.',
+   how:['סדרו רצף: אדום־כחול־אדום־כחול. {הוא ממשיך|היא ממשיכה}.','אחר כך תבנית של שלושה, ואז תבנית שבה חסר פריט באמצע.','להמציא תבנית משלה ולתת לכם להמשיך.'],
+   ok:'ממשי{ך|כה} תבנית של שלושה ומשלי{ם|מה} חסר באמצע.',
+   trap:'רק תבניות צבע. שלבו גם צורה, גודל וכיוון.',
+   easy:'תבנית של שניים, בצבע בלבד.',
+   hard:'תבנית עולה — 1, 2, 3 קוביות בכל קבוצה — ורצף מספרים.'}
+], ck:{t:'מתמיד{|ה} וזוכר{|ת}', items:[
+  'עוסק{|ת} במשימה אחת 15 דקות רצופות מרצון',
+  'מבצע{|ת} שלוש הוראות ברצף בלי תזכורת',
+  'מנצח{|ת} או מתחרה באמת במשחק זיכרון של 20 קלפים',
+  'ממשי{ך|כה} תבנית של שלושה פריטים ומשלי{ם|מה} חסר באמצע',
+  'מרכיב{|ה} פאזל של 48 חלקים ומעלה בכוחות עצמה'
+]}});
+
+L({id:'s7.think.2', st:7, dm:'think', ix:2, t:'לחשוב לפני שעונים', acts:[
+  {id:'a', t:'עשרים שאלות', reps:8, pace:3, dur:'8 דקות', gear:'שום דבר — טוב לנסיעות',
+   why:'המשחק הזה מאמן בדיוק את מה שקשה בגיל הזה: לשאול שאלה שמצמצמת, במקום לנחש מיד את התשובה.',
+   how:['חשבתי על חיה. אפשר לשאול רק שאלות של כן ולא.','אם {הוא מנחש|היא מנחשת} מיד — החזירו: "זו לא שאלת כן־לא, נסי שוב".','החליפו תפקידים, ותנו {לו|לה} לחשוב על משהו ולענות.'],
+   ok:'שואל{|ת} שלוש שאלות מצמצמות לפני שמנחשת.',
+   trap:'לתת קטגוריה רחבה מדי. "חיה" עובד, "משהו בעולם" לא.',
+   easy:'לצמצם מראש: "חשבתי על חיה מהחווה".',
+   hard:'לספור שאלות ולנסות לשפר את השיא.'},
+  {id:'b', t:'פאזל גדול בשלבים', reps:6, pace:2, dur:'20 דקות', gear:'פאזל 60 חלקים ומעלה',
+   why:'פאזל גדול מלמד אסטרטגיה — קודם המסגרת, אחר כך לפי צבע — וזו חשיבה מסודרת, לא רק סבלנות.',
+   how:['קודם למיין: חלקי מסגרת בערימה אחת, השאר לפי צבע.','לבנות מסגרת, ואז אזור אחד בכל פעם.','לעצור באמצע ולהמשיך מחר — זה חלק מהתרגיל.'],
+   ok:'מתחיל{|ה} לבד מהמסגרת, בלי שתאמרו.',
+   trap:'להרכיב בשביל{ו|ה} כשנתקעת. שאלו "איזה צבע את מחפשת" והישארו בצד.',
+   easy:'פאזל 35 חלקים, ולמיין יחד.',
+   hard:'100 חלקים, בלי להסתכל בתמונה שעל הקופסה.'},
+  {id:'c', t:'למיין לפי שתי תכונות', reps:8, pace:3, dur:'6 דקות', gear:'כפתורים, לגו, גרביים',
+   why:'מיון לפי שני קריטריונים בו־זמנית הוא קפיצת מדרגה בחשיבה, והוא ההקדמה לטבלאות ולחשיבה לוגית.',
+   how:['פזרו כפתורים. "שימי בצד את כל האדומים הגדולים".','ואז שני סלים: אדום־גדול מול אדום־קטן.','לסיום — {הוא בוחר|היא בוחרת} כלל ואתם צריכים לנחש מה הכלל.'],
+   ok:'ממיי{ן|נת} נכון לפי שתי תכונות, ומצליח{|ה} להסביר את הכלל במילים.',
+   trap:'לתת יותר מדי פריטים. עשרים זה מספיק.',
+   easy:'תכונה אחת בלבד, עם הבדל בולט.',
+   hard:'שלוש תכונות, ולנחש כלל שאתם המצאתם.'}
+], ck:{t:'חושב{|ת} בשיטה', items:[
+  'שואל{|ת} שאלות מצמצמות במקום לנחש מיד',
+  'מתחיל{|ה} פאזל מהמסגרת בלי שמזכירים',
+  'ממיי{ן|נת} לפי שתי תכונות ומסבירה את הכלל',
+  'עונה על חידת היגיון פשוטה — "מה כבד יותר, קילו נוצות או קילו ברזל"',
+  'מזהה מה לא שייך בקבוצה של ארבעה ומסבירה למה'
+]}});
+
+/* ---------- עצמאות ויום־יום ---------- */
+L({id:'s7.self.1', st:7, dm:'self', ix:1, t:'אני מסתדר{|ת} לבד', acts:[
+  {id:'a', t:'להתלבש מא׳ עד ת׳', reps:14, pace:6, dur:'תוך כדי', gear:'בגדים',
+   why:'בכיתה א׳ מתלבשים אחרי התעמלות בלי שאף אחד עוזר. וזה גם מוריד{|ה} מכם עשר דקות מכל בוקר.',
+   how:['הכינו את הבגדים בערב — {הוא בוחר|היא בוחרת}, אתם מאשרים.','בבוקר: אתם יוצאים מהחדר. חוזרים אחרי חמש דקות.','בגד הפוך זה בסדר. מתקנים רק אם {הוא מבקש|היא מבקשת}.'],
+   ok:'מתלבש{|ת} לבד מההתחלה עד הסוף ברוב הבקרים.',
+   trap:'לתקן בגד הפוך. זה מוריד{|ה} את התחושה שהצליחה, וזו כל הפואנטה.',
+   easy:'לעשות את השלב האחרון — אתם מכניסים את הראש לחולצה, {הוא ממשיך|היא ממשיכה}.',
+   hard:'להוסיף גרביים, נעליים עם שרוכים, ומעיל עם רוכסן.'},
+  {id:'b', t:'להכין אוכל{|ת} לבד', reps:8, pace:3, dur:'10 דקות', gear:'לחם, ממרח, סכין חמאה',
+   why:'הכנת אוכל{|ת} היא מוטוריקה, סדר פעולות ואחריות בבת אחת — ובעיקר, זו גאווה אמיתית.',
+   how:['להוציא, למרוח, לסגור, לשים בצלחת ולנקות אחרי.','למזוג מים מקנקן קטן. שפכה — סמרטוט, בלי הערה.','להתקדם: לפרוס בננה בסכין חמאה, לערבב סלט.'],
+   ok:'מכי{ן|נה} כריך לבד מהתחלה ועד הניקיון, בלי הוראות באמצע.',
+   trap:'להתערב בבלגן. הבלגן הוא חלק מהמחיר, וזה מחיר זול.',
+   easy:'אתם מוציאים את הכול לשולחן, {הוא רק מורח|היא רק מורחת}.',
+   hard:'להכין את הכריך של אח קטן, ולזכור מה {הוא אוהב|היא אוהבת}.'},
+  {id:'c', t:'לארוז לפי רשימה', reps:8, pace:3, dur:'6 דקות', gear:'תיק, רשימה מצוירת',
+   why:'ילקוט זה מה שמחכה בעוד שנה. ארגון עצמי לפי רשימה הוא מיומנות שנלמדת מוקדם ומשרתת שנים.',
+   how:['ציירו יחד רשימה — בקבוק, כובע, בגד חלופי.','{הוא אורז|היא אורזת} לבד ומסמנת כל פריט ברשימה.','בסוף — לעבור על הרשימה יחד ולבדוק.'],
+   ok:'אורז{|ת} נכון לפי רשימה מצוירת בלי שתזכירו פריטים.',
+   trap:'לבדוק בשקט אחרי ולהוסיף מה שחסר. עדיף שתשכח פעם אחת ותרגיש.',
+   easy:'שלושה פריטים בלבד.',
+   hard:'רשימה כתובה במילים במקום ציורים, ולארוז לטיול של יומיים.'}
+], ck:{t:'עצמא{י|ית} ביום־יום', items:[
+  'מתלבש{|ת} לבד מההתחלה עד הסוף',
+  'מכי{ן|נה} לעצמה כריך ומנקה אחריה',
+  'מוזג{|ת} לעצמה שתייה מקנקן בלי לשפוך',
+  'אורז{|ת} תיק לפי רשימה מצוירת',
+  'הול{ך|כת} לשירותים ומסתדר{|ת} לבד לגמרי, כולל שטיפת ידיים'
+]}});
+
+L({id:'s7.self.2', st:7, dm:'self', ix:2, t:'אחריות ובטיחות', acts:[
+  {id:'a', t:'מטלה קבועה שהיא שלי', reps:14, pace:6, dur:'5 דקות', gear:'מטלה אחת',
+   why:'מטלה קבועה — לא "לעזור" מדי פעם — היא מה שמייצר תחושת שייכות ואחריות אמיתית בבית.',
+   how:['בחרו יחד מטלה אחת קטנה: לפרוס שולחן, להוציא זבל, להאכיל את החיה.','זו {שלו|שלה} בלבד, כל יום, גם כשאין חשק.','בלי תשלום ובלי מדבקות. השבח הוא "השולחן ערוך כי את עשית".'],
+   ok:'מבצע{|ת} את המטלה ברוב הימים אחרי תזכורת אחת בלבד.',
+   trap:'להחליף מטלה כל שבוע. הקביעות היא כל העניין.',
+   easy:'מטלה שנמשכת דקה אחת, ולעשות אותה יחד בשבוע הראשון.',
+   hard:'להוסיף מטלה שנייה, או מטלה שצריך לזכור בלי תזכורת בכלל.'},
+  {id:'b', t:'שעון וסדר יום', reps:8, pace:3, dur:'5 דקות', gear:'שעון קיר עם מחוגים',
+   why:'בכיתה א׳ הזמן מנהל את היום — הפסקה, שיעור, צהריים. תחושת זמן מפחיתה מאבקים בבית.',
+   how:['שעון מחוגים על הקיר. ללמד את השעה השלמה: "כשהמחוג הגדול על 12".','לקשור לפעולות: "בשמונה יוצאים", "בשבע מקלחת".','לתת {לו|לה} להיות אחראית להודיע כשהגיע הזמן.'],
+   ok:'מזהה שעה שלמה על שעון מחוגים ויודע{|ת} מה קורה בכמה שעות ביום.',
+   trap:'ללמד רבע וחצי מיד. שעה שלמה קודם, ולאורך זמן.',
+   easy:'להשתמש בטיימר חול שרואים בו את הזמן עובר.',
+   hard:'חצי שעה ורבע שעה, ולתכנן: "יש לנו עשרים דקות — מה נספיק?"'},
+  {id:'c', t:'הפרטים שחייבים לדעת', reps:10, pace:4, dur:'3 דקות', gear:'שום דבר',
+   why:'שם מלא וטלפון של הורה הם מה שמחזיר ילד אבוד. זה נלמד בשיר, בלי לעשות מזה סיפור מפחיד.',
+   how:['להמציא מנגינה לטלפון שלכם ולשיר אותה. פעם ביום, שבועיים.','לתרגל: "אם את מאבדת אותנו בסופר — למי פונים?" לעובד בקופה, לא לאדם ברחוב.','לומר את השם המלא ואת שם ההורים בקול.'],
+   ok:'אומר{|ת} שם מלא ומספר{|ת} טלפון של הורה מהזיכרון.',
+   trap:'לספר סיפורי חטיפה. המטרה היא כלי, לא פחד.',
+   easy:'שם מלא בלבד, והטלפון בפתק בכיס.',
+   hard:'להוסיף כתובת, ולתרגל מה עושים אם נפרדנו במקום עמוס.'}
+], ck:{t:'אחרא{י|ית} ובטוח{|ה}', items:[
+  'מבצע{|ת} מטלה קבועה ברוב ימות השבוע',
+  'אומר{|ת} שם מלא ומספר{|ת} טלפון של הורה מהזיכרון',
+  'מזהה שעה שלמה על שעון מחוגים',
+  'יודע{|ת} למי לפנות אם הלכה לאיבוד במקום ציבורי',
+  'חוצה כביש נכון — עוצר{|ת}, מסתכל{|ת} לשני הצדדים, הול{ך|כת} עם מבוגר'
+]}});
+
+
+/* קובצי התוכן מגדירים מזהי תרגיל קצרים (a/b/c) בתוך כל רמה.
+   כאן הופכים אותם למזהים גלובליים — בלי זה יומן של תרגיל אחד
+   היה נזקף לזכות כל תרגיל 'a' בכל רמה אחרת. */
+LEVELS.forEach(l => l.acts.forEach(a => { a.id = l.id + '.' + a.id; }));
+
+/* ---------------------------------------------------------------
+   3.5 פרופילים — קוד לכל משתמש, ולינק העברה בין מכשירים
+   ---------------------------------------------------------------
+   אין כאן שרת. הקוד מפריד בין משפחות *באותו דפדפן*, ומזהה את
+   הפרופיל. את הנתונים עצמם מעביר לינק ההעברה, שנושא אותם דחוסים
+   בתוך הכתובת — קוד לבדו לא יכול לשלוף מידע שקיים רק בטלפון השני.
+   --------------------------------------------------------------- */
+const KEYBASE = 'nextstep.v1';
+const LASTKEY = 'nextstep.last';
+const OWNER   = null;                     /* אין יותר פרופיל "בעלים" — ההזרעה תלויה בקובץ המקומי, לא בקוד */
+/* גרסת האינטרנט — היעד של לינק העברה שנוצר מקובץ מקומי */
+const WEB_URL = 'https://claude.ai/code/artifact/2f53e9ca-3653-4db6-a042-39cccbea37aa';
+const ALPHA   = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';  /* בלי 0/O/1/I */
+let UID = null;
+
+function newCode(){
+  let s = '';
+  const r = new Uint8Array(6);
+  (window.crypto || {}).getRandomValues ? crypto.getRandomValues(r) : r.forEach((_,i)=> r[i] = Math.floor(Math.random()*256));
+  for(let i=0;i<6;i++) s += ALPHA[r[i] % ALPHA.length];
+  return s;
+}
+function cleanCode(s){ return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6); }
+function hashParams(){
+  const o = {};
+  (location.hash || '').replace(/^#/,'').split('&').forEach(p => {
+    const i = p.indexOf('='); if(i > 0) o[p.slice(0,i)] = p.slice(i+1);
+  });
+  return o;
+}
+function setHash(uid){
+  UID = uid;
+  try{ localStorage.setItem(LASTKEY, uid); }catch(e){}
+  /* בתוך המסגרת שבה רץ Artifact הקריאה הזו זורקת SecurityError.
+     היא נוחות בלבד — לעולם לא מפילים עליה את הטעינה. */
+  try{
+    const h = '#u=' + uid;
+    if(location.hash !== h) history.replaceState(null, '', location.pathname + location.search + h);
+  }catch(e){}
+}
+function profileKey(uid){ return KEYBASE + '.' + uid; }
+function profileExists(uid){ try{ return !!localStorage.getItem(profileKey(uid)); }catch(e){ return false; } }
+function knownProfiles(){
+  const out = [];
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf(KEYBASE + '.') === 0) out.push(k.slice(KEYBASE.length + 1));
+    }
+  }catch(e){}
+  return out.sort();
+}
+
+/* אריזה ופריקה של מצב לתוך כתובת — gzip כשהדפדפן תומך, אחרת base64 גולמי */
+function b64u(u8){ let s=''; for(let i=0;i<u8.length;i++) s += String.fromCharCode(u8[i]);
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function unb64u(s){ s = String(s).replace(/-/g,'+').replace(/_/g,'/');
+  const bin = atob(s), u = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i); return u; }
+
+async function packState(obj){
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  if(typeof CompressionStream === 'function'){
+    try{
+      const st = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
+      return 'z' + b64u(new Uint8Array(await new Response(st).arrayBuffer()));
+    }catch(e){}
+  }
+  return 'j' + b64u(bytes);
+}
+async function unpackState(s){
+  const kind = String(s).charAt(0), bytes = unb64u(String(s).slice(1));
+  if(kind === 'z'){
+    const st = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return JSON.parse(new TextDecoder().decode(await new Response(st).arrayBuffer()));
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+/* ---------------------------------------------------------------
+   4. אחסון
+   --------------------------------------------------------------- */
+let DB = null;
+let CUR = null;      /* הילד הנוכחי */
+let CURDM = null;    /* התחום הנוכחי */
+let CURLV = null;    /* הרמה הנוכחית */
+let CURACT = null;
+
+function save(){ try{ localStorage.setItem(profileKey(UID), JSON.stringify(DB)); }catch(e){} }
+function load(uid){
+  try{ const raw = localStorage.getItem(profileKey(uid)); if(raw) return JSON.parse(raw); }catch(e){}
+  return null;
+}
+function emptyDB(){ return {v:1, kids:[]}; }
+
+/* הילדים ההתחלתיים מוגדרים רק בבנייה המקומית (part0b-doc.html), כדי
+   שהשמות ותאריכי הלידה לא יישבו בקוד של גרסאות שמתפרסמות החוצה. */
+function seedKids(){ return (typeof SEED === 'function') ? SEED() : emptyDB(); }
+
+/* ---------------------------------------------------------------
+   5. גיל, שלב, מין
+   --------------------------------------------------------------- */
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseISO(s){ const p=String(s).split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+function daysAgo(iso){ return Math.max(0, Math.round((parseISO(todayISO()) - parseISO(iso)) / 86400000)); }
+
+function ageMonths(dob){
+  const b = parseISO(dob), n = parseISO(todayISO());
+  let m = (n.getFullYear()-b.getFullYear())*12 + (n.getMonth()-b.getMonth());
+  if(n.getDate() < b.getDate()) m--;
+  return Math.max(0, m);
+}
+function ageDays(dob){ return Math.max(0, Math.round((parseISO(todayISO()) - parseISO(dob))/86400000)); }
+
+function ageText(k){
+  const m = ageMonths(k.dob), d = ageDays(k.dob), f = (k.g==='f');
+  const ben = f ? 'בת' : 'בן';
+  if(d < 21) return ben + ' ' + d + ' ימים';
+  if(m < 3)  return ben + ' ' + Math.round(d/7) + ' שבועות';
+  if(m < 24) return ben + ' ' + m + ' חודשים';
+  const y = Math.floor(m/12), r = m%12;
+  if(r === 0) return ben + ' ' + y + ' בדיוק';
+  return ben + ' ' + y + ' ו‑' + r + ' חודשים';
+}
+function stageOf(k){
+  const m = ageMonths(k.dob);
+  return STAGES.find(s => m >= s.a && m < s.b) || STAGES[STAGES.length-1];
+}
+function domainName(dm, stId){
+  const al = DOMAIN_ALIAS[dm.id];
+  if(al && al[stId]) return al[stId];
+  return dm.n;
+}
+
+/* החלפת מין בטקסט:  {זכר|נקבה}  ו‑{name} */
+function gx(s, k){
+  if(s == null) return '';
+  return String(s)
+    .replace(/\{name\}/g, k ? k.name : '')
+    .replace(/\{([^{}|]*)\|([^{}|]*)\}/g, (_, m, f) => (k && k.g === 'f') ? f : m);
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* קיצור על גבול מילה — לפני ה‑esc, כדי לא לחתוך ישות HTML באמצע */
+function shorten(s, n){
+  s = String(s);
+  if(s.length <= n) return s;
+  return s.slice(0, n).replace(/\s+\S*$/, '') + '…';
+}
+function gxe(s, k){ return esc(gx(s, k)); }
+
+/* ---------------------------------------------------------------
+   6. מנוע — ניקוד, מצב, המלצה
+   --------------------------------------------------------------- */
+const CREDIT = {easy:1.4, ok:1.0, hard:0.5};
+
+function actLogs(k, actId){ return k.logs.filter(l => l.a === actId).sort((x,y)=> x.d < y.d ? 1 : -1); }
+
+function actScore(k, actId){
+  let s = k.seeds[actId] || 0;
+  k.logs.forEach(l => {
+    if(l.a !== actId) return;
+    const d = daysAgo(l.d);
+    const fresh = d <= 14 ? 1 : (d <= 30 ? 0.5 : 0.2);
+    s += fresh * (CREDIT[l.r] || 1);
+  });
+  return s;
+}
+
+/* מצב תרגיל: go / ripe / paused / refresh */
+function actState(k, act){
+  const lg = actLogs(k, act.id);
+  const last3 = lg.slice(0,3).map(l=>l.r);
+  const last2 = lg.slice(0,2).map(l=>l.r);
+  let reps = act.reps;
+  if(last2.length === 2 && last2[0]==='easy' && last2[1]==='easy') reps = Math.max(2, Math.ceil(reps*0.7));
+  const score = actScore(k, act.id);
+  const pct = Math.min(1, score / reps);
+  const paused = last3.length === 3 && last3.every(r => r === 'hard');
+  const bothHard = last2.length === 2 && last2.every(r => r === 'hard');
+  const stale = lg.length > 0 && daysAgo(lg[0].d) > 21;
+
+  let state = 'go';
+  if(paused) state = 'paused';
+  else if(score >= reps && !bothHard) state = 'ripe';
+  else if(stale && score < reps) state = 'refresh';
+
+  const cred = CREDIT[(lg[0]||{}).r] || 1;
+  const left = Math.max(0, Math.ceil((reps - score) / cred));
+  return {state, score, reps, pct, left, logs:lg, last: lg[0] || null,
+          hintHarder: last2.length===2 && last2.every(r=>r==='easy'),
+          hintEasier: paused || (last3.length>=2 && last3.slice(0,2).every(r=>r==='hard'))};
+}
+
+function levelActs(k, lv){ return lv.acts.map(a => ({a, s: actState(k, a)})); }
+function levelDone(k, lv){ return !!(k.lvl[lv.id] && k.lvl[lv.id].done); }
+function levelReady(k, lv){ return levelActs(k, lv).every(x => x.s.state === 'ripe'); }
+function levelPct(k, lv){
+  const xs = levelActs(k, lv);
+  return xs.reduce((t,x)=> t + x.s.pct, 0) / xs.length;
+}
+
+/* האם נגענו ברמה הזו אי־פעם — יומן על אחד מתרגיליה, או רשומת רמה */
+function levelTouched(k, lv){
+  if(k.lvl[lv.id]) return true;
+  return lv.acts.some(a => (k.seeds[a.id] > 0) || k.logs.some(l => l.a === a.id));
+}
+
+/* הרמות של תחום שרלוונטיות לילד.
+   הגיל קובע מה נפתח, לא מה נסגר: השלב הנוכחי תמיד נכנס, ורמה
+   משלב קודם נכנסת רק אם באמת התחלנו אותה — כך ילד שנכנס לאפליקציה
+   בגיל שש לא מקבל תרגילי תינוקות, וילד שחצה שלב באמצע לא מאבד
+   את מה שנשאר לו פתוח. */
+function domainLevels(k, dmId){
+  const st = stageOf(k).id;
+  return LEVELS.filter(l => l.dm === dmId && (l.st === st || (l.st < st && levelTouched(k, l))))
+               .sort((a,b) => a.st - b.st || a.ix - b.ix);
+}
+function currentLevel(k, dmId){
+  const ls = domainLevels(k, dmId);
+  return ls.find(l => !levelDone(k, l)) || null;
+}
+function openDomains(k){
+  const m = ageMonths(k.dob);
+  return DOMAINS.filter(d => m >= d.from);
+}
+function daysSinceDomain(k, dmId){
+  const ids = LEVELS.filter(l=>l.dm===dmId).flatMap(l=>l.acts.map(a=>a.id));
+  const ls = k.logs.filter(l => ids.indexOf(l.a) >= 0).sort((x,y)=> x.d<y.d?1:-1);
+  return ls.length ? daysAgo(ls[0].d) : 99;
+}
+
+/* המלצות היום — לכל היותר שתיים */
+function recommend(k){
+  const st = stageOf(k).id;
+  const out = [];
+  openDomains(k).forEach(d => {
+    const lv = currentLevel(k, d.id);
+    if(!lv) return;
+    const xs = levelActs(k, lv);
+    const todo = xs.filter(x => x.s.state === 'go' || x.s.state === 'refresh');
+    const ready = todo.length === 0 && xs.every(x => x.s.state === 'ripe');
+    let act = null;
+    if(todo.length){
+      todo.sort((p,q)=> q.s.pct - p.s.pct);           /* הכי קרוב לסיום קודם */
+      act = todo[0].a;
+    } else if(!ready){
+      const p = xs.find(x => x.s.state === 'paused');
+      act = p ? p.a : null;
+    }
+    if(!act && !ready) return;
+    let pr = (lv.st < st ? 3 : 0)
+           + Math.min(daysSinceDomain(k, d.id), 14) / 14 * 2
+           + (1 - levelPct(k, lv));
+    if(ready) pr += 2.8;   /* אתגר בשל חייב להגיע לשני המקומות הראשונים */
+    if(act && k.logs.some(l => l.a === act.id && l.d === todayISO())) pr -= 5;
+    out.push({d, lv, act, ready, pr, prev: lv.st < st});
+  });
+  out.sort((a,b) => b.pr - a.pr);
+  return out;
+}
+
+/* ---------------------------------------------------------------
+   7. תצוגה — עזרים
+   --------------------------------------------------------------- */
+const $ = s => document.querySelector(s);
+function show(id){
+  document.querySelectorAll('.scr').forEach(e => e.classList.remove('on'));
+  $('#'+id).classList.add('on');
+  window.scrollTo(0,0);
+}
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(()=> t.classList.remove('on'), 2600);
+}
+function celebrate(h, p, stars){
+  $('#cele-h').textContent = h; $('#cele-p').textContent = p;
+  $('#cele-st').textContent = stars || '⭐️⭐️⭐️';
+  $('#cele').classList.add('on');
+}
+$('#cele-b').onclick = () => $('#cele').classList.remove('on');
+
+function ringSVG(pct, color){
+  const r = 22, c = 2 * Math.PI * r, off = c * (1 - Math.max(0, Math.min(1, pct)));
+  return `<svg viewBox="0 0 52 52" aria-hidden="true">
+    <circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--line2)" stroke-width="6"/>
+    <circle cx="26" cy="26" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round"
+      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 26 26)"/>
+  </svg>`;
+}
+function bar(pct){
+  return `<div class="pbt"><div class="pbf" style="width:${Math.round(Math.max(0,Math.min(1,pct))*100)}%"></div></div>`;
+}
+const RATE_HE = {easy:'היה קל', ok:'בדיוק', hard:'היה קשה'};
+const RATE_BG = {easy:'#DCEBD3', ok:'#F6E2CB', hard:'#F3DDD8'};
+const RATE_FG = {easy:'#3F6B2E', ok:'#A65E1E', hard:'#A6503C'};
+function whenText(iso){
+  const d = daysAgo(iso);
+  if(d === 0) return 'היום';
+  if(d === 1) return 'אתמול';
+  if(d < 7)  return 'לפני ' + d + ' ימים';
+  if(d < 14) return 'לפני שבוע';
+  if(d < 31) return 'לפני ' + Math.round(d/7) + ' שבועות';
+  return 'לפני יותר מחודש';
+}
+
+/* ---------------------------------------------------------------
+   8. מסך 1 — מדף הילדים
+   --------------------------------------------------------------- */
+function renderShelf(){
+  const el = $('#shelf');
+  el.innerHTML = DB.kids.map(k => {
+    const st = stageOf(k);
+    const dsl = k.logs.length ? daysAgo(k.logs.sort((a,b)=>a.d<b.d?1:-1)[0].d) : null;
+    const tag = dsl === null ? 'עוד לא התחלנו'
+              : dsl === 0 ? 'עשינו היום'
+              : dsl === 1 ? 'אתמול'
+              : 'לפני ' + dsl + ' ימים';
+    const due = (dsl === null || dsl >= 3);
+    return `<button class="kidc" data-kid="${k.id}">
+      ${avatarSVG(Object.assign({alt:k.name}, k.av))}
+      <div class="nm">${esc(k.name)}</div>
+      <div class="ag">${esc(ageText(k))}</div>
+      <div class="tag ${due?'due':''}">${esc(tag)}</div>
+    </button>`;
+  }).join('') + `<button class="addk" id="b-add"><span class="plus">+</span><span>ילד חדש</span></button>`;
+
+  el.querySelectorAll('[data-kid]').forEach(b => b.onclick = () => openChild(b.dataset.kid));
+  $('#b-add').onclick = startWizard;
+}
+
+/* ---------------------------------------------------------------
+   9. מסך 3 — בית הילד
+   --------------------------------------------------------------- */
+function openChild(id){
+  CUR = DB.kids.find(k => k.id === id);
+  renderChild();
+  show('s-child');
+}
+
+function renderChild(){
+  const k = CUR, st = stageOf(k);
+  $('#ch-name').textContent = k.name;
+  $('#ch-age').textContent = ageText(k) + ' · שלב ' + st.id + ' — ' + st.t;
+
+  const recs = recommend(k);
+  const doms = openDomains(k);
+  let html = '';
+
+  /* באנר שלב קודם */
+  const prevOpen = doms.map(d => currentLevel(k, d.id)).filter(l => l && l.st < st.id);
+  if(prevOpen.length){
+    html += `<div class="banner"><div class="bt"><b>${esc(k.name)} ${k.g==='f'?'עברה':'עבר'} לשלב ${st.id} — ${esc(st.t)}.</b>
+      נשאר${prevOpen.length>1?'ו':'ה'} ${prevOpen.length} ${prevOpen.length>1?'רמות':'רמה'} מהשלב הקודם, והן מופיעות ראשונות —
+      השלב החדש לא מוחק אותן.</div></div>`;
+  }
+
+  /* המלצת היום */
+  if(recs.length === 0){
+    html += `<div class="hero empty"><div class="eyeb">הכול פתוח</div>
+      <h2>סיימתם את כל מה שיש כאן</h2>
+      <p class="why">אין כרגע רמה פתוחה בתחומים של ${esc(k.name)}. התוכן של השלב הבא ייפתח עם הגיל.</p></div>`;
+  } else {
+    const r = recs[0];
+    html += heroCard(k, r, true, 0);
+    if(recs.length > 1 && recs[1].pr > 0.6) html += heroCard(k, recs[1], false, 1);
+  }
+
+  /* טבעות תחומים */
+  html += `<div class="lbl" style="margin:22px 0 0">התחומים של ${esc(k.name)}</div><div class="rings">`;
+  DOMAINS.forEach(d => {
+    const open = ageMonths(k.dob) >= d.from;
+    if(!open){
+      const yrs = d.from >= 12 ? (d.from/12).toString().replace('.5','.5') : d.from;
+      html += `<div class="ring locked"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="var(--line)" stroke-width="6" stroke-dasharray="4 6"/></svg>
+        <div class="rn">${esc(d.n)}</div><div class="rl">נפתח בגיל ${yrs}</div></div>`;
+      return;
+    }
+    const lv = currentLevel(k, d.id);
+    const all = domainLevels(k, d.id);
+    const doneN = all.filter(l => levelDone(k, l)).length;
+    const pct = lv ? levelPct(k, lv) : 1;
+    html += `<button class="ring" data-dm="${d.id}">
+      ${ringSVG(pct, d.c)}
+      <div class="rn">${esc(domainName(d, st.id))}</div>
+      <div class="rl">${lv ? ('רמה ' + Math.min(doneN + 1, all.length) + ' מתוך ' + all.length) : 'הכול הושלם'}</div>
+    </button>`;
+  });
+  html += `</div>`;
+
+  /* רצף שבועי */
+  const names = ['א','ב','ג','ד','ה','ו','ש'];
+  const now = parseISO(todayISO());
+  let wk = '<div class="lbl" style="margin:22px 0 0">השבוע</div><div class="week">';
+  for(let i = 6; i >= 0; i--){
+    const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const iso = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+    const hit = k.logs.some(l => l.d === iso);
+    wk += `<div class="wd ${hit?'hit':''} ${i===0?'today':''}"><i></i><span>${names[dt.getDay()]}</span></div>`;
+  }
+  wk += '</div>';
+  const cnt = k.logs.filter(l => daysAgo(l.d) < 7).length;
+  wk += `<div class="meta">${cnt} תרגילים בשבעת הימים האחרונים</div>`;
+  html += wk;
+
+  html += `<div class="note">האפליקציה מודדת תרגול, לא ילדים. טווח הנורמה רחב מאוד, וילדים לא מתקדמים בקצב אחיד בכל התחומים.</div>`;
+
+  $('#ch-body').innerHTML = html;
+  $('#ch-body').querySelectorAll('[data-dm]').forEach(b => b.onclick = () => openDomain(b.dataset.dm));
+  $('#ch-body').querySelectorAll('[data-rec]').forEach(b => b.onclick = () => {
+    const r = recs[+b.dataset.rec];
+    CURDM = DOMAINS.find(d => d.id === r.d.id); CURLV = r.lv;
+    if(r.ready) openCheck(); else openAct(r.act);
+  });
+}
+
+function heroCard(k, r, big, idx){
+  const st = stageOf(k).id;
+  if(r.ready){
+    return `<button data-rec="${idx}" class="hero" style="width:100%;text-align:start;display:block;margin-top:${big?0:12}px;border-top-color:${r.d.c}">
+      <div class="eyeb" style="color:${r.d.c}">אתגר מחכה · ${esc(domainName(r.d, st))}</div>
+      <h2>${esc(gx(r.lv.ck.t, k))}</h2>
+      <p class="why">כל התרגילים של הרמה בשלים. חמש שאלות תצפית, ואפשר לעלות רמה.</p>
+      <div class="meta">רמה ${r.lv.ix} · ${esc(r.lv.t)}</div>
+    </button>`;
+  }
+  const s = actState(k, r.act);
+  return `<button data-rec="${idx}" class="hero" style="width:100%;text-align:start;display:block;margin-top:${big?0:12}px;border-top-color:${r.d.c}">
+    <div class="eyeb" style="color:${r.d.c}">${big?'הצעד של היום':'ואם יש עוד זמן'} · ${esc(domainName(r.d, st))}${r.prev?' · מהשלב הקודם':''}</div>
+    <h2>${gxe(r.act.t, k)}</h2>
+    <p class="why">${esc(shorten(gx(r.act.why, k), big ? 9999 : 150))}</p>
+    <div class="pb">${bar(s.pct)}<small>${Math.round(s.score*10)/10} מתוך ${s.reps}</small></div>
+    <div class="meta">${esc(r.act.dur)} · ${r.act.pace} פעמים בשבוע${s.last?' · אחרון: '+esc(whenText(s.last.d))+', '+RATE_HE[s.last.r]:''}</div>
+  </button>`;
+}
+
+/* ---------------------------------------------------------------
+   10. מסך 4 — תחום
+   --------------------------------------------------------------- */
+function openDomain(dmId){
+  CURDM = DOMAINS.find(d => d.id === dmId);
+  CURLV = currentLevel(CUR, dmId);
+  renderDomain();
+  show('s-domain');
+}
+
+function renderDomain(){
+  const k = CUR, d = CURDM, st = stageOf(k).id;
+  const all = domainLevels(k, d.id);
+  $('#dm-name').textContent = domainName(d, st);
+  $('#dm-sub').textContent = k.name;
+
+  let html = '<div class="lmap">';
+  all.forEach(l => {
+    const done = levelDone(k, l);
+    const now = CURLV && CURLV.id === l.id;
+    const cls = done ? 'done' : (now ? (l.st < st ? 'prev' : 'now') : '');
+    html += `<div class="ln ${cls}"><b>${l.ix}</b>${esc(l.t)}${l.st < st ? '<div style="font-size:10px;opacity:.85">שלב '+l.st+'</div>' : ''}</div>`;
+  });
+  html += '</div>';
+
+  if(!CURLV){
+    html += `<div class="empty">כל הרמות שיש כאן הושלמו. הרמות הבאות ייפתחו כש${k.name} ${k.g==='f'?'תגדל':'יגדל'} לשלב הבא.</div>`;
+    $('#dm-body').innerHTML = html;
+    return;
+  }
+
+  const lv = CURLV;
+  if(lv.st < st){
+    html += `<div class="banner"><div class="bt">הרמה הזו נשארה פתוחה <b>מהשלב הקודם</b>. היא התנאי לרמות של השלב הנוכחי, ולכן היא ראשונה בתור.</div></div>`;
+  }
+  html += `<div class="lbl">רמה ${lv.ix} · ${esc(lv.t)}</div>`;
+
+  const xs = levelActs(k, lv);
+  xs.forEach(x => {
+    const s = x.s;
+    const pillCls = s.state==='ripe'?'ripe':s.state==='paused'?'paused':s.state==='refresh'?'rest':'go';
+    const pillTxt = s.state==='ripe'?'בשל':s.state==='paused'?'בהפסקה':s.state==='refresh'?'לרענן':'ממשיכים';
+    html += `<button class="arow" data-act="${x.a.id}">
+      <div class="ah"><div class="at">${gxe(x.a.t, k)}</div><div class="pill ${pillCls}">${pillTxt}</div></div>
+      <div class="pb">${bar(s.pct)}<small>${Math.round(s.score*10)/10} / ${s.reps}</small></div>
+      <div class="meta">${esc(x.a.dur)} · ${x.a.pace} בשבוע${s.last?' · '+esc(whenText(s.last.d)):''}</div>
+    </button>`;
+  });
+
+  const ready = xs.every(x => x.s.state === 'ripe');
+  const fails = (k.lvl[lv.id] && k.lvl[lv.id].fails) || null;
+  const retry = k.lvl[lv.id] && k.lvl[lv.id].retry;
+  html += `<div class="card" style="margin-top:16px;border-color:${ready?d.c:'var(--line)'}">
+    <div class="lbl">אתגר הרמה</div>
+    <h3 style="margin:4px 0 6px;font-size:18px">${esc(gx(lv.ck.t, k))}</h3>
+    <p style="font-size:15px;color:var(--soft)">${ready
+      ? 'כל התרגילים בשלים. חמישה דברים שאתם רואים בעיניים — וזהו.'
+      : 'ייפתח כשכל התרגילים ברמה יגיעו ל"בשל".'}</p>
+    ${retry ? `<div class="meta">ניסיון חוזר מומלץ החל מ‑${esc(retry)}</div>` : ''}
+    ${fails && fails.length ? `<div class="meta">בפעם הקודמת לא עברו: ${fails.map(i=>esc(gx(lv.ck.items[i],k))).join(' · ')}</div>` : ''}
+    <div class="btnrow"><button class="btn ${ready?'':'ghost'} sm" id="b-check" ${ready?'':'disabled'}>לגשת לאתגר</button></div>
+  </div>`;
+
+  $('#dm-body').innerHTML = html;
+  $('#dm-body').querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
+    openAct(lv.acts.find(a => a.id === b.dataset.act));
+  });
+  const bc = $('#b-check'); if(bc) bc.onclick = openCheck;
+}
+
+/* ---------------------------------------------------------------
+   11. מסך 5 — תרגיל
+   --------------------------------------------------------------- */
+function openAct(act){
+  CURACT = act;
+  renderAct();
+  show('s-act');
+}
+
+function renderAct(){
+  const k = CUR, a = CURACT, s = actState(k, a);
+  $('#ac-ttl').textContent = gx(a.t, k);
+  const fresh = s.logs.length === 0 && !(k.seeds[a.id] > 0);
+
+  let html = `<div class="card">
+    <div class="lbl">כמה נשאר</div>
+    <div class="pb" style="margin-top:8px">${bar(s.pct)}<small>${Math.round(s.score*10)/10} מתוך ${s.reps}</small></div>
+    <div class="meta">${s.state === 'ripe'
+        ? 'התרגיל בשל. אפשר לגשת לאתגר הרמה כשכל השאר בשלים.'
+        : s.state === 'paused'
+        ? 'שלוש פעמים ברצף היה קשה — עוצרים כאן. עברו לגרסה הקלה, וחזרו לזה בעוד שבועיים.'
+        : s.state === 'refresh'
+        ? 'עבר יותר משלושה שבועות. שווה לרענן פעם־פעמיים.'
+        : 'עוד ' + s.left + ' ' + (s.left === 1 ? 'פעם' : 'פעמים') + ' בקצב של ' + a.pace + ' בשבוע — זה בערך ' + Math.max(1, Math.ceil(s.left / a.pace)) + ' שבוע' + (Math.ceil(s.left/a.pace) > 1 ? 'ות' : '') + '.'}</div>
+    ${s.hintHarder ? '<div class="meta" style="color:var(--green)">פעמיים ברצף היה קל — נסו את הגרסה הקשה למטה, וקיצרנו לכם את היעד.</div>' : ''}
+  </div>`;
+
+  if(fresh){
+    html += `<div class="card"><div class="lbl">כבר עשיתם את זה קודם?</div>
+      <p style="font-size:15px;color:var(--soft);margin-top:4px">כדי שהמונה יתחיל מהמקום הנכון.</p>
+      <div class="rate">
+        <button class="rb" data-seed="0">לא<small>מתחילים מאפס</small></button>
+        <button class="rb ok" data-seed="0.3">קצת<small>כמה פעמים</small></button>
+        <button class="rb easy" data-seed="0.7">הרבה<small>זה כבר שגרה</small></button>
+      </div></div>`;
+  }
+
+  html += `<div class="sect"><h3>למה זה חשוב</h3><p>${gxe(a.why, k)}</p></div>
+    <div class="sect"><h3>איך עושים</h3><ol>${a.how.map(h => '<li>' + gxe(h, k) + '</li>').join('')}</ol></div>
+    <div class="facts">
+      <div class="fact"><div class="fl">ציוד</div><div class="fv" style="font-size:12.5px">${gxe(a.gear, k)}</div></div>
+      <div class="fact"><div class="fl">כמה זמן</div><div class="fv">${esc(a.dur)}</div></div>
+      <div class="fact"><div class="fl">קצב</div><div class="fv">${a.pace} בשבוע</div></div>
+    </div>
+    <div class="sect"><h3>איך נראית הצלחה</h3><p>${gxe(a.ok, k)}</p></div>
+    <div class="sect"><h3>טעות נפוצה</h3><p>${gxe(a.trap, k)}</p></div>
+    <div class="sect"><h3>אם צריך לשנות</h3><div class="vary">
+      <div class="vbox"><b>קל יותר</b><span>${gxe(a.easy, k)}</span></div>
+      <div class="vbox"><b>קשה יותר</b><span>${gxe(a.hard, k)}</span></div>
+    </div></div>`;
+
+  html += `<div class="card" style="margin-top:20px"><div class="lbl">עשינו עכשיו — איך היה?</div>
+    <div class="rate">
+      <button class="rb easy" data-r="easy">היה קל<small>אפשר להקשות</small></button>
+      <button class="rb ok" data-r="ok">בדיוק<small>הרמה נכונה</small></button>
+      <button class="rb hard" data-r="hard">היה קשה<small>נרד רמה</small></button>
+    </div></div>`;
+
+  if(s.logs.length){
+    html += `<div class="sect"><h3>הפעמים האחרונות</h3>`;
+    s.logs.slice(0,6).forEach(l => {
+      html += `<div class="jitem"><span class="jr" style="background:${RATE_BG[l.r]};color:${RATE_FG[l.r]}">${RATE_HE[l.r]}</span><span>${esc(whenText(l.d))}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  const b = $('#ac-body');
+  b.innerHTML = html;
+  b.querySelectorAll('[data-seed]').forEach(x => x.onclick = () => {
+    k.seeds[a.id] = a.reps * parseFloat(x.dataset.seed);
+    save(); renderAct();
+    toast(parseFloat(x.dataset.seed) ? 'נרשם. המונה מתחיל מהמקום הנכון.' : 'מתחילים מאפס.');
+  });
+  b.querySelectorAll('[data-r]').forEach(x => x.onclick = () => logAct(x.dataset.r));
+}
+
+function logAct(rating){
+  const k = CUR, a = CURACT;
+  const before = actState(k, a).state;
+  k.logs.push({a:a.id, d:todayISO(), r:rating});
+  save();
+  const s = actState(k, a);
+
+  if(before !== 'ripe' && s.state === 'ripe'){
+    if(levelReady(k, CURLV)) celebrate('הרמה מוכנה לאתגר!', 'כל התרגילים ברמה בשלים. אפשר לגשת לאתגר של ' + CURLV.t + '.', '🏅');
+    else celebrate('התרגיל בשל!', 'עוד תרגיל שסיימתם. נשאר להשלים את השאר ברמה.', '⭐️⭐️⭐️');
+  } else if(s.state === 'paused'){
+    toast('שלוש פעמים היה קשה — עוצרים. עברו לגרסה הקלה.');
+  } else if(rating === 'easy' && s.hintHarder){
+    toast('היה קל פעמיים — קיצרנו את היעד. נסו את הגרסה הקשה.');
+  } else {
+    toast(s.state === 'ripe' ? 'נרשם. התרגיל בשל.' : 'נרשם. עוד ' + s.left + (s.left === 1 ? ' פעם.' : ' פעמים.'));
+  }
+  renderAct();
+}
+
+/* ---------------------------------------------------------------
+   12. מסך 6 — אתגר רמה
+   --------------------------------------------------------------- */
+let CK = [];
+function openCheck(){
+  CK = CURLV.ck.items.map(() => false);
+  renderCheck();
+  show('s-check');
+}
+function renderCheck(){
+  const k = CUR, lv = CURLV;
+  let html = `<div class="card"><div class="lbl">${esc(CURDM ? domainName(CURDM, stageOf(k).id) : '')} · רמה ${lv.ix}</div>
+    <h3 style="margin:4px 0 6px;font-size:20px">${esc(gx(lv.ck.t, k))}</h3>
+    <p style="font-size:15px;color:var(--soft)">סמנו רק מה שראיתם בעיניים בשבועיים האחרונים. ארבעה מתוך חמישה — ${k.g==='f'?'היא עולה':'הוא עולה'} רמה.</p></div>
+    <div style="margin-top:14px">`;
+  lv.ck.items.forEach((it, i) => {
+    html += `<button class="chk ${CK[i]?'yes':''}" data-i="${i}"><div class="bx">${CK[i]?'✓':''}</div><span>${gxe(it, k)}</span></button>`;
+  });
+  const n = CK.filter(Boolean).length, need = Math.ceil(lv.ck.items.length * 0.8);
+  html += `</div><div class="card" style="margin-top:6px">
+    <div class="meta">סומנו ${n} מתוך ${lv.ck.items.length} · צריך ${need} כדי לעבור</div>
+    <div class="btnrow"><button class="btn full" id="b-ck-done">לסיים את האתגר</button></div>
+  </div>`;
+  $('#ck-body').innerHTML = html;
+  $('#ck-body').querySelectorAll('[data-i]').forEach(b => b.onclick = () => { CK[+b.dataset.i] = !CK[+b.dataset.i]; renderCheck(); });
+  $('#b-ck-done').onclick = finishCheck;
+}
+function finishCheck(){
+  const k = CUR, lv = CURLV;
+  const n = CK.filter(Boolean).length, need = Math.ceil(lv.ck.items.length * 0.8);
+  const fails = CK.map((v,i)=> v?-1:i).filter(i => i >= 0);
+  if(n >= need){
+    k.lvl[lv.id] = {done:1, ts:todayISO()};
+    save();
+    const nxt = currentLevel(k, lv.dm);
+    celebrate(k.name + ' ' + (k.g==='f'?'עלתה':'עלה') + ' רמה!',
+      nxt ? 'הרמה הבאה נפתחה: ' + nxt.t + '.' : 'זו הייתה הרמה האחרונה שיש כאן כרגע.', '🎉');
+    CURLV = nxt;
+    renderDomain(); show('s-domain'); renderChild();
+  } else {
+    /* מחזירים לרמה את התרגילים שמאמנים את מה שנפל */
+    const retry = new Date(); retry.setDate(retry.getDate() + 14);
+    const rIso = retry.getDate() + '.' + (retry.getMonth()+1);
+    k.lvl[lv.id] = {done:0, fails:fails, retry:rIso};
+    /* מורידים 40% מהניקוד של התרגילים ברמה, כדי שיחזרו למסך */
+    lv.acts.forEach(a => { k.seeds[a.id] = Math.max(0, actScore(k, a.id) * 0.6 - k.logs.filter(l=>l.a===a.id).length * 0); });
+    lv.acts.forEach(a => { k.logs = k.logs.filter(l => !(l.a === a.id && daysAgo(l.d) > 30)); });
+    save();
+    toast('עוד לא. סימנו מה חסר וקבענו ניסיון חוזר בעוד שבועיים.');
+    renderDomain(); show('s-domain');
+  }
+}
+
+/* ---------------------------------------------------------------
+   13. מסך 7 — יומן
+   --------------------------------------------------------------- */
+$('#b-journal').onclick = () => { renderJournal(); show('s-journal'); };
+function actById(id){
+  for(const l of LEVELS){ const a = l.acts.find(x => x.id === id); if(a) return {a, l}; }
+  return null;
+}
+function renderJournal(){
+  const k = CUR;
+  const byDay = {};
+  k.logs.slice().sort((a,b)=> a.d < b.d ? 1 : -1).forEach(l => { (byDay[l.d] = byDay[l.d] || []).push(l); });
+  const days = Object.keys(byDay).sort().reverse().slice(0, 30);
+  if(!days.length){ $('#jr-body').innerHTML = '<div class="empty">עוד לא נרשם כלום. כל "עשינו" יופיע כאן.</div>'; return; }
+
+  /* סיכום שבועי */
+  const w = k.logs.filter(l => daysAgo(l.d) < 7);
+  const byDm = {};
+  w.forEach(l => { const f = actById(l.a); if(f) byDm[f.l.dm] = (byDm[f.l.dm]||0)+1; });
+  const top = Object.keys(byDm).sort((a,b)=>byDm[b]-byDm[a]);
+  let html = `<div class="card"><div class="lbl">השבוע האחרון</div>
+    <h3 style="margin:4px 0 6px;font-size:19px">${w.length} תרגילים${top.length? ', הכי הרבה ב'+esc(DOMAINS.find(d=>d.id===top[0]).n) : ''}</h3>
+    <p style="font-size:15px;color:var(--soft)">${
+      openDomains(k).filter(d => daysSinceDomain(k, d.id) > 10).length
+      ? 'לא נגעתם השבוע ב: ' + esc(openDomains(k).filter(d => daysSinceDomain(k, d.id) > 10).map(d=>d.n).join(' · '))
+      : 'נגעתם בכל התחומים הפתוחים לאחרונה.'}</p></div>`;
+
+  days.forEach(d => {
+    html += `<div class="jday"><div class="jd">${esc(whenText(d))} · ${d.split('-').reverse().join('.')}</div>`;
+    byDay[d].forEach(l => {
+      const f = actById(l.a);
+      html += `<div class="jitem"><span class="jr" style="background:${RATE_BG[l.r]};color:${RATE_FG[l.r]}">${RATE_HE[l.r]}</span><span>${f ? gxe(f.a.t, k) : esc(l.a)}</span></div>`;
+    });
+    html += `</div>`;
+  });
+  $('#jr-body').innerHTML = html;
+}
+
+/* ---------------------------------------------------------------
+   14. מסך 2 — אשף ילד חדש
+   --------------------------------------------------------------- */
+let W = null;
+function startWizard(edit){
+  W = edit
+    ? {step:1, edit:edit.id, name:edit.name, g:edit.g,
+       dd:edit.dob.split('-')[2], mm:edit.dob.split('-')[1], yy:edit.dob.split('-')[0],
+       av:Object.assign({}, edit.av)}
+    : {step:1, name:'', g:'m', dd:'', mm:'', yy:'',
+       av:{skin:'s2', hair:'h1', style:'short', eye:'e1', shirt:SHIRTS[2], print:'none'}};
+  renderWizard(); show('s-new');
+}
+function renderWizard(){
+  $('#wiz-ttl').textContent = W.edit ? 'עריכת ילד' : 'ילד חדש';
+  const b = $('#wiz-body');
+  if(W.step === 1){
+    b.innerHTML = `
+      <div class="field"><label>שם</label><input id="w-name" value="${esc(W.name)}" placeholder="השם שקוראים לו בבית"></div>
+      <div class="field"><label>מין</label><div class="seg">
+        <button data-g="m" class="${W.g==='m'?'on':''}">בן</button>
+        <button data-g="f" class="${W.g==='f'?'on':''}">בת</button></div></div>
+      <div class="field"><label>תאריך לידה</label><div class="dob">
+        <input id="w-dd" inputmode="numeric" maxlength="2" placeholder="יום"  value="${esc(W.dd)}">
+        <input id="w-mm" inputmode="numeric" maxlength="2" placeholder="חודש" value="${esc(W.mm)}">
+        <input id="w-yy" inputmode="numeric" maxlength="4" placeholder="שנה"  value="${esc(W.yy)}"></div>
+        <div class="meta" id="w-age"></div></div>
+      <div class="btnrow"><button class="btn full" id="w-next">לאווטאר</button></div>`;
+    b.querySelectorAll('[data-g]').forEach(x => x.onclick = () => { W.g = x.dataset.g; renderWizard(); });
+    const upd = () => {
+      W.name = $('#w-name').value.trim();
+      W.dd = $('#w-dd').value; W.mm = $('#w-mm').value; W.yy = $('#w-yy').value;
+      const iso = wizISO();
+      $('#w-age').textContent = iso ? ageText({dob:iso, g:W.g}) + ' · שלב ' + stageOf({dob:iso}).id + ' — ' + stageOf({dob:iso}).t : '';
+      W.av.baby = iso ? ageMonths(iso) < 12 : false;
+    };
+    ['w-name','w-dd','w-mm','w-yy'].forEach(id => $('#'+id).oninput = upd);
+    upd();
+    $('#w-next').onclick = () => {
+      upd();
+      if(!W.name) return toast('צריך שם');
+      if(!wizISO()) return toast('תאריך לידה לא תקין');
+      if(W.av.baby && W.av.style !== 'wisp' && W.av.style !== 'bald') W.av.style = 'wisp';
+      W.step = 2; renderWizard();
+    };
+  } else {
+    const av = Object.assign({alt:W.name}, W.av);
+    b.innerHTML = `
+      <div class="preview">${avatarSVG(av)}</div>
+      <div class="field"><label>גוון עור</label><div class="swatches">${SKINS.map(s=>`<button class="sw ${W.av.skin===s.id?'on':''}" data-skin="${s.id}" style="background:${s.f}" aria-label="עור"></button>`).join('')}</div></div>
+      <div class="field"><label>צבע שיער</label><div class="swatches">${HAIRS.map(h=>`<button class="sw ${W.av.hair===h.id?'on':''}" data-hair="${h.id}" style="background:${h.f}" aria-label="${h.n}"></button>`).join('')}</div></div>
+      <div class="field"><label>תסרוקת</label><div class="chips">${STYLES.map(s=>`<button class="chip ${W.av.style===s.id?'on':''}" data-style="${s.id}">${s.n}</button>`).join('')}
+        <button class="chip ${W.av.bow?'on':''}" data-bow="1">סרט</button></div></div>
+      <div class="field"><label>צבע עיניים</label><div class="chips">${EYES.map(e=>`<button class="chip ${W.av.eye===e.id?'on':''}" data-eye="${e.id}"><span class="dot" style="background:${e.c};display:inline-block;margin-left:6px"></span>${e.n}</button>`).join('')}</div></div>
+      <div class="field"><label>צבע חולצה</label><div class="swatches">${SHIRTS.map(c=>`<button class="sw ${W.av.shirt===c?'on':''}" data-shirt="${c}" style="background:${c}" aria-label="חולצה"></button>`).join('')}</div></div>
+      <div class="field"><label>הדפס</label><div class="chips">${PRINTS.map(p=>`<button class="chip ${W.av.print===p.id?'on':''}" data-print="${p.id}">${p.n}</button>`).join('')}</div></div>
+      <div class="btnrow"><button class="btn full" id="w-save">${W.edit?'לשמור':'להוסיף את '+esc(W.name)}</button>
+        <button class="btn ghost full" id="w-back">חזרה לפרטים</button></div>`;
+    const set = (key, val) => { W.av[key] = val; renderWizard(); };
+    b.querySelectorAll('[data-skin]').forEach(x => x.onclick = () => set('skin', x.dataset.skin));
+    b.querySelectorAll('[data-hair]').forEach(x => x.onclick = () => set('hair', x.dataset.hair));
+    b.querySelectorAll('[data-style]').forEach(x => x.onclick = () => set('style', x.dataset.style));
+    b.querySelectorAll('[data-eye]').forEach(x => x.onclick = () => set('eye', x.dataset.eye));
+    b.querySelectorAll('[data-shirt]').forEach(x => x.onclick = () => set('shirt', x.dataset.shirt));
+    b.querySelectorAll('[data-print]').forEach(x => x.onclick = () => set('print', x.dataset.print));
+    b.querySelector('[data-bow]').onclick = () => set('bow', !W.av.bow);
+    $('#w-back').onclick = () => { W.step = 1; renderWizard(); };
+    $('#w-save').onclick = saveWizard;
+  }
+}
+function wizISO(){
+  const d = parseInt(W.dd,10), m = parseInt(W.mm,10), y = parseInt(W.yy,10);
+  if(!(d>=1&&d<=31&&m>=1&&m<=12&&y>=1990&&y<=2100)) return null;
+  const iso = y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  const t = parseISO(iso);
+  if(t.getDate() !== d || t.getMonth() !== m-1) return null;
+  if(t > parseISO(todayISO())) return null;
+  return iso;
+}
+function saveWizard(){
+  const iso = wizISO(); if(!iso) return toast('תאריך לידה לא תקין');
+  if(W.edit){
+    const k = DB.kids.find(x => x.id === W.edit);
+    k.name = W.name; k.g = W.g; k.dob = iso; k.av = W.av;
+  } else {
+    DB.kids.push({id:'k'+Date.now(), name:W.name, g:W.g, dob:iso, av:W.av, logs:[], seeds:{}, lvl:{}});
+  }
+  save(); renderShelf(); show('s-kids');
+  toast(W.edit ? 'נשמר' : W.name + ' ' + (W.g==='f'?'נוספה':'נוסף'));
+}
+
+/* ---------------------------------------------------------------
+   14.4 סנכרון בענן — כבוי כברירת מחדל
+   ---------------------------------------------------------------
+   כל עוד לא הוזנה כתובת שרת, שום בקשה לא יוצאת מהמכשיר.
+   קוד השרת נמצא ב‑next-step-src\sync-worker.js.
+   --------------------------------------------------------------- */
+const SYNCKEY = 'nextstep.sync';
+function syncCfg(){
+  try{ return JSON.parse(localStorage.getItem(SYNCKEY) || 'null') || {url:'', secret:''}; }
+  catch(e){ return {url:'', secret:''}; }
+}
+function syncSave(c){ try{ localStorage.setItem(SYNCKEY, JSON.stringify(c)); }catch(e){} }
+function syncOn(){ const c = syncCfg(); return !!(c.url && /^https:\/\//.test(c.url)); }
+
+async function cloudPush(){
+  const c = syncCfg();
+  if(!syncOn()) return toast('לא הוגדרה כתובת שרת');
+  try{
+    const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + UID, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json', 'X-Secret': c.secret || ''},
+      body: JSON.stringify(DB)
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || !j.ok) return toast('העלאה נכשלה: ' + (j.error || r.status));
+    toast('הועלה לענן · ' + UID);
+  }catch(e){ toast('אין חיבור לשרת'); }
+}
+async function cloudPull(){
+  const c = syncCfg();
+  if(!syncOn()) return toast('לא הוגדרה כתובת שרת');
+  try{
+    const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + UID);
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || !j.ok) return toast('הורדה נכשלה: ' + (j.error || r.status));
+    if(!j.data || !Array.isArray(j.data.kids)) return toast('אין עדיין נתונים בענן לקוד ' + UID);
+    const n = j.data.kids.length;
+    if(!confirm('הורדת ' + n + ' ילדים מהענן תחליף את מה שיש במכשיר הזה. להמשיך?')) return;
+    DB = j.data; save(); renderShelf(); show('s-kids');
+    toast('הורדו ' + n + ' ילדים מהענן');
+  }catch(e){ toast('אין חיבור לשרת'); }
+}
+
+/* ---------------------------------------------------------------
+   14.5 שמירת קובץ
+   ---------------------------------------------------------------
+   קישור <a download> פשוט אינו עובד כשהדף רץ בתוך צופה Artifact —
+   שם שמירה עוברת דרך יכולת downloads שהצופה מאשר. תומכים בשתי הדרכים.
+   --------------------------------------------------------------- */
+let _dl;
+async function getDownloads(){
+  if(_dl !== undefined) return _dl;
+  _dl = null;
+  try{ if(window.claude && typeof claude.use === 'function') _dl = await claude.use('downloads'); }catch(e){}
+  return _dl;
+}
+async function exportFile(){
+  const name = 'hatzaad-haba-' + UID + '-' + todayISO() + '.json';
+  const text = JSON.stringify(DB, null, 2);
+  const dl = await getDownloads();
+  if(dl){
+    try{ await dl.save({filename:name, data:text}); toast('הקובץ נשמר'); }
+    catch(err){
+      const c = (err && err.code) || 'unavailable';
+      if(c === 'declined')          toast('בוטל — לא נשמר כלום');
+      else if(c === 'too_large')    toast('הקובץ גדול מדי לשמירה');
+      else if(c === 'rate_limited') toast('רגע — יש כבר בקשת שמירה פתוחה');
+      else                          toast('שמירה לקובץ לא זמינה כאן. השתמשו בלינק ההעברה.');
+    }
+    return;
+  }
+  try{
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], {type:'application/json'}));
+    a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    toast('הקובץ ירד');
+  }catch(e){ toast('שמירה לקובץ לא זמינה כאן. השתמשו בלינק ההעברה.'); }
+}
+
+/* ---------------------------------------------------------------
+   15. מסך 8 — הגדרות
+   --------------------------------------------------------------- */
+$('#b-settings').onclick = () => { renderSettings(); show('s-settings'); };
+function renderSettings(){
+  let html = `<div class="lbl">הילדים</div>`;
+  DB.kids.forEach(k => {
+    const st = stageOf(k);
+    html += `<div class="card"><div style="display:flex;gap:12px;align-items:center">
+      <div style="width:44px;flex:none">${avatarSVG(Object.assign({alt:k.name}, k.av))}</div>
+      <div style="flex:1"><b style="font-size:17px">${esc(k.name)}</b>
+        <div class="meta">${esc(ageText(k))} · שלב ${st.id} — ${esc(st.t)} · ${k.logs.length} תרגילים נרשמו</div></div></div>
+      <div class="btnrow"><button class="btn ghost sm" data-edit="${k.id}">עריכה</button>
+        <button class="btn ghost sm" data-reset="${k.id}">איפוס התקדמות</button>
+        <button class="btn ghost sm" data-del="${k.id}">מחיקה</button></div></div>`;
+  });
+  html += `<div class="lbl" style="margin-top:24px">הקוד שלך</div>
+    <div class="card"><div class="code">${esc(UID)}</div>
+      <p style="font-size:15px;color:var(--soft)">הקוד מזהה את הפרופיל שלכם. הוא מפריד בין משפחות שמשתמשות באותו דפדפן, והוא מה שמקלידים במסך הפתיחה כדי לחזור לפרופיל הזה.</p>
+      <div class="btnrow"><button class="btn ghost sm" id="b-switch">החלפת פרופיל</button></div></div>
+
+    <div class="lbl" style="margin-top:24px">העברה למכשיר אחר</div>
+    <div class="card">
+      <p style="font-size:15px;color:var(--soft)">אין כאן שרת, ולכן הקוד לבדו לא מביא נתונים ממכשיר אחר. <b>לינק ההעברה נושא את הנתונים בתוכו</b> — שלחו אותו לעצמכם והוא יטען הכול בצד השני.</p>
+      <div class="btnrow"><button class="btn sm" id="b-link">יצירת לינק העברה</button></div>
+      <div id="link-box" style="margin-top:12px"></div>
+    </div>
+
+    <div class="lbl" style="margin-top:24px">סנכרון בענן ${syncOn() ? '· פעיל' : '· כבוי'}</div>
+    <div class="card">
+      <p style="font-size:15px;color:var(--soft)">${syncOn()
+        ? 'כשמוגדר, הקוד <b>' + esc(UID) + '</b> מושך את הנתונים מכל מכשיר — בלי קוד העברה.'
+        : 'כבוי. כל עוד השדה ריק, שום נתון לא עוזב את המכשיר. קוד השרת נמצא בקובץ <code>sync-worker.js</code> לצד האפליקציה, עם הוראות התקנה.'}</p>
+      <div class="field" style="margin-top:12px"><label>כתובת השרת</label>
+        <input id="sy-url" placeholder="https://...workers.dev" value="${esc(syncCfg().url)}"></div>
+      <div class="field"><label>סיסמה (SECRET)</label>
+        <input id="sy-sec" type="password" placeholder="נדרש כדי להעלות" value="${esc(syncCfg().secret)}"></div>
+      <div class="btnrow"><button class="btn ghost sm" id="sy-save">שמירת הגדרות</button>
+        <button class="btn sm" id="sy-up" ${syncOn()?'':'disabled'}>העלאה לענן</button>
+        <button class="btn ghost sm" id="sy-down" ${syncOn()?'':'disabled'}>הורדה מהענן</button></div>
+    </div>
+
+    <div class="lbl" style="margin-top:24px">גיבוי לקובץ</div>
+    <div class="card"><p style="font-size:15px;color:var(--soft)">לגיבוי ארוך טווח, או להעברה כשהלינק ארוך מדי לשליחה.</p>
+    <div class="btnrow"><button class="btn ghost sm" id="b-exp">ייצוא לקובץ</button>
+      <button class="btn ghost sm" id="b-imp">ייבוא מקובץ</button></div>
+    <input type="file" id="f-imp" accept="application/json,.json" style="display:none"></div>
+    <div class="note">הצעד הבא · כלי להורים · פרופיל ${esc(UID)} · ${DB.kids.length} ילדים · גרסה 1.1</div>`;
+  $('#st-body').innerHTML = html;
+
+  $('#st-body').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => startWizard(DB.kids.find(k=>k.id===b.dataset.edit)));
+  $('#st-body').querySelectorAll('[data-reset]').forEach(b => b.onclick = () => {
+    const k = DB.kids.find(x=>x.id===b.dataset.reset);
+    if(!confirm('לאפס את כל ההתקדמות של ' + k.name + '? הפעולה לא הפיכה.')) return;
+    k.logs = []; k.seeds = {}; k.lvl = {}; save(); renderSettings(); toast('אופס');
+  });
+  $('#st-body').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    const k = DB.kids.find(x=>x.id===b.dataset.del);
+    if(!confirm('למחוק את ' + k.name + ' לגמרי? כל ההיסטוריה תימחק.')) return;
+    DB.kids = DB.kids.filter(x => x.id !== k.id); save(); renderSettings(); renderShelf(); toast('נמחק');
+  });
+  $('#b-switch').onclick = () => { renderWelcome(); show('s-welcome'); };
+  $('#b-link').onclick = async () => {
+    const payload = await packState(Object.assign({}, DB, {uid: UID}));   /* הקוד נוסע יחד עם הנתונים */
+    /* לינק file:// אינו שווה כלום במכשיר אחר — שם אין את הקובץ.
+       לכן מהקובץ המקומי הלינק מצביע תמיד על גרסת האינטרנט. */
+    const base = (location.protocol === 'file:') ? WEB_URL : location.href.split('#')[0];
+    const url = base + '#u=' + UID + '&d=' + payload;
+    const kb = Math.round(payload.length / 102.4) / 10;
+    const logs = DB.kids.reduce((t,k)=>t+k.logs.length,0);
+    $('#link-box').innerHTML = `
+      <div class="lbl" style="margin-top:4px">1 · קוד ההעברה — הדרך הבטוחה</div>
+      <textarea class="xfer" id="xf-code" readonly rows="3"></textarea>
+      <div class="btnrow"><button class="btn sm" id="b-copy-code">העתקת הקוד</button></div>
+      <div class="meta">מדביקים אותו במכשיר החדש במסך הפתיחה, תחת "יש לי קוד העברה".</div>
+      <div class="lbl" style="margin-top:18px">2 · או לינק ישיר</div>
+      <textarea class="xfer" id="xf-url" readonly rows="3"></textarea>
+      <div class="btnrow"><button class="btn ghost sm" id="b-copy-url">העתקת הלינק</button></div>
+      <div class="meta">${kb} KB · ${DB.kids.length} ילדים · ${logs} רישומים${
+        url.length > 8000 ? ' · <b style="color:var(--orange)">ארוך — אפליקציות הודעות עלולות לחתוך אותו. אם לא נטען, השתמשו בקוד.</b>' : ''}</div>`;
+    $('#xf-code').value = payload;
+    $('#xf-url').value = url;
+    const cp = (id, msg) => () => {
+      const t = $(id); t.select(); t.setSelectionRange(0, 999999);
+      const done = () => toast(msg);
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(done, () => { document.execCommand('copy'); done(); });
+      else { document.execCommand('copy'); done(); }
+    };
+    $('#b-copy-code').onclick = cp('#xf-code', 'הקוד הועתק');
+    $('#b-copy-url').onclick  = cp('#xf-url',  'הלינק הועתק');
+  };
+  $('#sy-save').onclick = () => {
+    const u = $('#sy-url').value.trim();
+    if(u && !/^https:\/\//.test(u)) return toast('הכתובת חייבת להתחיל ב‑https');
+    syncSave({url:u, secret:$('#sy-sec').value.trim()});
+    renderSettings();
+    toast(u ? 'סנכרון הופעל' : 'סנכרון כובה');
+  };
+  const su = $('#sy-up'), sd = $('#sy-down');
+  if(su) su.onclick = cloudPush;
+  if(sd) sd.onclick = cloudPull;
+  $('#b-exp').onclick = exportFile;
+  $('#b-imp').onclick = () => $('#f-imp').click();
+  $('#f-imp').onchange = e => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try{
+        const d = JSON.parse(r.result);
+        if(!d || !Array.isArray(d.kids)) throw 0;
+        if(!confirm('הייבוא יחליף את הנתונים במכשיר הזה. להמשיך?')) return;
+        DB = d; save(); renderSettings(); renderShelf(); toast('יובא בהצלחה');
+      }catch(err){ toast('הקובץ לא תקין'); }
+    };
+    r.readAsText(f);
+  };
+}
+
+/* ---------------------------------------------------------------
+   16. ניווט והפעלה
+   --------------------------------------------------------------- */
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const t = b.dataset.back;
+  if(t === 's-kids'){ renderShelf(); }
+  if(t === 's-child'){ renderChild(); }
+  if(t === 's-domain'){ if(CURDM) renderDomain(); else { renderChild(); return show('s-child'); } }
+  show(t);
+});
+
+/* ---------------------------------------------------------------
+   17. מסך 0 — פרופיל: חדש, קיים, או לינק העברה
+   --------------------------------------------------------------- */
+function renderWelcome(mode){
+  const b = $('#wc-body');
+
+  if(mode === 'have'){
+    b.innerHTML = `
+      <div class="hello"><div class="mark">🔑</div><h1>הקוד שלך</h1>
+        <p>שש ספרות ואותיות, מהמסך "הגדרות" בפרופיל שלכם.</p></div>
+      <div class="card" style="margin-top:18px">
+        <input class="code input" id="wc-code" inputmode="latin" maxlength="6" placeholder="XXXXXX" autocomplete="off">
+        <div class="btnrow"><button class="btn full" id="wc-go">להיכנס</button>
+          <button class="btn ghost full" id="wc-back">חזרה</button></div>
+      </div>
+      <div class="note">הקוד פותח את הפרופיל אבל לא מביא איתו נתונים ממכשיר אחר — אין כאן שרת שיחזיק אותם.
+        כדי להביא ילדים והתקדמות, השתמשו ב<b>קוד ההעברה</b> מהמסך הקודם.</div>`;
+    $('#wc-go').onclick = () => {
+      const c = cleanCode($('#wc-code').value);
+      if(c.length !== 6) return toast('קוד בן שש תווים');
+      boot(c, !profileExists(c));
+    };
+    $('#wc-back').onclick = () => renderWelcome();
+    return;
+  }
+
+  if(mode === 'paste'){
+    b.innerHTML = `
+      <div class="hello"><div class="mark">📥</div><h1>קוד העברה</h1>
+        <p>הדביקו כאן את הקוד — או את הלינק המלא — שיצרתם במכשיר שבו הילדים כבר קיימים.</p></div>
+      <div class="card" style="margin-top:18px">
+        <textarea class="xfer" id="wc-paste" rows="5" placeholder="הדביקו כאן"></textarea>
+        <div id="wc-err"></div>
+        <div class="btnrow"><button class="btn full" id="wc-load">טעינה</button>
+          <button class="btn ghost full" id="wc-back2">חזרה</button></div>
+      </div>
+      <div class="note">את הקוד מייצרים בהגדרות, תחת "העברה למכשיר אחר". הוא נושא בתוכו את כל הילדים וההתקדמות.</div>`;
+    $('#wc-load').onclick = () => importTransfer($('#wc-paste').value);
+    $('#wc-back2').onclick = () => renderWelcome();
+    return;
+  }
+
+  const others = knownProfiles();
+  b.innerHTML = `
+    <div class="hello"><div class="mark">🌱</div><h1>הצעד הבא</h1>
+      <p>לכל ילד, דבר אחד לעשות היום — לפי הגיל שלו, לפי הרמה שלו, ולפי מה שכבר עשיתם.</p></div>
+    <div class="card" style="margin-top:22px">
+      <div class="btnrow"><button class="btn full" id="wc-new">אני חדש כאן</button>
+        <button class="btn ghost full" id="wc-paste-b">יש לי קוד העברה — הילדים כבר קיימים אצלי</button>
+        <button class="btn ghost full" id="wc-have">יש לי קוד פרופיל</button></div>
+    </div>
+    ${others.length ? `<div class="lbl" style="margin-top:24px">פרופילים במכשיר הזה</div>
+      <div class="btnrow">${others.map(u=>`<button class="btn ghost sm" data-sw="${u}">${u}</button>`).join('')}</div>` : ''}
+    <div class="note">הכול נשמר בדפדפן הזה בלבד. אין חשבון, אין הרשמה, ושום נתון לא עוזב את המכשיר.</div>`;
+  $('#wc-new').onclick = () => { let c; do{ c = newCode(); } while(profileExists(c)); boot(c, true); };
+  $('#wc-paste-b').onclick = () => renderWelcome('paste');
+  $('#wc-have').onclick = () => renderWelcome('have');
+  b.querySelectorAll('[data-sw]').forEach(x => x.onclick = () => boot(x.dataset.sw));
+}
+
+/* מקבל קוד העברה גולמי, או לינק מלא שמכיל אותו */
+/* מקבל קוד העברה גולמי, או לינק מלא שמכיל אותו */
+async function importTransfer(raw){
+  const err = m => {
+    const box = $('#wc-err');
+    if(box){ box.innerHTML = '<div class="note" style="border-color:var(--orange);color:var(--ink)">' + esc(m) + '</div>'; }
+    toast(m);
+  };
+  let s = String(raw || '').trim();
+  if(!s) return err('לא הודבק כלום.');
+
+  const m = s.match(/[#&]d=([^&\s]+)/);
+  let uid = null;
+  if(m){
+    const mu = s.match(/[#&]u=([A-Za-z0-9]{4,12})/);
+    if(mu) uid = cleanCode(mu[1]);
+    s = m[1];
+  }
+  s = s.replace(/\s+/g, '');
+  if(s.length < 8) return err('הקוד קצר מדי — כנראה לא הועתק כולו.');
+
+  let problem;
+  try{ problem = await consumeTransfer({u: uid, d: s}); }
+  catch(e){ return err('משהו נכשל בטעינה: ' + (e && e.message ? e.message : 'שגיאה לא ידועה')); }
+  if(problem) return err(problem);
+}
+
+function boot(uid, isNew){
+  DB = load(uid);
+  if(!DB) DB = emptyDB();
+  UID = uid;
+  save();
+  renderShelf();
+  show(DB.kids.length ? 's-kids' : 's-new');
+  if(!DB.kids.length) startWizard();
+  setHash(uid);                       /* אחרי הציור, ואף פעם לא לפניו */
+  if(isNew) setTimeout(() => toast('הקוד שלך: ' + uid + ' — שמור אותו'), 600);
+}
+
+/* לינק העברה בכתובת */
+/* מחזיר null בהצלחה, או מחרוזת שמסבירה מה נכשל */
+async function consumeTransfer(p){
+  let state;
+  try{ state = await unpackState(p.d); }
+  catch(e){ return 'הקוד לא נפתח. ודאו שהעתקתם אותו במלואו, בלי רווחים ובלי שורות חסרות.'; }
+  if(!state || !Array.isArray(state.kids)) return 'הקוד נפתח אבל לא נמצאו בו ילדים.';
+
+  const uid = cleanCode(p.u) || cleanCode(state.uid) || newCode();
+  delete state.uid;
+  const n = state.kids.length;
+  if(profileExists(uid) && !confirm('כבר יש נתונים בפרופיל ' + uid + ' במכשיר הזה. הקוד יחליף אותם ב‑' + n + ' ילדים. להמשיך?'))
+    return 'בוטל. לא שונה כלום.';
+
+  /* שומרים ומציירים לפני כל נגיעה בכתובת — הכתובת היא קישוט,
+     והנתונים הם העיקר. */
+  UID = uid;
+  DB = state;
+  save();
+  renderShelf();
+  show('s-kids');
+  setHash(uid);
+  toast('הועברו ' + n + ' ילדים לפרופיל ' + uid);
+  return null;
+}
+
+(async function start(){
+  const p = hashParams();
+  if(p.d){ let bad; try{ bad = await consumeTransfer(p); }catch(e){ bad = 1; } if(!bad) return; }
+
+  let uid = cleanCode(p.u);
+  if(uid.length === 6){ boot(uid, !profileExists(uid)); return; }   /* קוד מהכתובת — קיים או חדש */
+  try{ uid = cleanCode(localStorage.getItem(LASTKEY)); }catch(e){}
+  if(uid.length === 6 && profileExists(uid)){ boot(uid); return; }
+
+  /* הרצה ראשונה על הקובץ המקומי בלבד: מאמצים נתונים מגרסה קודמת, ואם
+     אין — נטענים ארבעת הילדים. בגרסת ה‑Artifact אין את הדגל הזה, ולכן
+     מי שנכנס מהלינק מתחיל ריק ומקבל קוד משלו. */
+  if(window.NS_LOCAL && !knownProfiles().length){
+    let legacy = null;
+    try{ const raw = localStorage.getItem(KEYBASE); if(raw) legacy = JSON.parse(raw); }catch(e){}
+    let c; do{ c = newCode(); } while(profileExists(c));
+    UID = c;
+    DB = (legacy && legacy.kids && legacy.kids.length) ? legacy : seedKids();
+    save(); setHash(c);
+    renderShelf(); show('s-kids');
+    setTimeout(()=> toast('הקוד שלך: ' + c + ' — נמצא גם בהגדרות'), 700);
+    return;
+  }
+
+  renderWelcome();
+  show('s-welcome');
+})();
+</script>
+
+</body>
+</html>
+

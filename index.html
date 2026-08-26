@@ -240,8 +240,20 @@ p{margin:0}
 }
 </style>
 
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="הצעד הבא">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
 <body>
+<script>
+/* PWA — רק בגרסה המתארחת. בקובץ מקומי ובתוך Artifact אין service worker. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
 
 
 <script>document.documentElement.setAttribute("dir","rtl");document.documentElement.lang="he";</script>
@@ -1912,7 +1924,7 @@ const KEYBASE = 'nextstep.v1';
 const LASTKEY = 'nextstep.last';
 const OWNER   = null;                     /* אין יותר פרופיל "בעלים" — ההזרעה תלויה בקובץ המקומי, לא בקוד */
 /* גרסת האינטרנט — היעד של לינק העברה שנוצר מקובץ מקומי */
-const WEB_URL = 'https://claude.ai/code/artifact/2f53e9ca-3653-4db6-a042-39cccbea37aa';
+const WEB_URL = 'https://skuznitsky-clearshift.github.io/hatzaad-haba/';
 const ALPHA   = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';  /* בלי 0/O/1/I */
 let UID = null;
 
@@ -2712,19 +2724,26 @@ async function cloudPush(){
     toast('הועלה לענן · ' + UID);
   }catch(e){ toast('אין חיבור לשרת'); }
 }
-async function cloudPull(){
+/* משיכה גולמית לפי קוד — מחזיר state או null, בלי לגעת במסך */
+async function cloudFetch(code){
   const c = syncCfg();
+  if(!syncOn()) return null;
+  const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + cleanCode(code));
+  if(!r.ok) return null;
+  const j = await r.json().catch(()=>null);
+  if(!j || !j.ok || !j.data || !Array.isArray(j.data.kids)) return null;
+  return j.data;
+}
+async function cloudPull(){
   if(!syncOn()) return toast('לא הוגדרה כתובת שרת');
-  try{
-    const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + UID);
-    const j = await r.json().catch(()=>({}));
-    if(!r.ok || !j.ok) return toast('הורדה נכשלה: ' + (j.error || r.status));
-    if(!j.data || !Array.isArray(j.data.kids)) return toast('אין עדיין נתונים בענן לקוד ' + UID);
-    const n = j.data.kids.length;
-    if(!confirm('הורדת ' + n + ' ילדים מהענן תחליף את מה שיש במכשיר הזה. להמשיך?')) return;
-    DB = j.data; save(); renderShelf(); show('s-kids');
-    toast('הורדו ' + n + ' ילדים מהענן');
-  }catch(e){ toast('אין חיבור לשרת'); }
+  let state;
+  try{ state = await cloudFetch(UID); }
+  catch(e){ return toast('אין חיבור לשרת'); }
+  if(!state) return toast('אין עדיין נתונים בענן לקוד ' + UID);
+  const n = state.kids.length;
+  if(!confirm('הורדת ' + n + ' ילדים מהענן תחליף את מה שיש במכשיר הזה. להמשיך?')) return;
+  DB = state; save(); renderShelf(); show('s-kids');
+  toast('הורדו ' + n + ' ילדים מהענן');
 }
 
 /* ---------------------------------------------------------------
@@ -2900,37 +2919,17 @@ document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
 function renderWelcome(mode){
   const b = $('#wc-body');
 
-  if(mode === 'have'){
-    b.innerHTML = `
-      <div class="hello"><div class="mark">🔑</div><h1>הקוד שלך</h1>
-        <p>שש ספרות ואותיות, מהמסך "הגדרות" בפרופיל שלכם.</p></div>
-      <div class="card" style="margin-top:18px">
-        <input class="code input" id="wc-code" inputmode="latin" maxlength="6" placeholder="XXXXXX" autocomplete="off">
-        <div class="btnrow"><button class="btn full" id="wc-go">להיכנס</button>
-          <button class="btn ghost full" id="wc-back">חזרה</button></div>
-      </div>
-      <div class="note">הקוד פותח את הפרופיל אבל לא מביא איתו נתונים ממכשיר אחר — אין כאן שרת שיחזיק אותם.
-        כדי להביא ילדים והתקדמות, השתמשו ב<b>קוד ההעברה</b> מהמסך הקודם.</div>`;
-    $('#wc-go').onclick = () => {
-      const c = cleanCode($('#wc-code').value);
-      if(c.length !== 6) return toast('קוד בן שש תווים');
-      boot(c, !profileExists(c));
-    };
-    $('#wc-back').onclick = () => renderWelcome();
-    return;
-  }
-
   if(mode === 'paste'){
     b.innerHTML = `
       <div class="hello"><div class="mark">📥</div><h1>קוד העברה</h1>
-        <p>הדביקו כאן את הקוד — או את הלינק המלא — שיצרתם במכשיר שבו הילדים כבר קיימים.</p></div>
+        <p>הדביקו כאן את הקוד הארוך — או את הלינק המלא — שיצרתם במכשיר שבו הילדים כבר קיימים.</p></div>
       <div class="card" style="margin-top:18px">
         <textarea class="xfer" id="wc-paste" rows="5" placeholder="הדביקו כאן"></textarea>
         <div id="wc-err"></div>
         <div class="btnrow"><button class="btn full" id="wc-load">טעינה</button>
           <button class="btn ghost full" id="wc-back2">חזרה</button></div>
       </div>
-      <div class="note">את הקוד מייצרים בהגדרות, תחת "העברה למכשיר אחר". הוא נושא בתוכו את כל הילדים וההתקדמות.</div>`;
+      <div class="note">את הקוד הארוך מייצרים בהגדרות, תחת "העברה למכשיר אחר". צריך אותו רק כשאין סנכרון בענן.</div>`;
     $('#wc-load').onclick = () => importTransfer($('#wc-paste').value);
     $('#wc-back2').onclick = () => renderWelcome();
     return;
@@ -2941,17 +2940,49 @@ function renderWelcome(mode){
     <div class="hello"><div class="mark">🌱</div><h1>הצעד הבא</h1>
       <p>לכל ילד, דבר אחד לעשות היום — לפי הגיל שלו, לפי הרמה שלו, ולפי מה שכבר עשיתם.</p></div>
     <div class="card" style="margin-top:22px">
-      <div class="btnrow"><button class="btn full" id="wc-new">אני חדש כאן</button>
-        <button class="btn ghost full" id="wc-paste-b">יש לי קוד העברה — הילדים כבר קיימים אצלי</button>
-        <button class="btn ghost full" id="wc-have">יש לי קוד פרופיל</button></div>
+      <label style="display:block;font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.05em;margin-bottom:5px">הקוד שלך</label>
+      <input class="code input" id="wc-code" inputmode="latin" maxlength="6" placeholder="XXXXXX" autocomplete="off" autocapitalize="characters">
+      <div id="wc-err"></div>
+      <div class="btnrow"><button class="btn full" id="wc-go">כניסה</button>
+        <button class="btn ghost full" id="wc-new">אין לי קוד — צרו לי אחד</button></div>
     </div>
     ${others.length ? `<div class="lbl" style="margin-top:24px">פרופילים במכשיר הזה</div>
       <div class="btnrow">${others.map(u=>`<button class="btn ghost sm" data-sw="${u}">${u}</button>`).join('')}</div>` : ''}
-    <div class="note">הכול נשמר בדפדפן הזה בלבד. אין חשבון, אין הרשמה, ושום נתון לא עוזב את המכשיר.</div>`;
+    <div style="text-align:center;margin-top:22px">
+      <button id="wc-paste-b" style="font-size:14px;color:var(--soft);text-decoration:underline">יש לי קוד העברה ארוך</button></div>
+    <div class="note">${syncOn()
+      ? 'הקוד מביא איתו את הילדים וההתקדמות מכל מכשיר.'
+      : 'הכול נשמר בדפדפן הזה בלבד. אין חשבון ואין הרשמה.'}</div>`;
+
+  $('#wc-go').onclick = () => enterCode($('#wc-code').value);
+  $('#wc-code').addEventListener('keydown', e => { if(e.key === 'Enter') enterCode($('#wc-code').value); });
   $('#wc-new').onclick = () => { let c; do{ c = newCode(); } while(profileExists(c)); boot(c, true); };
   $('#wc-paste-b').onclick = () => renderWelcome('paste');
-  $('#wc-have').onclick = () => renderWelcome('have');
   b.querySelectorAll('[data-sw]').forEach(x => x.onclick = () => boot(x.dataset.sw));
+}
+
+/* שדה אחד לכולם: אם יש סנכרון — מנסים למשוך מהשרת; אם אין מה למשוך,
+   או שאין סנכרון בכלל — נפתח פרופיל עם הקוד הזה. אותה חוויה בשני המקרים. */
+async function enterCode(raw){
+  const c = cleanCode(raw);
+  const err = m => {
+    const box = $('#wc-err');
+    if(box) box.innerHTML = '<div class="note" style="border-color:var(--orange);color:var(--ink);margin-top:10px">' + esc(m) + '</div>';
+  };
+  if(c.length !== 6) return err('הקוד הוא שש אותיות וספרות.');
+
+  if(syncOn()){
+    const btn = $('#wc-go'); if(btn){ btn.textContent = 'רגע…'; btn.disabled = true; }
+    let state = null;
+    try{ state = await cloudFetch(c); }catch(e){}
+    if(btn){ btn.textContent = 'כניסה'; btn.disabled = false; }
+    if(state && Array.isArray(state.kids)){
+      UID = c; DB = state; save(); setHash(c);
+      renderShelf(); show('s-kids');
+      return toast('נטענו ' + state.kids.length + ' ילדים');
+    }
+  }
+  boot(c, !profileExists(c));
 }
 
 /* מקבל קוד העברה גולמי, או לינק מלא שמכיל אותו */

@@ -221,6 +221,34 @@ p{margin:0}
 .cele p{font-size:17px;color:var(--soft);margin-bottom:22px}
 .stars{font-size:46px;margin-bottom:14px;letter-spacing:6px}
 
+/* ---------- root: parents or kids ---------- */
+.pick2{display:grid;gap:14px;margin-top:10px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:26px 20px;
+  box-shadow:var(--sh2);display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .14s}
+.pcard:active{transform:scale(.97)}
+.pcard .pi{font-size:46px;line-height:1;margin-bottom:6px}
+.pcard b{font-size:24px}
+.pcard span{font-size:14.5px;color:var(--faint)}
+.pcard.kids{background:linear-gradient(160deg,#EFF5EA,#FFFDF6);border-color:#CFE3C4}
+
+/* ---------- game host ---------- */
+#game-host{position:fixed;inset:0;z-index:90;display:none;background:var(--paper)}
+#game-host.on{display:block}
+#game-frame{width:100%;height:100%;border:0;display:block}
+#game-exit{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);inset-inline-start:8px;z-index:91;
+  width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.82);border:1px solid var(--line);
+  font-size:19px;color:var(--soft);display:none;align-items:center;justify-content:center;box-shadow:var(--sh)}
+#game-host.on #game-exit{display:flex}
+
+/* ---------- parent gate ---------- */
+.gate{position:fixed;inset:0;z-index:95;display:none;align-items:center;justify-content:center;
+  background:rgba(59,44,32,.55);padding:22px}
+.gate.on{display:flex;animation:in .2s ease}
+.gbox{background:var(--surface);border-radius:22px;padding:22px;max-width:340px;width:100%;box-shadow:var(--sh2)}
+.gbox h2{font-size:21px;margin-bottom:6px}
+.gbox p{font-size:26px;font-weight:700;text-align:center;margin:14px 0 10px;font-variant-numeric:tabular-nums;direction:ltr}
+.gbox .meta{min-height:20px;color:var(--orange)}
+
 /* ---------- welcome / profile ---------- */
 .hello{text-align:center;padding:34px 4px 10px}
 .hello .mark{font-size:52px;line-height:1;margin-bottom:12px}
@@ -264,6 +292,31 @@ if('serviceWorker' in navigator){
     <div id="wc-body"></div>
   </div>
 
+  <!-- R · root: parents or kids -->
+  <div class="scr" id="s-root">
+    <div class="hello" style="padding-top:26px"><div class="mark">🌱</div><h1>הצעד הבא</h1></div>
+    <div class="pick2">
+      <button class="pcard" id="r-parent">
+        <div class="pi">👋</div><b>הורים</b><span>מה לעשות היום עם כל ילד</span></button>
+      <button class="pcard kids" id="r-kids">
+        <div class="pi">🎲</div><b>ילדים</b><span>משחקים</span></button>
+    </div>
+    <div class="note">אזור הילדים נעול ביציאה — צריך תרגיל חשבון כדי לחזור לכאן.</div>
+  </div>
+
+  <!-- K1 · kids mode: who is playing -->
+  <div class="scr" id="s-play-kid">
+    <div class="top"><button class="back" data-back="s-root" aria-label="חזרה">→</button><div class="ttl">מי משחק?</div></div>
+    <div class="shelf" id="play-shelf"></div>
+  </div>
+
+  <!-- K2 · kids mode: which game -->
+  <div class="scr" id="s-play-game">
+    <div class="top"><button class="back" data-back="s-play-kid" aria-label="חזרה">→</button>
+      <div style="flex:1;min-width:0"><div class="ttl" id="pg-name"></div><div class="sub">איזה משחק?</div></div></div>
+    <div id="pg-body"></div>
+  </div>
+
   <!-- 1 · kids shelf -->
   <div class="scr" id="s-kids">
     <div class="top">
@@ -271,6 +324,7 @@ if('serviceWorker' in navigator){
         <div class="ttl">הצעד הבא</div>
         <div class="sub">מה עושים היום עם כל אחד</div>
       </div>
+      <button class="iconb" id="b-home" aria-label="מסך הבית">🏠</button>
       <button class="iconb" id="b-settings" aria-label="הגדרות">⚙</button>
     </div>
     <div class="shelf" id="shelf"></div>
@@ -325,6 +379,24 @@ if('serviceWorker' in navigator){
 
 <div class="toast" id="toast" role="status"></div>
 <div class="cele" id="cele"><div class="cin"><div class="stars" id="cele-st">⭐️⭐️⭐️</div><h2 id="cele-h"></h2><p id="cele-p"></p><button class="btn" id="cele-b">יופי</button></div></div>
+
+<!-- G · full-screen game host -->
+<div id="game-host">
+  <iframe id="game-frame" title="משחק" allow="autoplay"></iframe>
+  <button id="game-exit" aria-label="יציאה מהמשחק">✕</button>
+</div>
+
+<!-- gate: math lock to leave kids mode -->
+<div class="gate" id="gate">
+  <div class="gbox">
+    <h2>רק הורים</h2>
+    <p id="gq"></p>
+    <input class="code input" id="ga" inputmode="numeric" maxlength="4" autocomplete="off">
+    <div id="gerr" class="meta"></div>
+    <div class="btnrow"><button class="btn full" id="gok">אישור</button>
+      <button class="btn ghost full" id="gcancel">חזרה למשחקים</button></div>
+  </div>
+</div>
 
 <script>
 "use strict";
@@ -495,6 +567,7 @@ function avatarSVG(av){
    --------------------------------------------------------------- */
 const LEVELS = [];
 function L(o){ LEVELS.push(o); }
+
 
 /* ============================================================
    שלב 0 · מבט וחיבור · 0–4 חודשים
@@ -2903,12 +2976,148 @@ function renderSettings(){
 }
 
 /* ---------------------------------------------------------------
+   15.5 אזור הילדים — משחקים
+   ---------------------------------------------------------------
+   כל משחק רץ בקובץ נפרד בתוך iframe. האפליקציה מחזיקה את המצב
+   ומעבירה אותו פנימה, כך שההתקדמות נשמרת **לכל ילד בנפרד** —
+   מה שהמשחקים לבדם לא ידעו לעשות. האודיו הכבד נטען רק כשנכנסים
+   למשחק, ולכן הקליפה נשארת קלה.
+   --------------------------------------------------------------- */
+const GAMES = [
+  {id:'numbers', n:'ספארי מספרים', file:'numbers-safari.html', from:42, dm:'num',
+   d:'ספירה, כמויות וחיבור — עם לוי האריה', mark:'🦁', bg:'#F6E2CB'},
+  {id:'letters', n:'יער האותיות',  file:'letters-forest.html', from:48, dm:'lang',
+   d:'צלילים, כתיבת אותיות ובניית מילים', mark:'🦉', bg:'#EADCF0'}
+];
+
+function gamesFor(k){
+  const m = ageMonths(k.dob);
+  const off = (k.gamesOff || {});
+  return GAMES.filter(g => m >= g.from && !off[g.id]);
+}
+function gameState(k, id){ return (k.games || {})[id] || null; }
+function setGameState(k, id, st){
+  if(!k.games) k.games = {};
+  k.games[id] = st;
+  save();
+}
+
+/* --- מסך שורש --- */
+$('#b-home').onclick = () => show('s-root');
+$('#r-parent').onclick = () => { renderShelf(); show('s-kids'); };
+$('#r-kids').onclick   = () => { renderPlayKid(); show('s-play-kid'); };
+
+function renderPlayKid(){
+  const el = $('#play-shelf');
+  if(!DB.kids.length){
+    el.innerHTML = '<div class="empty">עוד לא הוקמו ילדים. עוברים לאזור ההורים ומוסיפים.</div>';
+    return;
+  }
+  el.innerHTML = DB.kids.map(k => {
+    const n = gamesFor(k).length;
+    return `<button class="kidc" data-pk="${k.id}">
+      ${avatarSVG(Object.assign({alt:k.name}, k.av))}
+      <div class="nm">${esc(k.name)}</div>
+      <div class="tag">${n ? n + ' משחקים' : 'עוד קטן למשחקים'}</div>
+    </button>`;
+  }).join('');
+  el.querySelectorAll('[data-pk]').forEach(b => b.onclick = () => {
+    CUR = DB.kids.find(k => k.id === b.dataset.pk);
+    renderPlayGame(); show('s-play-game');
+  });
+}
+
+function renderPlayGame(){
+  const k = CUR;
+  $('#pg-name').textContent = k.name;
+  const gs = gamesFor(k);
+  if(!gs.length){
+    $('#pg-body').innerHTML = `<div class="empty">אין עדיין משחקים ל${esc(k.name)}.<br>הם נפתחים עם הגיל, ואפשר גם להדליק ולכבות אותם בהגדרות.</div>`;
+    return;
+  }
+  $('#pg-body').innerHTML = gs.map(g => {
+    const st = gameState(k, g.id);
+    const lvl = st && st.level ? 'רמה ' + st.level : 'משחק ראשון';
+    const stars = st && st.stars ? ' · ' + st.stars + ' ⭐' : '';
+    return `<button class="pcard" data-pg="${g.id}" style="background:${g.bg};margin-bottom:12px">
+      <div class="pi">${g.mark}</div><b>${esc(g.n)}</b>
+      <span>${esc(g.d)}</span>
+      <span style="margin-top:6px;font-weight:700;color:var(--soft)">${lvl}${stars}</span>
+    </button>`;
+  }).join('');
+  $('#pg-body').querySelectorAll('[data-pg]').forEach(b => b.onclick = () => openGame(b.dataset.pg));
+}
+
+/* --- אירוח המשחק --- */
+let CURGAME = null;
+function openGame(id){
+  const g = GAMES.find(x => x.id === id); if(!g) return;
+  CURGAME = g;
+  const fr = $('#game-frame');
+  fr.src = g.file;
+  $('#game-host').classList.add('on');
+}
+function closeGame(){
+  $('#game-host').classList.remove('on');
+  $('#game-frame').src = 'about:blank';
+  CURGAME = null;
+  renderPlayGame(); show('s-play-game');
+}
+$('#game-exit').onclick = closeGame;
+
+/* הפרוטוקול מול המשחק */
+window.addEventListener('message', ev => {
+  const d = ev.data;
+  if(!d || typeof d !== 'object' || !CURGAME || !CUR) return;
+  const fr = $('#game-frame');
+  if(d.type === 'ns-ready'){
+    fr.contentWindow.postMessage({
+      type:'ns-init',
+      child:{id:CUR.id, name:CUR.name, g:CUR.g},
+      state: gameState(CUR, CURGAME.id)
+    }, '*');
+  } else if(d.type === 'ns-save' && d.state){
+    setGameState(CUR, CURGAME.id, d.state);
+  } else if(d.type === 'ns-exit'){
+    closeGame();
+  }
+});
+
+/* --- שער ההורים --- */
+let GATE_OK = null, GATE_TRIES = 0;
+function askParent(then){
+  GATE_OK = then; GATE_TRIES = 0;
+  const a = 10 + Math.floor(Math.random()*80), b = 10 + Math.floor(Math.random()*80);
+  $('#gq').textContent = a + ' + ' + b + ' = ?';
+  $('#gq').dataset.ans = String(a + b);
+  $('#ga').value = ''; $('#gerr').textContent = '';
+  $('#gate').classList.add('on');
+  setTimeout(() => $('#ga').focus(), 60);
+}
+function gateSubmit(){
+  if($('#ga').value.trim() === $('#gq').dataset.ans){
+    $('#gate').classList.remove('on');
+    const f = GATE_OK; GATE_OK = null; if(f) f();
+  } else {
+    GATE_TRIES++;
+    $('#gerr').textContent = GATE_TRIES >= 3 ? 'לא נכון. תבקשו מאבא או אמא.' : 'לא נכון, נסו שוב.';
+    $('#ga').value = '';
+  }
+}
+$('#gok').onclick = gateSubmit;
+$('#ga').addEventListener('keydown', e => { if(e.key === 'Enter') gateSubmit(); });
+$('#gcancel').onclick = () => { $('#gate').classList.remove('on'); GATE_OK = null; };
+
+/* ---------------------------------------------------------------
    16. ניווט והפעלה
    --------------------------------------------------------------- */
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
   const t = b.dataset.back;
+  /* יציאה מאזור הילדים חזרה למסך השורש עוברת דרך שער ההורים */
+  if(t === 's-root'){ return askParent(() => show('s-root')); }
   if(t === 's-kids'){ renderShelf(); }
   if(t === 's-child'){ renderChild(); }
+  if(t === 's-play-kid'){ renderPlayKid(); }
   if(t === 's-domain'){ if(CURDM) renderDomain(); else { renderChild(); return show('s-child'); } }
   show(t);
 });
@@ -3018,7 +3227,7 @@ function boot(uid, isNew){
   UID = uid;
   save();
   renderShelf();
-  show(DB.kids.length ? 's-kids' : 's-new');
+  show(DB.kids.length ? 's-root' : 's-new');
   if(!DB.kids.length) startWizard();
   setHash(uid);                       /* אחרי הציור, ואף פעם לא לפניו */
   if(isNew) setTimeout(() => toast('הקוד שלך: ' + uid + ' — שמור אותו'), 600);
@@ -3069,7 +3278,7 @@ async function consumeTransfer(p){
     UID = c;
     DB = (legacy && legacy.kids && legacy.kids.length) ? legacy : seedKids();
     save(); setHash(c);
-    renderShelf(); show('s-kids');
+    renderShelf(); show('s-root');
     setTimeout(()=> toast('הקוד שלך: ' + c + ' — נמצא גם בהגדרות'), 700);
     return;
   }

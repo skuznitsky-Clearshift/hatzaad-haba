@@ -1,8 +1,9 @@
 /* הצעד הבא — service worker
    אסטרטגיה: cache-first לקליפה, עם רענון ברקע.
    כשמעלים גרסה חדשה — משנים את CACHE, וזה מוחק את הישן. */
-const CACHE = 'hatzaad-haba-v1';
+const CACHE = 'hatzaad-haba-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+/* המשחקים כבדים — הם נכנסים למטמון בפעם הראשונה שמשחקים בהם, לא בהתקנה */
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

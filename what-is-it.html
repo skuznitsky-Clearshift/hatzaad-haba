@@ -116,6 +116,21 @@ h1{margin:0 0 8px;font-size:clamp(26px,6.5vw,38px)}
   background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s}
 .sw.on{background:var(--green)}
 .sw.on i{transform:translateX(-22px)}
+/* שער הורים לפני ההגדרות — ילד לא אמור לשנות רמות או לאפס התקדמות */
+#pgate{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+  background:rgba(40,35,28,.55);padding:22px}
+#pgate.on{display:flex}
+#pgate .bx{background:#FFFDF6;border-radius:22px;padding:22px;max-width:330px;width:100%;text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#pgate h3{margin:0 0 6px;font-size:20px}
+#pgate .q{font-size:27px;font-weight:700;margin:12px 0 10px;direction:ltr;font-variant-numeric:tabular-nums}
+#pgate input{width:100%;padding:12px;border-radius:14px;border:2px solid #E0D6C0;font-size:24px;
+  text-align:center;font-family:inherit;direction:ltr}
+#pgate .er{min-height:20px;font-size:14px;color:#C0603F;margin-top:6px}
+#pgate .row{display:flex;gap:8px;margin-top:12px}
+#pgate .row button{flex:1;padding:12px;border-radius:14px;font-weight:700;font-size:16px;
+  background:#5FA84E;color:#fff}
+#pgate .row button.gh{background:#F1EADA;color:#4A4038}
 </style>
 </head>
 <body>
@@ -168,6 +183,13 @@ h1{margin:0 0 8px;font-size:clamp(26px,6.5vw,38px)}
     <button class="btn" id="againBtn">עוד סיבוב</button>
     <button class="btn ghost" id="backMenuBtn">רמה אחרת</button></div></div></div>
 
+<div id="pgate"><div class="bx">
+  <h3>רק הורים</h3>
+  <div class="q" id="pgq"></div>
+  <input id="pga" inputmode="numeric" maxlength="4" autocomplete="off">
+  <div class="er" id="pger"></div>
+  <div class="row"><button id="pgok">אישור</button><button class="gh" id="pgno">חזרה</button></div>
+</div></div>
 <script>
 "use strict";
 
@@ -680,6 +702,12 @@ function rec(ok, item, skill){
     if(!bag[k]) bag[k]={ok:0,miss:0}; bag[k][ok?'ok':'miss']++; };
   bump(P.stats.items, item);
   bump(P.stats.skills, skill);
+  /* פילוח פריטים לפי מיומנות — כדי שההורה יידע אם הקושי בזיהוי או בכתיבה */
+  if(item != null && skill){
+    if(!P.stats.bySkill) P.stats.bySkill = {};
+    if(!P.stats.bySkill[skill]) P.stats.bySkill[skill] = {};
+    bump(P.stats.bySkill[skill], item);
+  }
   bump(P.stats.levels, P.level);
 }
 
@@ -807,7 +835,7 @@ $('#againBtn').onclick    = ()=>{ sfxTap(); $('#reward').classList.remove('on');
 $('#backMenuBtn').onclick = ()=>{ sfxTap(); $('#reward').classList.remove('on'); renderMenu(); show('menu'); };
 
 $('#startBtn').onclick = ()=>{ ac(); sfxTap(); renderMenu(); show('menu'); say('ui_which'); };
-$('#setBtn').onclick   = ()=>{ ac(); sfxTap(); renderSettings(); show('settings'); };
+$('#setBtn').onclick = ()=>{ ac(); sfxTap(); pgAsk(function(){ if(typeof renderSettings==='function') renderSettings(); show('settings'); }); };
 
 function renderSettings(){
   $('#tVoice').classList.toggle('on', !!P.voice);
@@ -842,6 +870,31 @@ if(HOSTED){
 }
 document.addEventListener('pointerdown', function once(){ ac(); }, {once:true});
 window.addEventListener('beforeunload', speakStop);
+/* שער הורים לפני ההגדרות. שתי טעויות = חוזרים אחורה, מתוך הנחה
+   שילד לחץ בטעות; מבוגר שטעה פשוט ילחץ שוב. */
+var PG_OK=null, PG_TRY=0;
+function pgClose(){ document.getElementById('pgate').classList.remove('on'); PG_OK=null; PG_TRY=0; }
+function pgAsk(then){
+  PG_OK=then; PG_TRY=0;
+  var a=10+Math.floor(Math.random()*80), b=10+Math.floor(Math.random()*80);
+  var q=document.getElementById('pgq');
+  q.textContent=a+' + '+b+' = ?'; q.dataset.ans=String(a+b);
+  document.getElementById('pga').value=''; document.getElementById('pger').textContent='';
+  document.getElementById('pgate').classList.add('on');
+  setTimeout(function(){ document.getElementById('pga').focus(); },60);
+}
+function pgSubmit(){
+  var q=document.getElementById('pgq');
+  if(document.getElementById('pga').value.trim()===q.dataset.ans){ var f=PG_OK; pgClose(); if(f) f(); return; }
+  PG_TRY++;
+  if(PG_TRY>=2){ document.getElementById('pger').textContent='טעית פעמיים, אני חוזר אחורה';
+    setTimeout(pgClose,1500); return; }
+  document.getElementById('pger').textContent='לא נכון, נסו שוב';
+  document.getElementById('pga').value='';
+}
+document.getElementById('pgok').onclick=pgSubmit;
+document.getElementById('pgno').onclick=pgClose;
+document.getElementById('pga').addEventListener('keydown',function(e){ if(e.key==='Enter') pgSubmit(); });
 </script>
 </body>
 </html>

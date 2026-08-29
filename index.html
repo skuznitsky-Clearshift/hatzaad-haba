@@ -221,6 +221,30 @@ p{margin:0}
 .cele p{font-size:17px;color:var(--soft);margin-bottom:22px}
 .stars{font-size:46px;margin-bottom:14px;letter-spacing:6px}
 
+/* כפתור ההורים — מכוון להיות לא מושך: אפור, קטן, בלי צל.
+   ילד שלא קורא לא אמור לרצות ללחוץ עליו. */
+.parentbtn{font-size:14px;color:var(--faint);border:1px solid var(--line);border-radius:99px;
+  padding:7px 16px;background:transparent}
+.parentbtn:active{opacity:.6}
+
+/* לשוניות בממשק ההורים */
+.tabs{display:flex;gap:8px;margin:2px 0 14px}
+.tab{flex:1;padding:11px 8px;border-radius:14px;font-size:15.5px;font-weight:700;
+  background:var(--paper2);color:var(--soft);border:1px solid transparent}
+.tab.on{background:var(--surface);color:var(--ink);border-color:var(--line);box-shadow:var(--sh)}
+
+/* כרטיס משחק — אחיד בגודלו, עם סמל גדול וצבעוני לילד שלא קורא */
+.gcard{background:var(--surface);border:3px solid var(--line);border-radius:24px;padding:14px;
+  box-shadow:var(--sh2);display:flex;flex-direction:column;align-items:center;gap:6px;
+  width:100%;min-height:196px;justify-content:center;transition:transform .14s}
+.gcard:active{transform:scale(.96)}
+.gcard .gm{width:126px;height:98px}
+.gcard .gm svg{width:100%;height:100%;display:block}
+.gcard b{font-size:20px}
+.gcard .sub2{font-size:13px;color:var(--faint);text-align:center;line-height:1.35}
+.gcard .lvl{font-size:13.5px;font-weight:700;color:var(--soft)}
+.games2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+
 /* ---------- root: parents or kids ---------- */
 .pick2{display:grid;gap:14px;margin-top:10px}
 .pcard{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:26px 20px;
@@ -249,6 +273,11 @@ p{margin:0}
 .tgl.on{background:var(--green)}
 .tgl.on i{transform:translateX(-22px)}
 .ins{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.advice{margin-top:12px;font-size:16px;line-height:1.6;background:var(--paper2);
+  border-radius:14px;padding:12px 14px}
+.datalink{margin-top:10px;font-size:14.5px;font-weight:700;color:var(--blue);
+  text-decoration:underline;background:none;padding:2px 0}
+.databox[hidden]{display:none}
 .insrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
 .il{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--faint);min-width:44px}
 .il.good{color:#3F6B2E} .il.mid{color:#A65E1E} .il.bad{color:#A6503C}
@@ -311,28 +340,24 @@ if('serviceWorker' in navigator){
     <div id="wc-body"></div>
   </div>
 
-  <!-- R · root: parents or kids -->
+  <!-- R · root — this IS the kids' screen: who is playing -->
   <div class="scr" id="s-root">
-    <div class="hello" style="padding-top:26px"><div class="mark">🌱</div><h1>הצעד הבא</h1></div>
-    <div class="pick2">
-      <button class="pcard" id="r-parent">
-        <div class="pi">👋</div><b>הורים</b><span>מה לעשות היום עם כל ילד</span></button>
-      <button class="pcard kids" id="r-kids">
-        <div class="pi">🎲</div><b>ילדים</b><span>משחקים</span></button>
+    <div class="hello" style="padding:18px 4px 6px"><div class="mark">🌱</div><h1>מי משחק?</h1></div>
+    <div class="shelf" id="root-shelf"></div>
+    <div style="text-align:center;margin-top:26px">
+      <button id="b-parents" class="parentbtn">הורים ›</button>
     </div>
-    <div class="note">אזור הילדים נעול ביציאה — צריך תרגיל חשבון כדי לחזור לכאן.</div>
   </div>
 
-  <!-- K1 · kids mode: who is playing -->
-  <div class="scr" id="s-play-kid">
-    <div class="top"><button class="back" data-back="s-root" aria-label="חזרה">→</button><div class="ttl">מי משחק?</div></div>
-    <div class="shelf" id="play-shelf"></div>
-  </div>
-
-  <!-- K2 · kids mode: which game -->
+  <!-- K2 · one child: their games -->
   <div class="scr" id="s-play-game">
-    <div class="top"><button class="back" data-back="s-play-kid" aria-label="חזרה">→</button>
-      <div style="flex:1;min-width:0"><div class="ttl" id="pg-name"></div><div class="sub">איזה משחק?</div></div></div>
+    <div class="top"><button class="back" data-back="s-root" aria-label="חזרה">→</button>
+      <div style="flex:1;min-width:0"><div class="ttl" id="pg-name"></div><div class="sub">בחרו משחק</div></div></div>
+    <div id="pg-body"></div>
+    <div style="text-align:center;margin-top:24px">
+      <button id="b-parents2" class="parentbtn">הורים ›</button>
+    </div>
+  </div>
     <div id="pg-body"></div>
   </div>
 
@@ -360,6 +385,10 @@ if('serviceWorker' in navigator){
     <div class="top"><button class="back" data-back="s-kids" aria-label="חזרה">→</button>
       <div style="flex:1;min-width:0"><div class="ttl" id="ch-name"></div><div class="sub" id="ch-age"></div></div>
       <button class="iconb" id="b-journal" aria-label="יומן">📖</button></div>
+    <div class="tabs">
+      <button class="tab on" data-tab="train">תרגול יחד</button>
+      <button class="tab" data-tab="games">משחקים</button>
+    </div>
     <div id="ch-body"></div>
   </div>
 
@@ -1999,7 +2028,6 @@ L({id:'s7.self.2', st:7, dm:'self', ix:2, t:'אחריות ובטיחות', acts:
   'חוצה כביש נכון — עוצר{|ת}, מסתכל{|ת} לשני הצדדים, הול{ך|כת} עם מבוגר'
 ]}});
 
-
 /* קובצי התוכן מגדירים מזהי תרגיל קצרים (a/b/c) בתוך כל רמה.
    כאן הופכים אותם למזהים גלובליים — בלי זה יומן של תרגיל אחד
    היה נזקף לזכות כל תרגיל 'a' בכל רמה אחרת. */
@@ -2332,7 +2360,7 @@ function renderShelf(){
   }).join('') + `<button class="addk" id="b-add"><span class="plus">+</span><span>ילד חדש</span></button>`;
 
   el.querySelectorAll('[data-kid]').forEach(b => b.onclick = () => openChild(b.dataset.kid));
-  $('#b-add').onclick = startWizard;
+  $('#b-add').onclick = () => startWizard();   /* בלי החץ, אירוע הלחיצה מגיע כפרמטר edit והקוד זורק */
 }
 
 /* ---------------------------------------------------------------
@@ -2344,8 +2372,11 @@ function openChild(id){
   show('s-child');
 }
 
+let CH_TAB = "train";
 function renderChild(){
   const k = CUR, st = stageOf(k);
+  document.querySelectorAll("#s-child .tab").forEach(t => t.classList.toggle("on", t.dataset.tab === CH_TAB));
+  if(CH_TAB === "games"){ $("#ch-name").textContent = k.name; $("#ch-age").textContent = ageText(k); return renderTabGames(); }
   $('#ch-name').textContent = k.name;
   $('#ch-age').textContent = ageText(k) + ' · שלב ' + st.id + ' — ' + st.t;
 
@@ -2409,38 +2440,51 @@ function renderChild(){
   wk += `<div class="meta">${cnt} תרגילים בשבעת הימים האחרונים</div>`;
   html += wk;
 
-  /* --- משחקים: מה פתוח, ומה הנתונים מספרים --- */
-  html += `<div class="lbl" style="margin:22px 0 0">משחקים</div>`;
-  GAMES.forEach(g => {
-    const on = gameEnabled(k, g);
-    const auto = ageMonths(k.dob) >= g.from;
-    const st = gameState(k, g.id);
-    const ins = gameInsight(g, st);
-    html += `<div class="card" style="margin-top:10px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:40px;flex:none">${GMARK[g.id]||''}</div>
-        <div style="flex:1;min-width:0"><b style="font-size:17px">${esc(g.n)}</b>
-          <div class="meta">${auto ? 'מתאים לגיל' : 'נפתח בגיל ' + (g.from/12).toFixed(1).replace('.0','')}${
-            (k.gamesOn||{})[g.id] !== undefined ? ' · נקבע ידנית' : ''}</div></div>
-        <button class="tgl ${on?'on':''}" data-gt="${g.id}" role="switch" aria-checked="${on}"><i></i></button>
-      </div>
-      ${ins ? `<div class="ins">${ins}</div>` : (on ? '<div class="meta" style="margin-top:8px">עוד לא שיחקו — אין נתונים להציג.</div>' : '')}
-    </div>`;
-  });
-
   html += `<div class="note">האפליקציה מודדת תרגול, לא ילדים. טווח הנורמה רחב מאוד, וילדים לא מתקדמים בקצב אחיד בכל התחומים.</div>`;
 
   $('#ch-body').innerHTML = html;
-  $('#ch-body').querySelectorAll('[data-gt]').forEach(b => b.onclick = () => {
-    const g = GAMES.find(x => x.id === b.dataset.gt);
-    setGameEnabled(k, g.id, !gameEnabled(k, g));
-    renderChild();
-  });
   $('#ch-body').querySelectorAll('[data-dm]').forEach(b => b.onclick = () => openDomain(b.dataset.dm));
   $('#ch-body').querySelectorAll('[data-rec]').forEach(b => b.onclick = () => {
     const r = recs[+b.dataset.rec];
     CURDM = DOMAINS.find(d => d.id === r.d.id); CURLV = r.lv;
     if(r.ready) openCheck(); else openAct(r.act);
+  });
+}
+
+/* --- לשונית 2: משחקים --- */
+function renderTabGames(){
+  const k = CUR;
+  let html = '';
+  GAMES.forEach(g => {
+    const on   = gameEnabled(k, g);
+    const auto = ageMonths(k.dob) >= g.from;
+    const st   = gameState(k, g.id);
+    const has  = !!(st && st.stats);
+    html += `<div class="card" style="margin-top:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:52px;flex:none">${GMARK[g.id]||''}</div>
+        <div style="flex:1;min-width:0"><b style="font-size:18px">${esc(g.n)}</b>
+          <div class="meta">${auto ? 'מתאים לגיל' : 'נפתח בגיל ' + (g.from/12).toFixed(1).replace('.0','')}${
+            (k.gamesOn||{})[g.id] !== undefined ? ' · נקבע ידנית' : ''}</div></div>
+        <button class="tgl ${on?'on':''}" data-gt="${g.id}" role="switch" aria-checked="${on}"><i></i></button>
+      </div>
+      <div class="advice">${esc(gameAdvice(g, st))}</div>
+      ${has ? `<button class="datalink" data-open="${g.id}">לחץ לצפייה בנתונים מהמשחק</button>
+               <div class="databox" id="dbx-${g.id}" hidden>${gameInsight(g, st)}</div>` : ''}
+    </div>`;
+  });
+  $('#ch-body').innerHTML = html +
+    `<div class="note">ההמלצה נבנית ממה שהילד באמת עשה במשחק — רק פריטים שנפגשו לפחות ${MIN_SEEN} פעמים נספרים.</div>`;
+
+  $('#ch-body').querySelectorAll('[data-gt]').forEach(b => b.onclick = () => {
+    const g = GAMES.find(x => x.id === b.dataset.gt);
+    setGameEnabled(k, g.id, !gameEnabled(k, g));
+    renderChild();
+  });
+  $('#ch-body').querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
+    const box = $('#dbx-' + b.dataset.open);
+    box.hidden = !box.hidden;
+    b.textContent = box.hidden ? 'לחץ לצפייה בנתונים מהמשחק' : 'הסתרת הנתונים';
   });
 }
 
@@ -2686,6 +2730,7 @@ function finishCheck(){
 /* ---------------------------------------------------------------
    13. מסך 7 — יומן
    --------------------------------------------------------------- */
+document.querySelectorAll("#s-child .tab").forEach(t => t.onclick = () => { CH_TAB = t.dataset.tab; renderChild(); });
 $('#b-journal').onclick = () => { renderJournal(); show('s-journal'); };
 function actById(id){
   for(const l of LEVELS){ const a = l.acts.find(x => x.id === id); if(a) return {a, l}; }
@@ -3067,6 +3112,73 @@ function setGameState(k, id, st){
 }
 
 /* ---------------------------------------------------------------
+   המלצה מילולית מנתוני המשחק
+   ---------------------------------------------------------------
+   ההורה לא אמור לקרוא טבלה כדי להבין מה לעשות. זו פסקה אחת
+   שאומרת על מה לעבוד, ורק מתחתיה הנתונים הגולמיים.
+   --------------------------------------------------------------- */
+function weakestSkills(st){
+  const sk = (st && st.stats && st.stats.skills) || {};
+  return Object.keys(sk)
+    .map(k => ({k, v:sk[k], n:(sk[k].ok||0)+(sk[k].miss||0)}))
+    .filter(r => r.n >= MIN_SEEN)
+    .sort((a,b) => itemScore(a.v) - itemScore(b.v));
+}
+/* פריטים חלשים, מפוצלים לפי המיומנות שבה נמדדו */
+function weakBySkill(st){
+  const items = (st && st.stats && st.stats.bySkill) || null;
+  const flat  = (st && st.stats && st.stats.items) || {};
+  const out = {};
+  if(items){
+    Object.keys(items).forEach(sk => {
+      out[sk] = Object.keys(items[sk])
+        .map(k => ({k, v:items[sk][k], n:(items[sk][k].ok||0)+(items[sk][k].miss||0)}))
+        .filter(r => r.n >= MIN_SEEN && itemScore(r.v) < .6)
+        .sort((a,b) => itemScore(a.v) - itemScore(b.v)).map(r => r.k);
+    });
+    return out;
+  }
+  /* אין פילוח לפי מיומנות — נופלים לרשימה אחת */
+  out['_'] = Object.keys(flat)
+    .map(k => ({k, v:flat[k], n:(flat[k].ok||0)+(flat[k].miss||0)}))
+    .filter(r => r.n >= MIN_SEEN && itemScore(r.v) < .6)
+    .sort((a,b) => itemScore(a.v) - itemScore(b.v)).map(r => r.k);
+  return out;
+}
+const listHe = a => a.length <= 1 ? (a[0]||'') : a.slice(0,-1).join(', ') + ' ו' + a[a.length-1];
+
+function gameAdvice(g, st){
+  if(!st || !st.stats) return 'עוד לא שיחקתם, אז אין לי על מה להמליץ.';
+  const skills = weakestSkills(st);
+  const by     = weakBySkill(st);
+  const all    = by['_'] || [];
+  const bits   = [];
+
+  /* אילו פריטים חלשים, ובאילו מיומנויות */
+  const keys = Object.keys(by).filter(s => s !== '_' && by[s].length);
+  if(keys.length >= 2){
+    const a = by[keys[0]], b = by[keys[1]];
+    const both = a.filter(x => b.indexOf(x) >= 0);
+    const onlyB = b.filter(x => a.indexOf(x) < 0);
+    if(both.length) bits.push('הייתי ממליץ לעבוד יחד על ' + listHe(both) + ' — גם ב' + keys[0] + ' וגם ב' + keys[1]);
+    if(onlyB.length) bits.push(listHe(onlyB) + ' רק ב' + keys[1]);
+  } else if(all.length){
+    bits.push('הייתי ממליץ לעבוד יחד על ' + listHe(all.slice(0,6)));
+  }
+
+  /* על איזו מיומנות ללחוץ יותר */
+  if(skills.length){
+    const worst = skills[0], best = skills[skills.length-1];
+    let s = 'ובכללי הייתי עובד יותר חזק על ' + worst.k;
+    if(skills.length > 1 && itemScore(skills[1].v) < .8) s += ' וטיפה על ' + skills[1].k;
+    bits.push(s);
+    if(itemScore(best.v) >= .85 && best.k !== worst.k) bits.push(best.k + ' כבר במקום טוב');
+  }
+  if(!bits.length) return 'הנתונים עוד דלילים. עוד כמה סיבובים ואוכל להמליץ.';
+  return bits.join(', ') + '.';
+}
+
+/* ---------------------------------------------------------------
    מה הנתונים מהמשחק אומרים
    ---------------------------------------------------------------
    כל משחק שולח stats.items — לכל פריט (מספר, אות, עצם) כמה פעמים
@@ -3118,49 +3230,46 @@ function gameInsight(g, st){
   return h;
 }
 
-/* --- מסך שורש --- */
-$('#b-home').onclick = () => show('s-root');
-$('#r-parent').onclick = () => { renderShelf(); show('s-kids'); };
-$('#r-kids').onclick   = () => { renderPlayKid(); show('s-play-kid'); };
-
-function renderPlayKid(){
-  const el = $('#play-shelf');
-  if(!DB.kids.length){
-    el.innerHTML = '<div class="empty">עוד לא הוקמו ילדים. עוברים לאזור ההורים ומוסיפים.</div>';
-    return;
-  }
-  el.innerHTML = DB.kids.map(k => {
-    const n = gamesFor(k).length;
-    return `<button class="kidc" data-pk="${k.id}">
+/* --- מסך השורש: זה מסך הילדים. אין יותר פיצול הורים/ילדים בכניסה,
+       כי משתמשים פשוט לא מצאו את המשחקים. --- */
+function renderRoot(){
+  const el = $('#root-shelf');
+  el.innerHTML = DB.kids.map(k => `<button class="kidc" data-pk="${k.id}">
       ${avatarSVG(Object.assign({alt:k.name}, k.av))}
       <div class="nm">${esc(k.name)}</div>
-      <div class="tag">${n ? n + ' משחקים' : 'עוד קטן למשחקים'}</div>
-    </button>`;
-  }).join('');
+      <div class="tag">${gamesFor(k).length ? gamesFor(k).length + ' משחקים' : 'עוד קטן למשחקים'}</div>
+    </button>`).join('') +
+    `<button class="addk" id="b-addkid"><span class="plus">+</span><span>ילד חדש</span></button>`;
+
   el.querySelectorAll('[data-pk]').forEach(b => b.onclick = () => {
     CUR = DB.kids.find(k => k.id === b.dataset.pk);
     renderPlayGame(); show('s-play-game');
   });
+  /* הוספת ילד היא פעולה של הורה — מאחורי השער */
+  $('#b-addkid').onclick = () => askParent(() => startWizard());
 }
+$('#b-parents').onclick  = () => askParent(() => { CUR = CUR || DB.kids[0]; if(CUR){ openChild(CUR.id); } else { renderShelf(); show('s-kids'); } });
+$('#b-parents2').onclick = () => askParent(() => openChild(CUR.id));
 
 function renderPlayGame(){
   const k = CUR;
   $('#pg-name').textContent = k.name;
   const gs = gamesFor(k);
   if(!gs.length){
-    $('#pg-body').innerHTML = `<div class="empty">אין עדיין משחקים ל${esc(k.name)}.<br>הם נפתחים עם הגיל, ואפשר גם להדליק ולכבות אותם בהגדרות.</div>`;
+    $('#pg-body').innerHTML = `<div class="empty">אין עדיין משחקים ל${esc(k.name)}.<br>הם נפתחים עם הגיל, ואפשר להדליק אותם בממשק ההורים.</div>`;
     return;
   }
-  $('#pg-body').innerHTML = gs.map(g => {
+  /* כרטיסים בגודל אחיד, סמל גדול וצבעוני — ילד שלא קורא מזהה לפי הסמל */
+  $('#pg-body').innerHTML = `<div class="games2">` + gs.map(g => {
     const st = gameState(k, g.id);
-    const lvl = st && st.level ? 'רמה ' + st.level : 'משחק ראשון';
-    const stars = st && st.stars ? ' · ' + st.stars + ' ⭐' : '';
-    return `<button class="pcard" data-pg="${g.id}" style="background:${g.bg};margin-bottom:12px">
-      <div class="pi" style="width:74px;height:56px">${GMARK[g.id]||''}</div><b>${esc(g.n)}</b>
-      <span>${esc(g.d)}</span>
-      <span style="margin-top:6px;font-weight:700;color:var(--soft)">${lvl}${stars}</span>
+    const lvl = st && st.level ? 'רמה ' + st.level : '';
+    const stars = st && st.stars ? ' ⭐ ' + st.stars : '';
+    return `<button class="gcard" data-pg="${g.id}" style="border-color:${g.bg}">
+      <div class="gm">${GMARK[g.id] || ''}</div>
+      <b>${esc(g.n)}</b>
+      <div class="lvl">${lvl}${stars}</div>
     </button>`;
-  }).join('');
+  }).join('') + `</div>`;
   $('#pg-body').querySelectorAll('[data-pg]').forEach(b => b.onclick = () => openGame(b.dataset.pg));
 }
 
@@ -3199,7 +3308,8 @@ window.addEventListener('message', ev => {
   }
 });
 
-/* --- שער ההורים --- */
+/* שער ההורים. שתי טעויות סוגרות אותו וחוזרות אחורה — ההנחה היא
+   שילד לחץ בטעות, ומבוגר שטעה פשוט ילחץ שוב. */
 let GATE_OK = null, GATE_TRIES = 0;
 function askParent(then){
   GATE_OK = then; GATE_TRIES = 0;
@@ -3210,19 +3320,25 @@ function askParent(then){
   $('#gate').classList.add('on');
   setTimeout(() => $('#ga').focus(), 60);
 }
+function closeGate(){ $('#gate').classList.remove('on'); GATE_OK = null; GATE_TRIES = 0; }
 function gateSubmit(){
   if($('#ga').value.trim() === $('#gq').dataset.ans){
-    $('#gate').classList.remove('on');
-    const f = GATE_OK; GATE_OK = null; if(f) f();
-  } else {
-    GATE_TRIES++;
-    $('#gerr').textContent = GATE_TRIES >= 3 ? 'לא נכון. תבקשו מאבא או אמא.' : 'לא נכון, נסו שוב.';
-    $('#ga').value = '';
+    const f = GATE_OK; closeGate(); if(f) f();
+    return;
   }
+  GATE_TRIES++;
+  if(GATE_TRIES >= 2){
+    $('#gerr').textContent = 'טעית פעמיים, אני חוזר אחורה';
+    setTimeout(closeGate, 1500);
+    return;
+  }
+  $('#gerr').textContent = 'לא נכון, נסו שוב';
+  $('#ga').value = '';
 }
 $('#gok').onclick = gateSubmit;
 $('#ga').addEventListener('keydown', e => { if(e.key === 'Enter') gateSubmit(); });
-$('#gcancel').onclick = () => { $('#gate').classList.remove('on'); GATE_OK = null; };
+$('#gcancel').onclick = closeGate;
+$('#gcancel').onclick = closeGate;
 
 /* ---------------------------------------------------------------
    16. ניווט והפעלה
@@ -3230,10 +3346,10 @@ $('#gcancel').onclick = () => { $('#gate').classList.remove('on'); GATE_OK = nul
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
   const t = b.dataset.back;
   /* יציאה מאזור הילדים חזרה למסך השורש עוברת דרך שער ההורים */
-  if(t === 's-root'){ return askParent(() => show('s-root')); }
+  if(t === 's-root'){ renderRoot(); return show('s-root'); }
   if(t === 's-kids'){ renderShelf(); }
   if(t === 's-child'){ renderChild(); }
-  if(t === 's-play-kid'){ renderPlayKid(); }
+  if(t === 's-play-kid'){ renderRoot(); return show('s-root'); }
   if(t === 's-domain'){ if(CURDM) renderDomain(); else { renderChild(); return show('s-child'); } }
   show(t);
 });
@@ -3342,7 +3458,7 @@ function boot(uid, isNew){
   if(!DB) DB = emptyDB();
   UID = uid;
   save();
-  renderShelf();
+  renderShelf(); renderRoot();
   show(DB.kids.length ? 's-root' : 's-new');
   if(!DB.kids.length) startWizard();
   setHash(uid);                       /* אחרי הציור, ואף פעם לא לפניו */
@@ -3394,7 +3510,7 @@ async function consumeTransfer(p){
     UID = c;
     DB = (legacy && legacy.kids && legacy.kids.length) ? legacy : seedKids();
     save(); setHash(c);
-    renderShelf(); show('s-root');
+    renderShelf(); renderRoot(); show('s-root');
     setTimeout(()=> toast('הקוד שלך: ' + c + ' — נמצא גם בהגדרות'), 700);
     return;
   }

@@ -358,8 +358,6 @@ if('serviceWorker' in navigator){
       <button id="b-parents2" class="parentbtn">הורים ›</button>
     </div>
   </div>
-    <div id="pg-body"></div>
-  </div>
 
   <!-- 1 · kids shelf -->
   <div class="scr" id="s-kids">
@@ -382,7 +380,7 @@ if('serviceWorker' in navigator){
 
   <!-- 3 · child home -->
   <div class="scr" id="s-child">
-    <div class="top"><button class="back" data-back="s-kids" aria-label="חזרה">→</button>
+    <div class="top"><button class="back" data-back="auto" aria-label="חזרה">→</button>
       <div style="flex:1;min-width:0"><div class="ttl" id="ch-name"></div><div class="sub" id="ch-age"></div></div>
       <button class="iconb" id="b-journal" aria-label="יומן">📖</button></div>
     <div class="tabs">
@@ -2359,14 +2357,16 @@ function renderShelf(){
     </button>`;
   }).join('') + `<button class="addk" id="b-add"><span class="plus">+</span><span>ילד חדש</span></button>`;
 
-  el.querySelectorAll('[data-kid]').forEach(b => b.onclick = () => openChild(b.dataset.kid));
+  el.querySelectorAll('[data-kid]').forEach(b => b.onclick = () => openChild(b.dataset.kid, 's-kids'));
   $('#b-add').onclick = () => startWizard();   /* בלי החץ, אירוע הלחיצה מגיע כפרמטר edit והקוד זורק */
 }
 
 /* ---------------------------------------------------------------
    9. מסך 3 — בית הילד
    --------------------------------------------------------------- */
-function openChild(id){
+let CH_BACK = 's-kids';
+function openChild(id, from){
+  if(from) CH_BACK = from;
   CUR = DB.kids.find(k => k.id === id);
   renderChild();
   show('s-child');
@@ -3248,8 +3248,8 @@ function renderRoot(){
   /* הוספת ילד היא פעולה של הורה — מאחורי השער */
   $('#b-addkid').onclick = () => askParent(() => startWizard());
 }
-$('#b-parents').onclick  = () => askParent(() => { CUR = CUR || DB.kids[0]; if(CUR){ openChild(CUR.id); } else { renderShelf(); show('s-kids'); } });
-$('#b-parents2').onclick = () => askParent(() => openChild(CUR.id));
+$('#b-parents').onclick  = () => askParent(() => { CUR = CUR || DB.kids[0]; if(CUR){ openChild(CUR.id, 's-root'); } else { renderShelf(); show('s-kids'); } });
+$('#b-parents2').onclick = () => askParent(() => openChild(CUR.id, 's-play-game'));
 
 function renderPlayGame(){
   const k = CUR;
@@ -3338,13 +3338,14 @@ function gateSubmit(){
 $('#gok').onclick = gateSubmit;
 $('#ga').addEventListener('keydown', e => { if(e.key === 'Enter') gateSubmit(); });
 $('#gcancel').onclick = closeGate;
-$('#gcancel').onclick = closeGate;
 
 /* ---------------------------------------------------------------
    16. ניווט והפעלה
    --------------------------------------------------------------- */
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
-  const t = b.dataset.back;
+  let t = b.dataset.back;
+  if(t === 'auto') t = CH_BACK;
+  if(t === 's-play-game'){ renderPlayGame(); return show('s-play-game'); }
   /* יציאה מאזור הילדים חזרה למסך השורש עוברת דרך שער ההורים */
   if(t === 's-root'){ renderRoot(); return show('s-root'); }
   if(t === 's-kids'){ renderShelf(); }

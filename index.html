@@ -382,7 +382,7 @@ if('serviceWorker' in navigator){
   <div class="scr" id="s-child">
     <div class="top"><button class="back" data-back="auto" aria-label="חזרה">→</button>
       <div style="flex:1;min-width:0"><div class="ttl" id="ch-name"></div><div class="sub" id="ch-age"></div></div>
-      <button class="iconb" id="b-journal" aria-label="יומן">📖</button></div>
+      <button class="iconb" id="b-settings2" aria-label="הגדרות">⚙</button><button class="iconb" id="b-journal" aria-label="יומן">📖</button></div>
     <div class="tabs">
       <button class="tab on" data-tab="train">תרגול יחד</button>
       <button class="tab" data-tab="games">משחקים</button>
@@ -417,7 +417,7 @@ if('serviceWorker' in navigator){
 
   <!-- 8 · settings -->
   <div class="scr" id="s-settings">
-    <div class="top"><button class="back" data-back="s-kids" aria-label="חזרה">→</button><div class="ttl">הגדרות</div></div>
+    <div class="top"><button class="back" data-back="autost" aria-label="חזרה">→</button><div class="ttl">הגדרות</div></div>
     <div id="st-body"></div>
   </div>
 
@@ -2364,7 +2364,7 @@ function renderShelf(){
 /* ---------------------------------------------------------------
    9. מסך 3 — בית הילד
    --------------------------------------------------------------- */
-let CH_BACK = 's-kids';
+let CH_BACK = 's-kids', ST_BACK = 's-kids';
 function openChild(id, from){
   if(from) CH_BACK = from;
   CUR = DB.kids.find(k => k.id === id);
@@ -2948,7 +2948,8 @@ async function exportFile(){
 /* ---------------------------------------------------------------
    15. מסך 8 — הגדרות
    --------------------------------------------------------------- */
-$('#b-settings').onclick = () => { renderSettings(); show('s-settings'); };
+$('#b-settings').onclick  = () => { ST_BACK = 's-kids';  renderSettings(); show('s-settings'); };
+$('#b-settings2').onclick = () => { ST_BACK = 's-child'; renderSettings(); show('s-settings'); };
 function renderSettings(){
   let html = `<div class="lbl">הילדים</div>`;
   DB.kids.forEach(k => {
@@ -3345,6 +3346,7 @@ $('#gcancel').onclick = closeGate;
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
   let t = b.dataset.back;
   if(t === 'auto') t = CH_BACK;
+  if(t === 'autost') t = ST_BACK;
   if(t === 's-play-game'){ renderPlayGame(); return show('s-play-game'); }
   /* יציאה מאזור הילדים חזרה למסך השורש עוברת דרך שער ההורים */
   if(t === 's-root'){ renderRoot(); return show('s-root'); }

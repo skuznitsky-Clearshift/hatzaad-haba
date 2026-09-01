@@ -428,7 +428,7 @@ if('serviceWorker' in navigator){
 
 <!-- G · full-screen game host -->
 <div id="game-host">
-  <iframe id="game-frame" title="משחק" allow="autoplay"></iframe>
+  <iframe id="game-frame" title="משחק" allow="autoplay; microphone"></iframe>
   <button id="game-exit" aria-label="יציאה מהמשחק">✕</button>
 </div>
 
@@ -2853,7 +2853,9 @@ function saveWizard(){
   } else {
     DB.kids.push({id:'k'+Date.now(), name:W.name, g:W.g, dob:iso, av:W.av, logs:[], seeds:{}, lvl:{}});
   }
-  save(); renderShelf(); show('s-kids');
+  save(); renderShelf();
+  /* ילד חדש — נוחתים במרחב הילדים, כדי שבחירת האווטאר תפתח את המשחקים */
+  if(W.edit){ show('s-kids'); } else { renderRoot(); show('s-root'); }
   toast(W.edit ? 'נשמר' : W.name + ' ' + (W.g==='f'?'נוספה':'נוסף'));
 }
 
@@ -3379,30 +3381,45 @@ function renderWelcome(mode){
     return;
   }
 
-  const others = knownProfiles();
+  /* מסך הקוד — רק למי שכבר יש לו משתמש */
+  if(mode === 'code'){
+    const others = knownProfiles();
+    b.innerHTML = `
+      <div class="hello"><div class="mark">🔑</div><h1>כבר יש לי משתמש</h1>
+        <p>הזינו את הקוד בן שש התווים שקיבלתם כשנכנסתם בפעם הראשונה. הוא מביא איתו את הילדים וההתקדמות.</p></div>
+      <div class="card" style="margin-top:20px">
+        <label style="display:block;font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.05em;margin-bottom:5px">הקוד שלך</label>
+        <input class="code input" id="wc-code" inputmode="latin" maxlength="6" placeholder="XXXXXX" autocomplete="off" autocapitalize="characters">
+        <div id="wc-err"></div>
+        <div class="btnrow"><button class="btn full" id="wc-go">כניסה</button>
+          <button class="btn ghost full" id="wc-back3">חזרה</button></div>
+      </div>
+      ${others.length ? `<div class="lbl" style="margin-top:24px">פרופילים במכשיר הזה</div>
+        <div class="btnrow">${others.map(u=>`<button class="btn ghost sm" data-sw="${u}">${u}</button>`).join('')}</div>` : ''}
+      <div style="text-align:center;margin-top:22px">
+        <button id="wc-paste-b" style="font-size:14px;color:var(--soft);text-decoration:underline">יש לי קוד העברה ארוך</button></div>
+      <div class="note">${syncOn()
+        ? 'עם סנכרון בענן הקוד מושך את הנתונים מכל מכשיר.'
+        : 'בלי סנכרון בענן הקוד לבדו לא מביא נתונים ממכשיר אחר — לשם כך יש קוד העברה ארוך.'}</div>`;
+    $('#wc-go').onclick = () => enterCode($('#wc-code').value);
+    $('#wc-code').addEventListener('keydown', e => { if(e.key === 'Enter') enterCode($('#wc-code').value); });
+    $('#wc-back3').onclick = () => renderWelcome();
+    $('#wc-paste-b').onclick = () => renderWelcome('paste');
+    b.querySelectorAll('[data-sw]').forEach(x => x.onclick = () => boot(x.dataset.sw));
+    return;
+  }
+
+  /* מסך הפתיחה — שתי אפשרויות בלבד, בלי שדה קוד שמבלבל מי שנכנס לראשונה */
   b.innerHTML = `
     <div class="hello"><div class="mark">🌱</div><h1>הצעד הבא</h1>
       <p>לכל ילד, דבר אחד לעשות היום — לפי הגיל שלו, לפי הרמה שלו, ולפי מה שכבר עשיתם.</p></div>
-    <div class="card" style="margin-top:22px">
-      <label style="display:block;font-size:12.5px;font-weight:700;color:var(--faint);letter-spacing:.05em;margin-bottom:5px">הקוד שלך</label>
-      <input class="code input" id="wc-code" inputmode="latin" maxlength="6" placeholder="XXXXXX" autocomplete="off" autocapitalize="characters">
-      <div id="wc-err"></div>
-      <div class="btnrow"><button class="btn full" id="wc-go">כניסה</button>
-        <button class="btn ghost full" id="wc-new">אין לי קוד — צרו לי אחד</button></div>
+    <div class="btnrow" style="flex-direction:column;gap:12px;margin-top:26px">
+      <button class="btn full" id="wc-first">כניסה ראשונה שלי</button>
+      <button class="btn ghost full" id="wc-have">כבר יש לי משתמש</button>
     </div>
-    ${others.length ? `<div class="lbl" style="margin-top:24px">פרופילים במכשיר הזה</div>
-      <div class="btnrow">${others.map(u=>`<button class="btn ghost sm" data-sw="${u}">${u}</button>`).join('')}</div>` : ''}
-    <div style="text-align:center;margin-top:22px">
-      <button id="wc-paste-b" style="font-size:14px;color:var(--soft);text-decoration:underline">יש לי קוד העברה ארוך</button></div>
-    <div class="note">${syncOn()
-      ? 'הקוד מביא איתו את הילדים וההתקדמות מכל מכשיר.'
-      : 'הכול נשמר בדפדפן הזה בלבד. אין חשבון ואין הרשמה.'}</div>`;
-
-  $('#wc-go').onclick = () => enterCode($('#wc-code').value);
-  $('#wc-code').addEventListener('keydown', e => { if(e.key === 'Enter') enterCode($('#wc-code').value); });
-  $('#wc-new').onclick = () => { let c; do{ c = newCode(); } while(profileExists(c)); boot(c, true); };
-  $('#wc-paste-b').onclick = () => renderWelcome('paste');
-  b.querySelectorAll('[data-sw]').forEach(x => x.onclick = () => boot(x.dataset.sw));
+    <div class="note">הכול נשמר בדפדפן הזה. אין הרשמה ואין סיסמה — רק קוד בן שש תווים שתקבלו מיד.</div>`;
+  $('#wc-first').onclick = () => { let c; do{ c = newCode(); } while(profileExists(c)); boot(c, true); };
+  $('#wc-have').onclick  = () => renderWelcome('code');
 }
 
 /* שדה אחד לכולם: אם יש סנכרון — מנסים למשוך מהשרת; אם אין מה למשוך,

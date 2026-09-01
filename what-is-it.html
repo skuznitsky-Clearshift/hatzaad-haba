@@ -604,7 +604,7 @@ function pump(){
   const a = ensureAudio();
   a.src = 'data:audio/mpeg;base64,' + b64;
   const pr = a.play();
-  if(pr && pr.catch) pr.catch(()=>{ sayBusy=false; });
+  if(pr && pr.catch) pr.catch(()=>{ sayBusy=false; pump(); });   /* בלי pump התור נתקע לתמיד */
 }
 function ttsFallback(text){
   if(!text || !window.speechSynthesis) return pump();

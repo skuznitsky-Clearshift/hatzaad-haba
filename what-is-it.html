@@ -151,7 +151,7 @@ h1{margin:0 0 8px;font-size:clamp(26px,6.5vw,38px)}
       <div class="sp"></div><div class="pill">⭐ <span id="stars2">0</span></div>
       <button class="icon" id="setBtn" aria-label="הגדרות">⚙</button></div>
     <div id="hello"></div>
-    <h1>מה נלמד?</h1>
+    <div id="coach"></div>
     <div class="levels" id="levels"></div>
   </section>
   <section class="screen" id="play">
@@ -359,9 +359,12 @@ const ITEMS = [
   <path d="M28 66 q0 -34 22 -34 q22 0 22 34 z" fill="#6FBB5B"/>
   <path d="M28 60 q22 8 44 0 v6 q-22 8 -44 0 z" fill="#4A8C3D"/>`},
 {id:'h_brush', n:'מברשת שיניים', c:'home', s:`
-  <rect x="44" y="30" width="12" height="58" rx="6" fill="#4E82A0"/>
-  <rect x="40" y="14" width="20" height="18" rx="5" fill="#CFE3F2"/>
-  <path d="M43 14 v-6 M48 14 v-8 M53 14 v-8 M58 14 v-6" stroke="#9FC4DC" stroke-width="3.4" stroke-linecap="round"/>`},
+  <path d="M38.5 26 V14 q0 -5 5 -5 h13 q5 0 5 5 v12 z" fill="#CFE4F1"/>
+  <path d="M43 10 v15 M47.6 9.4 v15.6 M52.4 9.4 v15.6 M57 10 v15" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M43 32 C41 42 46 44 46 52 C46 62 42.5 66 42.5 76 L42.5 88 Q42.5 94 50 94 Q57.5 94 57.5 88 L57.5 76 C57.5 66 54 62 54 52 C54 44 59 42 57 32 Z" fill="#4E93BC"/>
+  <rect x="37" y="20" width="26" height="19" rx="8" fill="#4E93BC"/>
+  <rect x="43" y="68" width="14" height="18" rx="7" fill="#8ECAE4"/>
+  <path d="M46.5 73 v8 M50 72.5 v9 M53.5 73 v8" stroke="#4E93BC" stroke-width="2.2" stroke-linecap="round"/>`},
 {id:'h_pot', n:'סיר', c:'home', s:`
   <path d="M24 40 h52 l-5 40 h-42 z" fill="#7A828B"/>
   <ellipse cx="50" cy="40" rx="26" ry="7" fill="#9AA3AD"/>
@@ -392,9 +395,11 @@ const ITEMS = [
   <path d="M52 22 q12 -8 16 2 q-12 4 -16 -2 z" fill="#5FA84E"/>
   <path d="M36 42 q-4 10 0 18" stroke="#fff" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/>`},
 {id:'f_banana', n:'בננה', c:'food', s:`
-  <path d="M22 34 q4 40 40 44 q22 2 20 -10 q-4 6 -18 2 q-30 -8 -32 -38 z" fill="#F2C14E"/>
-  <path d="M22 34 q4 40 40 44" fill="none" stroke="#D9A431" stroke-width="2"/>
-  <path d="M20 30 l6 6 l-4 4 z" fill="#6B4423"/>`},
+  <path d="M18 40 Q52 106 86 44 Q52 68 18 40 Z" fill="#F5CE45"/>
+  <path d="M18 40 Q52 106 86 44" fill="none" stroke="#DFA92B" stroke-width="3" stroke-linecap="round"/>
+  <path d="M27 47 Q52 82 78 49" fill="none" stroke="#FBE38A" stroke-width="4" stroke-linecap="round" opacity=".9"/>
+  <path d="M18 40 l-7 -11 q-1 -5 5 -3 l7 12 z" fill="#7A5A3A"/>
+  <path d="M86 44 l9 -4 q2 4 -1 7 l-8 2 z" fill="#5E4630"/>`},
 {id:'f_grapes', n:'ענבים', c:'food', s:`
   <g fill="#9C5FB8">
    <circle cx="50" cy="36" r="8"/><circle cx="40" cy="48" r="8"/><circle cx="60" cy="48" r="8"/>
@@ -685,8 +690,9 @@ function rec(ok, item, skill){
 }
 
 /* ---------- ניווט ---------- */
+function toMenu(){ renderHome(); renderMenu(); show('menu'); say('ui_which'); }
 function show(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); }
-$$('[data-back]').forEach(b=> b.onclick = ()=>{ sfxTap(); speakStop(); show(b.dataset.back); if(b.dataset.back==='menu') renderHome(); });
+$$('[data-back]').forEach(b=> b.onclick = ()=>{ sfxTap(); speakStop(); if(b.dataset.back==='menu'){ toMenu(); } else { show(b.dataset.back); } });
 
 /* ---------- מסכים ---------- */
 function renderWho(){
@@ -696,7 +702,7 @@ function renderWho(){
     b.className = 'lvcard';
     b.style.cssText = 'flex-direction:column;text-align:center;padding:14px';
     b.innerHTML = `<div style="width:86px">${avatarKid(g)}</div><b>${KIDS[g].name}</b>`;
-    b.onclick = ()=>{ ac(); sfxTap(); P.player=g; save(); renderHome(); renderMenu(); show('menu'); say('ui_which'); };
+    b.onclick = ()=>{ ac(); sfxTap(); P.player=g; save(); toMenu(); };
     w.appendChild(b);
   });
 }
@@ -815,7 +821,7 @@ function finishRound(){
   say(levelUp ? 'lvl_up' : 'done_'+G());
 }
 $('#againBtn').onclick    = ()=>{ sfxTap(); $('#reward').classList.remove('on'); startLevel(S.lv); };
-$('#backMenuBtn').onclick = ()=>{ sfxTap(); $('#reward').classList.remove('on'); renderMenu(); show('menu'); };
+$('#backMenuBtn').onclick = ()=>{ sfxTap(); $('#reward').classList.remove('on'); toMenu(); };
 
 $('#setBtn').onclick = ()=>{ ac(); sfxTap(); pgAsk(function(){ if(typeof renderSettings==='function') renderSettings(); show('settings'); }); };
 
@@ -843,12 +849,12 @@ if(HOSTED){
     if(d.state) P = {...DEF, ...d.state, stats:{...freshStats(), ...(d.state.stats||{})}};
     P.player = (d.child && d.child.g === 'f') ? 'f' : 'm';
     if(d.child && d.child.name && KIDS[P.player]) KIDS[P.player].name = d.child.name;
-    renderHome(); renderMenu(); show('menu');
+    toMenu();
   });
   try{ window.parent.postMessage({type:'ns-ready'}, '*'); }catch(e){}
 }else{
   renderWho();
-  if(P.player){ renderHome(); renderMenu(); show('menu'); } else { show('who'); }
+  if(P.player){ toMenu(); } else { show('who'); }
 }
 document.addEventListener('pointerdown', function once(){ ac(); }, {once:true});
 window.addEventListener('beforeunload', speakStop);

@@ -314,6 +314,35 @@ p{margin:0}
   border:1px solid var(--line);border-radius:13px;padding:10px;background:var(--paper2);
   color:var(--soft);resize:vertical;word-break:break-all;
 }
+.agein{width:120px;text-align:center;font-family:'Heebo',system-ui,sans-serif;font-size:20px}
+select.input{width:100%;padding:12px;border-radius:14px;border:1.5px solid var(--line);
+  background:var(--surface);font-size:16px;color:var(--ink);appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--faint) 50%),linear-gradient(135deg,var(--faint) 50%,transparent 50%);
+  background-position:calc(0% + 16px) calc(50% - 2px),calc(0% + 21px) calc(50% - 2px);
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.a2hs{position:fixed;inset:0;background:rgba(59,44,32,.55);z-index:120;display:flex;
+  align-items:flex-end;justify-content:center;padding:0}
+.a2hs[hidden]{display:none}
+.a2hs-box{background:var(--surface);width:100%;max-width:520px;border-radius:26px 26px 0 0;
+  padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px));box-shadow:var(--sh2);
+  animation:a2up .3s ease}
+@keyframes a2up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.a2hs-icon{font-size:38px;text-align:center}
+.a2hs-box h3{font-size:21px;text-align:center;margin:6px 0 6px}
+.a2hs-box p{font-size:15px;color:var(--soft);text-align:center}
+.a2hs-step{display:flex;align-items:center;gap:9px;font-size:15px;color:var(--ink);
+  background:var(--paper2);border-radius:14px;padding:11px 13px;margin-top:9px}
+.a2hs-step .n{width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;
+  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.a2hs-step .shr{width:20px;height:20px;color:var(--blue);flex:none}
+.a2hs-ios{margin-top:12px}
+.hist{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.hsvg{width:100%;height:74px;display:block;margin:4px 0 2px}
+.hcv{font-size:7px;fill:var(--muted);text-anchor:middle;font-family:inherit}
+.hcx{font-size:8px;fill:var(--muted);text-anchor:middle;font-family:inherit}
+.hleg{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:11px}
+.hd{width:9px;height:9px;border-radius:3px;display:inline-block;margin-left:4px}
+.hd.hg{background:#5FA98A}.hd.hm{background:#D8A657}.hd.hb{background:#D97A6C}.hd.hn{background:#E9A0A0}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -433,6 +462,26 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- gate: math lock to leave kids mode -->
+  <div class="a2hs" id="a2hs" hidden>
+    <div class="a2hs-box">
+      <div class="a2hs-icon">🌱</div>
+      <h3>להוסיף למסך הבית</h3>
+      <p id="a2hs-txt">כך האפליקציה נפתחת כמו אפליקציה רגילה, גם בלי אינטרנט.</p>
+      <div class="a2hs-ios" id="a2hs-ios" hidden>
+        <div class="a2hs-step"><span class="n">1</span> לחצו על <b>שיתוף</b> בסרגל למטה
+          <svg viewBox="0 0 24 24" class="shr" aria-hidden="true">
+            <path d="M12 3v12M12 3l-4 4M12 3l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="a2hs-step"><span class="n">2</span> גללו ובחרו <b>הוספה למסך הבית</b></div>
+        <div class="a2hs-step"><span class="n">3</span> לחצו <b>הוספה</b></div>
+      </div>
+      <div class="btnrow">
+        <button class="btn full" id="a2hs-go">הוספה</button>
+        <button class="btn ghost full" id="a2hs-skip">לא עכשיו</button>
+      </div>
+    </div>
+  </div>
   <div class="gate" id="leaveq">
     <div class="gbox">
       <h3>לצאת מעמוד ההורים?</h3>
@@ -2783,41 +2832,88 @@ let W = null;
 function startWizard(edit){
   W = edit
     ? {step:1, edit:edit.id, name:edit.name, g:edit.g,
-       dd:edit.dob.split('-')[2], mm:edit.dob.split('-')[1], yy:edit.dob.split('-')[0],
+       age:String(Math.max(0, Math.floor(ageMonths(edit.dob)/12))),
+       frame:'', frameTouched:false, avTouched:true,
        av:Object.assign({}, edit.av)}
-    : {step:1, name:'', g:'m', dd:'', mm:'', yy:'',
-       av:{skin:'s2', hair:'h1', style:'short', eye:'e1', shirt:SHIRTS[2], print:'none'}};
+    : {step:1, name:'', g:'', age:'', frame:'', frameTouched:false, avTouched:false,
+       av:{skin:SKINS[1].id, hair:HAIRS[1].id, style:'short', eye:'e1', shirt:SHIRTS[1], print:'star'}};;
   renderWizard(); show('s-new');
+}
+/* מסגרות החינוך, לפי גיל. ההורה יכול לשנות אם הילד לא במסגרת התואמת לגילו. */
+const FRAMES = [
+  {id:'nb',  t:'NB · מתחת לגיל שנה',        lo:0,  hi:1},
+  {id:'m1',  t:'מעון שנה 1 · גיל 1–2',      lo:1,  hi:2},
+  {id:'m2',  t:'מעון שנה 2 · גיל 2–3',      lo:2,  hi:3},
+  {id:'g1',  t:'גן עירייה שנה 1 · גיל 3–4', lo:3,  hi:4},
+  {id:'gt',  t:'גן עירייה טרום חובה · 4–5', lo:4,  hi:5},
+  {id:'gh',  t:'גן חובה · גיל 5–6',          lo:5,  hi:6},
+  {id:'k1',  t:'כיתה א׳ · גיל 6–7',          lo:6,  hi:7},
+  {id:'k2',  t:'כיתה ב׳ · גיל 7–8',          lo:7,  hi:8},
+  {id:'k3',  t:'כיתה ג׳ · גיל 8–9',          lo:8,  hi:9},
+  {id:'k4',  t:'כיתה ד׳ · גיל 9–10',         lo:9,  hi:10},
+  {id:'k5',  t:'כיתה ה׳ · גיל 10–11',        lo:10, hi:11},
+  {id:'k6',  t:'כיתה ו׳ · גיל 11–12',        lo:11, hi:99}
+];
+function frameForAge(y){
+  const n = parseInt(y, 10);
+  if(isNaN(n)) return '';
+  const f = FRAMES.find(x => n >= x.lo && n < x.hi);
+  return (f || FRAMES[FRAMES.length-1]).id;
+}
+/* ברירת המחדל של האווטאר נקבעת לפי המין, לפני שההורה נוגע בעורך */
+function avDefault(g){
+  return g === 'f'
+    ? {skin:SKINS[1].id, hair:HAIRS[1].id, style:STYLES[1].id, eye:'e1', shirt:SHIRTS[0], print:'none'}
+    : {skin:SKINS[1].id, hair:HAIRS[1].id, style:'short',      eye:'e1', shirt:SHIRTS[1], print:'star'};
 }
 function renderWizard(){
   $('#wiz-ttl').textContent = W.edit ? 'עריכת ילד' : 'ילד חדש';
   const b = $('#wiz-body');
   if(W.step === 1){
+    const nameLbl = W.g === 'f' ? 'השם שקוראים לה בבית' : 'השם שקוראים לו בבית';
     b.innerHTML = `
-      <div class="field"><label>שם</label><input id="w-name" value="${esc(W.name)}" placeholder="השם שקוראים לו בבית"></div>
       <div class="field"><label>מין</label><div class="seg">
         <button data-g="m" class="${W.g==='m'?'on':''}">בן</button>
         <button data-g="f" class="${W.g==='f'?'on':''}">בת</button></div></div>
-      <div class="field"><label>תאריך לידה</label><div class="dob">
-        <input id="w-dd" inputmode="numeric" maxlength="2" placeholder="יום"  value="${esc(W.dd)}">
-        <input id="w-mm" inputmode="numeric" maxlength="2" placeholder="חודש" value="${esc(W.mm)}">
-        <input id="w-yy" inputmode="numeric" maxlength="4" placeholder="שנה"  value="${esc(W.yy)}"></div>
-        <div class="meta" id="w-age"></div></div>
+      <div class="field"><label>שם</label>
+        <input id="w-name" value="${esc(W.name)}" placeholder="${nameLbl}" autocomplete="off"></div>
+      <div class="field"><label>גיל</label>
+        <input id="w-age" class="agein" inputmode="numeric" maxlength="2" placeholder="בשנים" value="${esc(W.age)}">
+        <div class="meta" id="w-agem"></div></div>
+      <div class="field" id="w-framewrap" ${W.age===''?'hidden':''}><label>שלב המסגרת</label>
+        <select id="w-frame" class="input">${FRAMES.map(f =>
+          `<option value="${f.id}" ${W.frame===f.id?'selected':''}>${f.t}</option>`).join('')}</select>
+        <div class="meta">אפשר לשנות אם הילד לא במסגרת שמתאימה לגיל.</div></div>
       <div class="btnrow"><button class="btn full" id="w-next">לאווטאר</button></div>`;
-    b.querySelectorAll('[data-g]').forEach(x => x.onclick = () => { W.g = x.dataset.g; renderWizard(); });
+    b.querySelectorAll('[data-g]').forEach(x => x.onclick = () => {
+      W.g = x.dataset.g;
+      if(!W.edit && !W.avTouched) W.av = avDefault(W.g);   /* ברירת מחדל לפי מין */
+      renderWizard();
+    });
     const upd = () => {
       W.name = $('#w-name').value.trim();
-      W.dd = $('#w-dd').value; W.mm = $('#w-mm').value; W.yy = $('#w-yy').value;
+      W.age  = $('#w-age').value.replace(/\D/g,'').slice(0,2);
+      if($('#w-age').value !== W.age) $('#w-age').value = W.age;
+      const wrap = $('#w-framewrap');
+      if(W.age === ''){ wrap.hidden = true; }
+      else {
+        wrap.hidden = false;
+        if(!W.frameTouched){ W.frame = frameForAge(W.age); $('#w-frame').value = W.frame; }
+      }
       const iso = wizISO();
-      $('#w-age').textContent = iso ? ageText({dob:iso, g:W.g}) + ' · שלב ' + stageOf({dob:iso}).id + ' — ' + stageOf({dob:iso}).t : '';
+      $('#w-agem').textContent = iso ? ageText({dob:iso, g:W.g}) + ' · שלב ' + stageOf({dob:iso}).id : '';
       W.av.baby = iso ? ageMonths(iso) < 12 : false;
     };
-    ['w-name','w-dd','w-mm','w-yy'].forEach(id => $('#'+id).oninput = upd);
+    $('#w-name').oninput = upd;
+    $('#w-age').oninput  = upd;
+    $('#w-frame').onchange = () => { W.frameTouched = true; W.frame = $('#w-frame').value; };
     upd();
     $('#w-next').onclick = () => {
       upd();
+      if(!W.g) return toast('קודם בן או בת');
       if(!W.name) return toast('צריך שם');
-      if(!wizISO()) return toast('תאריך לידה לא תקין');
+      if(W.age === '') return toast('צריך גיל');
+      if(!wizISO()) return toast('גיל לא תקין');
       if(W.av.baby && W.av.style !== 'wisp' && W.av.style !== 'bald') W.av.style = 'wisp';
       W.step = 2; renderWizard();
     };
@@ -2846,22 +2942,21 @@ function renderWizard(){
     $('#w-save').onclick = saveWizard;
   }
 }
+/* גיל בשנים -> תאריך לידה. הילד מוצג כבן הגיל שנרשם, בדיוק. */
 function wizISO(){
-  const d = parseInt(W.dd,10), m = parseInt(W.mm,10), y = parseInt(W.yy,10);
-  if(!(d>=1&&d<=31&&m>=1&&m<=12&&y>=1990&&y<=2100)) return null;
-  const iso = y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-  const t = parseISO(iso);
-  if(t.getDate() !== d || t.getMonth() !== m-1) return null;
-  if(t > parseISO(todayISO())) return null;
-  return iso;
+  const y = parseInt(W.age, 10);
+  if(isNaN(y) || y < 0 || y > 18) return null;
+  const now = new Date();
+  const d = new Date(now.getFullYear() - y, now.getMonth(), now.getDate());
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function saveWizard(){
   const iso = wizISO(); if(!iso) return toast('תאריך לידה לא תקין');
   if(W.edit){
     const k = DB.kids.find(x => x.id === W.edit);
-    k.name = W.name; k.g = W.g; k.dob = iso; k.av = W.av;
+    k.name = W.name; k.g = W.g; k.dob = iso; k.frame = W.frame; k.av = W.av; touch(k);
   } else {
-    DB.kids.push({id:'k'+Date.now(), name:W.name, g:W.g, dob:iso, av:W.av, logs:[], seeds:{}, lvl:{}});
+    DB.kids.push({id:'k'+Date.now(), name:W.name, g:W.g, dob:iso, frame:W.frame, av:W.av, logs:[], seeds:{}, lvl:{}, mt:Date.now()});
   }
   save(); renderShelf();
   /* ילד חדש — נוחתים במרחב הילדים, כדי שבחירת האווטאר תפתח את המשחקים */
@@ -2875,6 +2970,38 @@ function saveWizard(){
    כל עוד לא הוזנה כתובת שרת, שום בקשה לא יוצאת מהמכשיר.
    קוד השרת נמצא ב‑next-step-src\sync-worker.js.
    --------------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   הוספה למסך הבית — נשאלת פעם אחת, בפתיחה הראשונה
+   אנדרואיד נותן אירוע התקנה אמיתי; באייפון אין ממשק כזה, ולכן שם
+   מוצגות ההוראות של כפתור השיתוף.
+   --------------------------------------------------------------- */
+const A2HS_KEY = 'nextstep.a2hs';
+let deferredPrompt = null;
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+function isIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+function a2hsSeen(){ try{ return localStorage.getItem(A2HS_KEY) === '1'; }catch(e){ return true; } }
+function a2hsDone(){ try{ localStorage.setItem(A2HS_KEY,'1'); }catch(e){} }
+function a2hsHide(){ const el = $('#a2hs'); if(el) el.hidden = true; }
+function a2hsShow(){
+  if(isStandalone() || a2hsSeen()) return;
+  const box = $('#a2hs'); if(!box) return;
+  const ios = isIOS();
+  $('#a2hs-ios').hidden = !ios;
+  $('#a2hs-go').textContent = ios ? 'הבנתי' : 'הוספה';
+  $('#a2hs-txt').textContent = ios
+    ? 'שלושה צעדים, וזה יושב אצלכם על המסך כמו כל אפליקציה.'
+    : 'כך האפליקציה נפתחת כמו אפליקציה רגילה, גם בלי אינטרנט.';
+  box.hidden = false;
+}
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
+window.addEventListener('appinstalled', () => { a2hsDone(); a2hsHide(); });
+
 const SYNCKEY = 'nextstep.sync';
 function syncCfg(){
   try{ return JSON.parse(localStorage.getItem(SYNCKEY) || 'null') || {url:'', secret:''}; }
@@ -2882,6 +3009,119 @@ function syncCfg(){
 }
 function syncSave(c){ try{ localStorage.setItem(SYNCKEY, JSON.stringify(c)); }catch(e){} }
 function syncOn(){ const c = syncCfg(); return !!(c.url && /^https:\/\//.test(c.url)); }
+
+/* ---------------------------------------------------------------
+   מיזוג בין מכשירים
+   ---------------------------------------------------------------
+   שני הורים על אותו קוד. במקום "מי דרס את מי" — מיזוג לפי ילד:
+   יומן = איחוד רשומות, מונים = הגבוה מבין השניים, פרופיל = מי
+   שנערך אחרון. אחרי סנכרון אחד משני הצדדים שניהם זהים.
+   --------------------------------------------------------------- */
+function touch(k){ if(k) k.mt = Date.now(); }
+
+function mergeMax(x, y){
+  const o = Object.assign({}, x || {});
+  Object.keys(y || {}).forEach(id => { o[id] = Math.max(o[id] || 0, y[id] || 0); });
+  return o;
+}
+function mergeCounters(x, y){
+  const o = {};
+  Object.keys(Object.assign({}, x || {}, y || {})).forEach(id => {
+    const p = (x || {})[id] || {}, q = (y || {})[id] || {};
+    o[id] = {ok: Math.max(p.ok || 0, q.ok || 0), miss: Math.max(p.miss || 0, q.miss || 0)};
+  });
+  return o;
+}
+function mergeGames(x, y){
+  const o = {};
+  Object.keys(Object.assign({}, x || {}, y || {})).forEach(id => {
+    const p = (x || {})[id], q = (y || {})[id];
+    if(!p){ o[id] = q; return; }
+    if(!q){ o[id] = p; return; }
+    const s = Object.assign({}, p, q);
+    const ps = p.stats || {}, qs = q.stats || {};
+    s.stats = {items:  mergeCounters(ps.items,  qs.items),
+               skills: mergeCounters(ps.skills, qs.skills),
+               levels: mergeCounters(ps.levels, qs.levels)};
+    const h = {};
+    Object.keys(Object.assign({}, p.hist || {}, q.hist || {})).forEach(d => {
+      const u = (p.hist || {})[d] || {ok:0, miss:0}, v = (q.hist || {})[d] || {ok:0, miss:0};
+      h[d] = {ok: Math.max(u.ok, v.ok), miss: Math.max(u.miss, v.miss)};
+    });
+    if(Object.keys(h).length) s.hist = h;
+    /* התקדמות מספרית — הגבוה; אוספי פרסים — איחוד */
+    Object.keys(s).forEach(f => {
+      if(f === 'stats' || f === 'hist') return;
+      if(typeof p[f] === 'number' && typeof q[f] === 'number') s[f] = Math.max(p[f], q[f]);
+      else if(Array.isArray(p[f]) && Array.isArray(q[f])){
+        const seen = {}, u = [];
+        p[f].concat(q[f]).forEach(v => { const kk = JSON.stringify(v);
+          if(!seen[kk]){ seen[kk] = 1; u.push(v); } });
+        s[f] = u;
+      }
+    });
+    o[id] = s;
+  });
+  return o;
+}
+function mergeKid(a, b){
+  const nw = (b.mt || 0) > (a.mt || 0) ? b : a;
+  const k = {id:a.id, name:nw.name, g:nw.g, dob:nw.dob, frame:nw.frame, av:nw.av,
+             mt: Math.max(a.mt || 0, b.mt || 0)};
+  const seen = {}; k.logs = [];
+  (a.logs || []).concat(b.logs || []).forEach(l => {
+    const key = l.a + '|' + l.d;
+    if(seen[key]) return;
+    seen[key] = 1; k.logs.push(l);
+  });
+  k.seeds = mergeMax(a.seeds, b.seeds);
+  k.lvl = {};
+  Object.keys(Object.assign({}, a.lvl || {}, b.lvl || {})).forEach(id => {
+    const x = (a.lvl || {})[id], y = (b.lvl || {})[id];
+    k.lvl[id] = !x ? y : !y ? x : (x.done ? x : y.done ? y : ((y.fails || 0) > (x.fails || 0) ? y : x));
+  });
+  k.games = mergeGames(a.games, b.games);
+  return k;
+}
+function mergeDB(local, remote){
+  const out = {v: local.v || 1, kids: []}, at = {};
+  (local.kids || []).forEach(k => at[k.id] = {a:k, b:null});
+  (remote.kids || []).forEach(k => { if(at[k.id]) at[k.id].b = k; else at[k.id] = {a:null, b:k}; });
+  Object.keys(at).forEach(id => {
+    const p = at[id];
+    out.kids.push(!p.b ? p.a : !p.a ? p.b : mergeKid(p.a, p.b));
+  });
+  return out;
+}
+
+/* סנכרון מלא: מושכים, ממזגים, מעלים בחזרה. אחרי זה שני המכשירים זהים. */
+let SYNCING = false;
+async function cloudSync(quiet){
+  if(!syncOn()){ if(!quiet) toast('לא הוגדרה כתובת שרת'); return false; }
+  if(SYNCING) return false;
+  SYNCING = true;
+  try{
+    let remote = null;
+    try{ remote = await cloudFetch(UID); }
+    catch(e){ if(!quiet) toast('אין חיבור לשרת'); return false; }
+    if(remote){ DB = mergeDB(DB, remote); save(); }
+    const c = syncCfg();
+    const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + UID, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json', 'X-Secret': c.secret || ''},
+      body: JSON.stringify(DB)
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || !j.ok){ if(!quiet) toast('הסנכרון נכשל: ' + (j.error || r.status)); return false; }
+    if(typeof renderShelf === 'function') renderShelf();
+    if(typeof renderRoot  === 'function') renderRoot();
+    if(!quiet) toast('סונכרן · ' + DB.kids.length + ' ילדים');
+    return true;
+  }catch(e){
+    if(!quiet) toast('אין חיבור לשרת');
+    return false;
+  }finally{ SYNCING = false; }
+}
 
 async function cloudPush(){
   const c = syncCfg();
@@ -2989,14 +3229,15 @@ function renderSettings(){
     <div class="lbl" style="margin-top:24px">סנכרון בענן ${syncOn() ? '· פעיל' : '· כבוי'}</div>
     <div class="card">
       <p style="font-size:15px;color:var(--soft)">${syncOn()
-        ? 'כשמוגדר, הקוד <b>' + esc(UID) + '</b> מושך את הנתונים מכל מכשיר — בלי קוד העברה.'
+        ? 'שני ההורים מזינים את אותה כתובת ואת הקוד <b>' + esc(UID) + '</b>. כל פתיחה של האפליקציה וכל סיום משחק מסנכרנים לבד: היומן מתאחד, ההתקדמות במשחקים נלקחת מהגבוה, ופרטי הילד מהעדכון האחרון. אף צד לא דורס את השני.'
         : 'כבוי. כל עוד השדה ריק, שום נתון לא עוזב את המכשיר. קוד השרת נמצא בקובץ <code>sync-worker.js</code> לצד האפליקציה, עם הוראות התקנה.'}</p>
       <div class="field" style="margin-top:12px"><label>כתובת השרת</label>
         <input id="sy-url" placeholder="https://...workers.dev" value="${esc(syncCfg().url)}"></div>
       <div class="field"><label>סיסמה (SECRET)</label>
         <input id="sy-sec" type="password" placeholder="נדרש כדי להעלות" value="${esc(syncCfg().secret)}"></div>
       <div class="btnrow"><button class="btn ghost sm" id="sy-save">שמירת הגדרות</button>
-        <button class="btn sm" id="sy-up" ${syncOn()?'':'disabled'}>העלאה לענן</button>
+        <button class="btn sm" id="sy-now" ${syncOn()?'':'disabled'}>סנכרון עכשיו</button>
+        <button class="btn ghost sm" id="sy-up" ${syncOn()?'':'disabled'}>העלאה לענן</button>
         <button class="btn ghost sm" id="sy-down" ${syncOn()?'':'disabled'}>הורדה מהענן</button></div>
     </div>
 
@@ -3056,6 +3297,7 @@ function renderSettings(){
     renderSettings();
     toast(u ? 'סנכרון הופעל' : 'סנכרון כובה');
   };
+  const sn = $('#sy-now'); if(sn) sn.onclick = () => cloudSync(false);
   const su = $('#sy-up'), sd = $('#sy-down');
   if(su) su.onclick = cloudPush;
   if(sd) sd.onclick = cloudPull;
@@ -3118,8 +3360,25 @@ function setGameEnabled(k, id, val){
 }
 function gamesFor(k){ return GAMES.filter(g => gameEnabled(k, g)); }
 function gameState(k, id){ return (k.games || {})[id] || null; }
+/* יומן יומי: אחרי כל שמירה נרשם צילום מצב מצטבר ליום הנוכחי.
+   מהפרשים בין ימים עוקבים נגזר גרף השיפור. יום בלי רשומה = לא שיחקו. */
+function stampHist(st){
+  if(!st || !st.stats || !st.stats.items) return;
+  let ok = 0, miss = 0;
+  const it = st.stats.items;
+  Object.keys(it).forEach(k => { ok += (it[k].ok||0); miss += (it[k].miss||0); });
+  if(!(ok + miss)) return;
+  if(!st.hist) st.hist = {};
+  const d = new Date();
+  const day = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  st.hist[day] = {ok, miss};
+  const days = Object.keys(st.hist).sort();
+  while(days.length > 60) delete st.hist[days.shift()];
+}
+
 function setGameState(k, id, st){
   if(!k.games) k.games = {};
+  stampHist(st);
   k.games[id] = st;
   save();
 }
@@ -3201,9 +3460,58 @@ function gameAdvice(g, st){
 const MIN_SEEN = 3;
 function itemScore(v){ const n = (v.ok||0) + (v.miss||0); return n ? (v.ok||0)/n : 0; }
 
+/* גרף שיפור זעיר: 14 ימים אחרונים, אחוז הצלחה יומי.
+   עמודה אדומה נמוכה = לא שיחקו באותו יום. */
+function histChart(st){
+  const H = st && st.hist; if(!H) return '';
+  const keys = Object.keys(H).sort();
+  if(!keys.length) return '';
+
+  const DAYS = 14, W = 260, HH = 54, PAD = 3;
+  const bw = (W - PAD*(DAYS-1)) / DAYS;
+  const today = new Date(); today.setHours(12,0,0,0);
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+
+  let bars = '', labs = '', played = 0;
+  for(let i = 0; i < DAYS; i++){
+    const d = new Date(today); d.setDate(today.getDate() - (DAYS-1-i));
+    const key = iso(d);
+    const x = i * (bw + PAD);
+    const cur = H[key];
+    let pct = null;
+    if(cur){
+      const before = keys.filter(k => k < key).pop();
+      const p = before ? H[before] : {ok:0, miss:0};
+      const dOk = cur.ok - p.ok, dMs = cur.miss - p.miss, n = dOk + dMs;
+      if(n > 0) pct = dOk / n;
+    }
+    if(pct === null){
+      bars += `<rect x="${x.toFixed(1)}" y="${HH-4}" width="${bw.toFixed(1)}" height="4" rx="2" fill="#E9A0A0"></rect>`;
+    }else{
+      played++;
+      const h = Math.max(5, Math.round(pct * (HH - 6)));
+      const c = pct >= 0.8 ? '#5FA98A' : pct >= 0.5 ? '#D8A657' : '#D97A6C';
+      bars += `<rect x="${x.toFixed(1)}" y="${HH-h}" width="${bw.toFixed(1)}" height="${h}" rx="2" fill="${c}"></rect>`;
+      bars += `<text x="${(x+bw/2).toFixed(1)}" y="${HH-h-2}" class="hcv">${Math.round(pct*100)}</text>`;
+    }
+    if(i === 0 || i === DAYS-1 || i === Math.floor((DAYS-1)/2))
+      labs += `<text x="${(x+bw/2).toFixed(1)}" y="10" class="hcx">${d.getDate()}.${d.getMonth()+1}</text>`;
+  }
+  if(!played) return '';
+
+  return `<div class="hist">
+    <div class="meta">שיפור לאורך זמן · 14 הימים האחרונים</div>
+    <svg viewBox="0 0 ${W} ${HH+14}" class="hsvg" preserveAspectRatio="none">
+      <g>${bars}</g>
+      <g transform="translate(0,${HH+2})">${labs}</g>
+    </svg>
+    <div class="meta hleg"><i class="hd hg"></i>מצוין <i class="hd hm"></i>בסדר <i class="hd hb"></i>מתקשה <i class="hd hn"></i>לא שיחקו</div>
+  </div>`;
+}
+
 function gameInsight(g, st){
   const items = st && st.stats && st.stats.items;
-  if(!items) return '';
+  if(!items) return histChart(st);
   const rows = Object.keys(items)
     .map(k => ({k, v:items[k], n:(items[k].ok||0)+(items[k].miss||0)}))
     .filter(r => r.n >= MIN_SEEN);
@@ -3240,6 +3548,7 @@ function gameInsight(g, st){
   }
   if(weak.length) h += `<div class="meta" style="margin-top:8px">כדאי לתרגל בבית דווקא את אלה שמסומנים "מתקשה".</div>`;
   h += `</div>`;
+  h += histChart(st);
   return h;
 }
 
@@ -3300,6 +3609,7 @@ function closeGame(){
   $('#game-frame').src = 'about:blank';
   CURGAME = null;
   renderPlayGame(); show('s-play-game');
+  if(syncOn()) cloudSync(true);
 }
 $('#game-exit').onclick = closeGame;
 
@@ -3351,6 +3661,20 @@ function gateSubmit(){
 $('#gok').onclick = gateSubmit;
 $('#ga').addEventListener('keydown', e => { if(e.key === 'Enter') gateSubmit(); });
 $('#gcancel').onclick = closeGate;
+$('#a2hs-skip').onclick = () => { a2hsDone(); a2hsHide(); };
+$('#a2hs-go').onclick = async () => {
+  if(deferredPrompt){
+    a2hsHide();
+    deferredPrompt.prompt();
+    try{ await deferredPrompt.userChoice; }catch(e){}
+    deferredPrompt = null;
+    a2hsDone();
+    return;
+  }
+  a2hsDone(); a2hsHide();          /* אייפון — ההוראות נקראו */
+};
+setTimeout(a2hsShow, 1200);
+setTimeout(() => { if(syncOn()) cloudSync(true); }, 1500);
 $('#lv-no').onclick  = closeLeave;
 $('#lv-yes').onclick = () => { const f = LEAVE_OK; closeLeave(); if(f) f(); };
 /* כפתור הבית במדף ההורים — עד עכשיו לא היה מחובר לכלום */

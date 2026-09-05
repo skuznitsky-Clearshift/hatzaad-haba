@@ -384,8 +384,8 @@ if('serviceWorker' in navigator){
       <div style="flex:1;min-width:0"><div class="ttl" id="ch-name"></div><div class="sub" id="ch-age"></div></div>
       <button class="iconb" id="b-settings2" aria-label="הגדרות">⚙</button><button class="iconb" id="b-journal" aria-label="יומן">📖</button></div>
     <div class="tabs">
-      <button class="tab on" data-tab="train">תרגול יחד</button>
-      <button class="tab" data-tab="games">משחקים</button>
+      <button class="tab on" data-tab="games">משחקים</button>
+      <button class="tab" data-tab="train">תרגול יחד</button>
     </div>
     <div id="ch-body"></div>
   </div>
@@ -433,6 +433,16 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- gate: math lock to leave kids mode -->
+  <div class="gate" id="leaveq">
+    <div class="gbox">
+      <h3>לצאת מעמוד ההורים?</h3>
+      <p class="sub" style="margin-top:6px">נחזור למסך שבו הילדים בוחרים את עצמם.</p>
+      <div class="btnrow" style="margin-top:14px">
+        <button class="btn full" id="lv-yes">כן, לצאת</button>
+        <button class="btn ghost full" id="lv-no">לא, להישאר</button>
+      </div>
+    </div>
+  </div>
 <div class="gate" id="gate">
   <div class="gbox">
     <h2>רק הורים</h2>
@@ -2372,7 +2382,7 @@ function openChild(id, from){
   show('s-child');
 }
 
-let CH_TAB = "train";
+let CH_TAB = "games";
 function renderChild(){
   const k = CUR, st = stageOf(k);
   document.querySelectorAll("#s-child .tab").forEach(t => t.classList.toggle("on", t.dataset.tab === CH_TAB));
@@ -3316,9 +3326,9 @@ window.addEventListener('message', ev => {
 let GATE_OK = null, GATE_TRIES = 0;
 function askParent(then){
   GATE_OK = then; GATE_TRIES = 0;
-  const a = 10 + Math.floor(Math.random()*80), b = 10 + Math.floor(Math.random()*80);
-  $('#gq').textContent = a + ' + ' + b + ' = ?';
-  $('#gq').dataset.ans = String(a + b);
+  const a = 3 + Math.floor(Math.random()*4), b = 3 + Math.floor(Math.random()*4);
+  $('#gq').textContent = a + ' × ' + b + ' = ?';
+  $('#gq').dataset.ans = String(a * b);
   $('#ga').value = ''; $('#gerr').textContent = '';
   $('#gate').classList.add('on');
   setTimeout(() => $('#ga').focus(), 60);
@@ -3341,17 +3351,42 @@ function gateSubmit(){
 $('#gok').onclick = gateSubmit;
 $('#ga').addEventListener('keydown', e => { if(e.key === 'Enter') gateSubmit(); });
 $('#gcancel').onclick = closeGate;
+$('#lv-no').onclick  = closeLeave;
+$('#lv-yes').onclick = () => { const f = LEAVE_OK; closeLeave(); if(f) f(); };
+/* כפתור הבית במדף ההורים — עד עכשיו לא היה מחובר לכלום */
+{ const hb = $('#b-home'); if(hb) hb.onclick = () => askLeave(toKids); }
+/* לחצן החזרה של המכשיר שואל לפני שהוא מוציא מאזור ההורים */
+history.replaceState({ns:1}, '');
+history.pushState({ns:1}, '');
+window.addEventListener('popstate', () => {
+  history.pushState({ns:1}, '');
+  if($('#leaveq').classList.contains('on')) return closeLeave();
+  if(inParentArea()) askLeave(toKids);
+});
 
 /* ---------------------------------------------------------------
    16. ניווט והפעלה
    --------------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   יציאה מאזור ההורים — גם בכפתור הבית וגם בלחצן החזרה של המכשיר
+   --------------------------------------------------------------- */
+const PARENT_SCREENS = ['s-kids','s-child','s-domain','s-act','s-check','s-journal','s-settings','s-new'];
+function inParentArea(){
+  const on = document.querySelector('.scr.on');
+  return !!on && PARENT_SCREENS.indexOf(on.id) >= 0;
+}
+let LEAVE_OK = null;
+function askLeave(then){ LEAVE_OK = then; $('#leaveq').classList.add('on'); }
+function closeLeave(){ $('#leaveq').classList.remove('on'); LEAVE_OK = null; }
+function toKids(){ renderRoot(); show('s-root'); }
+
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
   let t = b.dataset.back;
   if(t === 'auto') t = CH_BACK;
   if(t === 'autost') t = ST_BACK;
   if(t === 's-play-game'){ renderPlayGame(); return show('s-play-game'); }
   /* יציאה מאזור הילדים חזרה למסך השורש עוברת דרך שער ההורים */
-  if(t === 's-root'){ renderRoot(); return show('s-root'); }
+  if(t === 's-root'){ askLeave(toKids); return; }
   if(t === 's-kids'){ renderShelf(); }
   if(t === 's-child'){ renderChild(); }
   if(t === 's-play-kid'){ renderRoot(); return show('s-root'); }

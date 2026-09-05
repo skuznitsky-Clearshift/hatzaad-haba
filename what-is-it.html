@@ -131,6 +131,9 @@ h1{margin:0 0 8px;font-size:clamp(26px,6.5vw,38px)}
 #pgate .row button{flex:1;padding:12px;border-radius:14px;font-weight:700;font-size:16px;
   background:#5FA84E;color:#fff}
 #pgate .row button.gh{background:#F1EADA;color:#4A4038}
+.lvmark{width:54px;height:44px;flex:none;display:flex;align-items:center;justify-content:center}
+.lvmark svg{width:100%;height:100%}
+.lvmark .num{font-size:22px}
 </style>
 </head>
 <body>
@@ -143,21 +146,14 @@ h1{margin:0 0 8px;font-size:clamp(26px,6.5vw,38px)}
     <div style="display:flex;gap:16px;margin-top:10px" id="whoBtns"></div>
   </section>
 
-  <section class="screen" id="home">
-    <div class="topbar"><div class="pill">⭐ <span id="stars">0</span></div><div class="sp"></div>
+  <section class="screen" id="menu">
+    <div class="topbar"><button class="icon" data-back="who" aria-label="החלפת ילד">→</button>
+      <div class="sp"></div><div class="pill">⭐ <span id="stars2">0</span></div>
       <button class="icon" id="setBtn" aria-label="הגדרות">⚙</button></div>
     <div id="hello"></div>
-    <div id="coach"></div>
-    <button class="btn" id="startBtn">בואו נשחק! 🎉</button>
-  </section>
-
-  <section class="screen" id="menu">
-    <div class="topbar"><button class="icon" data-back="home" aria-label="חזרה">→</button>
-      <div class="sp"></div><div class="pill">⭐ <span id="stars2">0</span></div></div>
     <h1>מה נלמד?</h1>
     <div class="levels" id="levels"></div>
   </section>
-
   <section class="screen" id="play">
     <div class="topbar"><button class="icon" data-back="menu" aria-label="חזרה">→</button>
       <div class="sp"></div><div id="trail"></div></div>
@@ -167,7 +163,7 @@ h1{margin:0 0 8px;font-size:clamp(26px,6.5vw,38px)}
   </section>
 
   <section class="screen" id="settings">
-    <div class="topbar"><button class="icon" data-back="home" aria-label="חזרה">→</button></div>
+    <div class="topbar"><button class="icon" data-back="menu" aria-label="חזרה">→</button></div>
     <h1>הגדרות</h1>
     <div class="tog"><span>קול</span><button class="sw" id="tVoice"><i></i></button></div>
     <div class="tog"><span>צלילי משחק</span><button class="sw" id="tSound"><i></i></button></div>
@@ -690,7 +686,7 @@ function rec(ok, item, skill){
 
 /* ---------- ניווט ---------- */
 function show(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); }
-$$('[data-back]').forEach(b=> b.onclick = ()=>{ sfxTap(); speakStop(); show(b.dataset.back); if(b.dataset.back==='home') renderHome(); });
+$$('[data-back]').forEach(b=> b.onclick = ()=>{ sfxTap(); speakStop(); show(b.dataset.back); if(b.dataset.back==='menu') renderHome(); });
 
 /* ---------- מסכים ---------- */
 function renderWho(){
@@ -700,16 +696,25 @@ function renderWho(){
     b.className = 'lvcard';
     b.style.cssText = 'flex-direction:column;text-align:center;padding:14px';
     b.innerHTML = `<div style="width:86px">${avatarKid(g)}</div><b>${KIDS[g].name}</b>`;
-    b.onclick = ()=>{ ac(); sfxTap(); P.player=g; save(); renderHome(); show('home'); say('ui_hello_'+g); };
+    b.onclick = ()=>{ ac(); sfxTap(); P.player=g; save(); renderHome(); renderMenu(); show('menu'); say('ui_which'); };
     w.appendChild(b);
   });
 }
 function renderHome(){
-  $('#hello').innerHTML = `<div style="width:62px">${avatarKid(G())}</div><span>שלום ${KIDS[G()].name}!</span>`;
-  $('#stars').textContent = P.stars;
-  coach(L('ui_which') || 'מה נלמד היום?');
+  const h = $('#hello');
+  if(h) h.innerHTML = `<div style="width:52px">${avatarKid(G())}</div><span>שלום ${KIDS[G()].name}!</span>`;
+  const s = $('#stars'); if(s) s.textContent = P.stars;      /* המסך הישן הוסר — לא תמיד קיים */
+  const c = $('#coach'); if(c) coach(L('ui_which') || 'מה נלמד היום?');
 }
 function maxUnlocked(){ return P.allLevels ? LEVELS_DEF.length : P.unlocked; }
+/* לכל משחקון ציור משלו — ילד שאינו קורא בוחר לפי הצורה, לא לפי הכותרת */
+const LVMARK = {
+  1:'<svg viewBox="0 0 48 40"><circle cx="15" cy="20" r="11" fill="#D9534F"/><circle cx="32" cy="20" r="11" fill="#4E82A0" opacity=".85"/></svg>',
+  2:'<svg viewBox="0 0 48 40"><path d="M24 5 L42 19 H36 V35 H12 V19 H6 Z" fill="#F2C14E" stroke="#B5823A" stroke-width="2.2" stroke-linejoin="round"/><rect x="20" y="24" width="8" height="11" fill="#B5823A"/></svg>',
+  3:'<svg viewBox="0 0 48 40"><circle cx="24" cy="14" r="9" fill="#6FA05B"/><path d="M8 34c4-8 10-12 16-12s12 4 16 12z" fill="#4F9689"/></svg>',
+  4:'<svg viewBox="0 0 48 40"><rect x="7" y="8" width="34" height="22" rx="2" fill="#4E82A0"/><rect x="7" y="8" width="34" height="7.3" fill="#E8E2D4"/><rect x="7" y="22.7" width="34" height="7.3" fill="#D9534F"/><rect x="5" y="8" width="3" height="27" fill="#8A5A3B"/></svg>',
+  5:'<svg viewBox="0 0 48 40"><circle cx="24" cy="20" r="13" fill="none" stroke="#7A828B" stroke-width="4"/><circle cx="24" cy="20" r="4" fill="#7A828B"/></svg>'
+};
 function renderMenu(){
   $('#stars2').textContent = P.stars;
   const box = $('#levels'); box.innerHTML = '';
@@ -718,7 +723,8 @@ function renderMenu(){
     const b = document.createElement('button');
     b.className = 'lvcard' + (open ? '' : ' lock');
     const n = ITEMS.filter(i=>d.cats.indexOf(i.c)>=0).length;
-    b.innerHTML = `<div class="num">${open?d.lv:'🔒'}</div><div><b>${d.t}</b><small>${n} דברים</small></div>`;
+    const mark = open ? (LVMARK[d.lv] || '') : '<div class="num">🔒</div>';
+    b.innerHTML = `<div class="lvmark">${mark}</div><div><b>${d.t}</b><small>${n} דברים</small></div>`;
     if(open) b.onclick = ()=>{ ac(); sfxTap(); startLevel(d.lv); };
     box.appendChild(b);
   });
@@ -811,7 +817,6 @@ function finishRound(){
 $('#againBtn').onclick    = ()=>{ sfxTap(); $('#reward').classList.remove('on'); startLevel(S.lv); };
 $('#backMenuBtn').onclick = ()=>{ sfxTap(); $('#reward').classList.remove('on'); renderMenu(); show('menu'); };
 
-$('#startBtn').onclick = ()=>{ ac(); sfxTap(); renderMenu(); show('menu'); say('ui_which'); };
 $('#setBtn').onclick = ()=>{ ac(); sfxTap(); pgAsk(function(){ if(typeof renderSettings==='function') renderSettings(); show('settings'); }); };
 
 function renderSettings(){
@@ -838,12 +843,12 @@ if(HOSTED){
     if(d.state) P = {...DEF, ...d.state, stats:{...freshStats(), ...(d.state.stats||{})}};
     P.player = (d.child && d.child.g === 'f') ? 'f' : 'm';
     if(d.child && d.child.name && KIDS[P.player]) KIDS[P.player].name = d.child.name;
-    renderHome(); show('home');
+    renderHome(); renderMenu(); show('menu');
   });
   try{ window.parent.postMessage({type:'ns-ready'}, '*'); }catch(e){}
 }else{
   renderWho();
-  if(P.player){ renderHome(); show('home'); } else { show('who'); }
+  if(P.player){ renderHome(); renderMenu(); show('menu'); } else { show('who'); }
 }
 document.addEventListener('pointerdown', function once(){ ac(); }, {once:true});
 window.addEventListener('beforeunload', speakStop);
@@ -853,9 +858,9 @@ var PG_OK=null, PG_TRY=0;
 function pgClose(){ document.getElementById('pgate').classList.remove('on'); PG_OK=null; PG_TRY=0; }
 function pgAsk(then){
   PG_OK=then; PG_TRY=0;
-  var a=10+Math.floor(Math.random()*80), b=10+Math.floor(Math.random()*80);
+  var a=3+Math.floor(Math.random()*4), b=3+Math.floor(Math.random()*4);
   var q=document.getElementById('pgq');
-  q.textContent=a+' + '+b+' = ?'; q.dataset.ans=String(a+b);
+  q.textContent=a+' × '+b+' = ?'; q.dataset.ans=String(a*b);
   document.getElementById('pga').value=''; document.getElementById('pger').textContent='';
   document.getElementById('pgate').classList.add('on');
   setTimeout(function(){ document.getElementById('pga').focus(); },60);

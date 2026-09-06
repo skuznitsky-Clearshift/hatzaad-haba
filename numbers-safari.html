@@ -290,24 +290,17 @@ h1{font-size:clamp(30px,8vw,54px);margin:2px 0 0;color:var(--green-d);letter-spa
   </section>
 
   <!-- ============ HOME ============ -->
-  <section class="screen" id="home">
-    <div class="logo">🦁</div>
-    <h1>ספארי מספרים</h1>
-    <div class="hello" id="hello"></div>
-    <button class="btn green" id="startBtn"></button>
-    <div style="display:flex;gap:12px;margin-top:16px">
-      <button class="icon-btn" id="albumBtn" title="אלבום החיות" aria-label="אלבום החיות">📖</button>
-      <button class="icon-btn" id="setBtn" title="הגדרות" aria-label="הגדרות">⚙️</button>
-    </div>
-  </section>
 
   <!-- ============ MENU ============ -->
   <section class="screen" id="menu">
     <div class="topbar">
-      <button class="icon-btn" data-back="home" aria-label="חזרה">→</button>
+      <button class="icon-btn" data-back="who" aria-label="החלפת ילד">→</button>
       <div class="spacer"></div>
       <div class="pill">⭐ <span id="menuStars">0</span></div>
+      <button class="icon-btn" id="albumBtn" title="אלבום החיות" aria-label="אלבום החיות">📖</button>
+      <button class="icon-btn" id="setBtn" title="הגדרות" aria-label="הגדרות">⚙️</button>
     </div>
+    <div class="hello" id="hello"></div>
     <h1 style="font-size:26px;text-align:center;margin:4px 0 10px">איזה משחק בוחרים?</h1>
     <div class="grid" id="gameGrid"></div>
   </section>
@@ -330,7 +323,7 @@ h1{font-size:clamp(30px,8vw,54px);margin:2px 0 0;color:var(--green-d);letter-spa
   <!-- ============ ALBUM ============ -->
   <section class="screen" id="album">
     <div class="topbar">
-      <button class="icon-btn" data-back="home" aria-label="חזרה">→</button>
+      <button class="icon-btn" data-back="menu" aria-label="חזרה">→</button>
       <div class="pill">📖 אלבום החיות</div>
       <div class="spacer"></div>
       <div class="pill">⭐ <span id="albStars">0</span></div>
@@ -342,7 +335,7 @@ h1{font-size:clamp(30px,8vw,54px);margin:2px 0 0;color:var(--green-d);letter-spa
   <!-- ============ SETTINGS ============ -->
   <section class="screen" id="settings">
     <div class="topbar">
-      <button class="icon-btn" data-back="home" aria-label="חזרה">→</button>
+      <button class="icon-btn" data-back="menu" aria-label="חזרה">→</button>
       <div class="pill">⚙️ הגדרות</div>
     </div>
     <div style="max-width:520px;width:100%;margin:8px auto">
@@ -656,7 +649,7 @@ function confetti(n){
 function show(id){
   $$('.screen').forEach(s=>s.classList.toggle('on', s.id===id));
   speakStop();
-  if(id==='home')     renderHome();
+  if(id==='menu')     renderHome();
   if(id==='menu')     renderMenu();
   if(id==='album')    renderAlbum();
   if(id==='settings') renderSettings();
@@ -679,21 +672,22 @@ function renderWho(){
 }
 function choosePlayer(g){
   P.player = g; save();
-  show('home');
+  toMenu();
   say('ui_hello_' + g);
 }
 
 /* =========================================================
    מסך הבית
    ========================================================= */
+/* אין מסך ביניים: נכנסים ישר לבחירת המשחקון */
+function toMenu(){ renderHome(); renderMenu(); show('menu'); say('ui_which'); }
 function renderHome(){
   const k = kid();
   $('#hello').innerHTML = avatar(G()) + `<span>שלום ${k.name}!</span>` +
     (HOSTED ? `` : `<button class="sw" id="swKid">החלף</button>`);   /* hidden inside the parents app */
   { const sw = $("#swKid"); if(sw) sw.onclick = (e)=>{ e.stopPropagation(); sfxTap(); show('who'); }; }
-  $('#startBtn').textContent = gt('בוא נשחק! 🎉','בואי נשחק! 🎉');
+  { const sb = $('#startBtn'); if(sb) sb.textContent = gt('בוא נשחק! 🎉','בואי נשחק! 🎉'); }
 }
-$('#startBtn').onclick = ()=>{ ac(); sfxTap(); show('menu'); say('ui_which'); };
 $('#albumBtn').onclick = ()=>{ ac(); sfxTap(); show('album'); };
 $('#setBtn').onclick = ()=>{ ac(); sfxTap(); pgAsk(function(){ if(typeof renderSettings==='function') renderSettings(); show('settings'); }); };
 
@@ -1712,10 +1706,10 @@ if(HOSTED){
     if(d.state) P = {...DEF, ...d.state, good:{...DEF.good, ...(d.state.good||{})}, stats:{...freshStats(), ...(d.state.stats||{})}};
     P.player = (d.child && d.child.g === 'f') ? 'f' : 'm';
     if(d.child && d.child.name && KIDS[P.player]) KIDS[P.player].name = d.child.name;
-    show('home');
+    toMenu();
   });
   try{ window.parent.postMessage({type:'ns-ready'}, '*'); }catch(e){}
-} else if(P.player){ show('home'); } else { show('who'); }
+} else if(P.player){ toMenu(); } else { show('who'); }
 document.addEventListener('pointerdown', function once(){ ac(); }, {once:true});
 window.addEventListener('beforeunload', speakStop);
 /* שער הורים לפני ההגדרות. שתי טעויות = חוזרים אחורה, מתוך הנחה

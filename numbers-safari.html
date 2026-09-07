@@ -113,6 +113,7 @@ h1{font-size:clamp(30px,8vw,54px);margin:2px 0 0;color:var(--green-d);letter-spa
 .board .an.gone{opacity:.22;filter:grayscale(1)}
 .board .an.hi{animation:hiPulse .5s ease}
 @keyframes hiPulse{50%{transform:scale(1.5) translateY(-8px)}}
+.gcol{display:grid;grid-template-columns:repeat(2,26px);gap:4px;justify-content:center}
 .grp{background:#fff;border-radius:24px;padding:12px;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-width:42vw;min-width:110px;transition:transform .12s ease;border:4px solid transparent}
 .grp:active{transform:scale(.96)}
 .op{font-size:clamp(28px,8vw,46px);font-weight:700;color:var(--brown-l)}
@@ -751,7 +752,7 @@ let LV = 1;
 
 function mrec(id){
   if(!P.m) P.m = {};
-  if(!P.m[id]) P.m[id] = {lv:1, at:0, cool:0, bad:0};
+  if(!P.m[id]) P.m[id] = {lv:1, at:0, cool:0, bad:0, p:0, mid:0};
   const r = P.m[id];
   r.lv = Math.max(1, Math.min(MLV_MAX, (r.lv|0) || 1));
   return r;
@@ -805,21 +806,48 @@ function lvNote(dec){
 }
 function lvKey(dec){ return (dec && dec.dir) ? ((dec.dir > 0 ? 'lvup_' : 'lvdn_') + G()) : null; }
 
+/* ---- שער ההתקדמות ------------------------------------------
+   מה שמעלה רמה הוא **סבב מושלם**, לא מהירות: כל השאלות נענו
+   נכון בניסיון הראשון.
+     רמה 1 ⇦ 2:   סבב מושלם אחד.
+     רמה 2 והלאה: שני מושלמים — ברצף, או עם סבב אחד באמצע שבו
+                   עד שתי טעויות.
+   סבב עם שלוש טעויות ומעלה מאפס את הקִדמה, וגם שני סבבים
+   "סבירים" באמצע מאפסים — מותר רק אחד. כך ילד שלא יודע את
+   החומר לא נדחף קדימה רק מפני שהוא מהיר. */
+function progGate(r, wrong){
+  const need = r.lv === 1 ? 1 : 2;
+  if(wrong === 0){
+    r.p = (r.p || 0) + 1;
+    if(r.p >= need){ r.p = 0; r.mid = 0; return true; }
+  }else if(wrong <= 2){
+    if(r.p > 0){ r.mid = (r.mid || 0) + 1; if(r.mid > 1){ r.p = 0; r.mid = 0; } }
+  }else{
+    r.p = 0; r.mid = 0;
+  }
+  return false;
+}
+
 function levelDecide(){
   const id = S.game, r = mrec(id), lv = r.lv;
-  const acc = S.correct / (S.total || QPER);
+  const tot = S.total || QPER;
+  const acc = S.correct / tot;
   const med = medianTime();
   const ratio = Math.max(0.4, Math.min(2.5, med / baseOf(id, lv)));
   const timeOnly = !!TIME_ONLY[id];
+  /* אימון של פריט אחד מהלוח הוא לא סבב, ולכן הוא לא נספר לשער
+     ולא מאפס אותו. */
+  const full = tot >= QPER;
+  /* במשחקון שנמדד רק בזמן אין תשובה שגויה, ולכן השער תמיד נפתח —
+     ושם המהירות היא שקובעת אם באמת נהיה קל מדי. */
+  const gate = full ? progGate(r, timeOnly ? 0 : (tot - S.correct)) : false;
   let dir = 0, weak = false;
 
   if(timeOnly){
-    if(ratio <= 0.6)                                   dir = 1;
-    else if(ratio <= 0.85 && r.at >= 2 && !r.cool)     dir = 1;
+    if(gate && ratio <= 0.85)                          dir = 1;
     else if(ratio >= 1.7){ weak = true; r.bad++; if(r.bad >= 2 || r.seeded) dir = -1; }
   }else{
-    if(acc === 1 && ratio <= 0.7)                      dir = 1;   /* נהיה פשוט מדי */
-    else if(acc >= 0.9 && ratio <= 1.0 && r.at >= 2 && !r.cool) dir = 1;
+    if(gate)                                           dir = 1;
     else if(acc < 0.5 || (acc < 0.65 && ratio >= 1.6)){
       weak = true; r.bad++; if(r.bad >= 2 || r.seeded) dir = -1;
     }
@@ -827,8 +855,8 @@ function levelDecide(){
   if(!weak) r.bad = 0;
 
   const next = Math.max(1, Math.min(MLV_MAX, lv + dir));
-  if(next > lv){ r.lv = next; r.at = 0; r.cool = 0; r.bad = 0; }
-  else if(next < lv){ r.lv = next; r.at = 0; r.cool = 2; r.bad = 0; }
+  if(next > lv){ r.lv = next; r.at = 0; r.cool = 0; r.bad = 0; r.p = 0; r.mid = 0; }
+  else if(next < lv){ r.lv = next; r.at = 0; r.cool = 2; r.bad = 0; r.p = 0; r.mid = 0; }
   else { r.at++; if(r.cool) r.cool--; }
   r.seeded = 0;
 
@@ -995,19 +1023,28 @@ function buildQuestion(){
 
   if(g==='cmp'){
     const cap = Math.min(M,10);
-    let a = ri(1,cap), b = ri(1,cap);
-    while(a===b) b = ri(1,cap);
+    /* אותו אימוג'י בשני הצדדים, והפרש של אחד או שניים. עם שני
+       אימוג'ים שונים ורוחב גליף שונה, ועם הפרש שיכול להיות תשע,
+       אפשר לענות נכון לפי "איזה צד תופס יותר מקום" — בלי לספור
+       אף פעם. שני אלה מכריחים ספירה או התאמה חד־חד־ערכית. */
+    const d = ri(1,2);
+    let hi = ri(1 + d, cap), lo = hi - d;
+    let a = hi, b = lo;
+    if(Math.random() < .5){ a = lo; b = hi; }
     const bigger = Math.random() < .5;
-    const winner = bigger ? Math.max(a,b) : Math.min(a,b);
-    const em2 = pick(PLAY_EMOJI.filter(x=>x!==em));
+    const winner = bigger ? hi : lo;
+    /* עמודה אחת לכל צד ומספר קבוע של פריטים בשורה, כדי שהגלישה
+       תהיה זהה בשני הצדדים ותאפשר התאמה של פריט מול פריט. */
+    const col = v => '<div class="gcol">' +
+      Array.from({length:v},()=>'<span class="an">'+em+'</span>').join('') + '</div>';
     return {
       stat:{item:null, skill:'השוואה'},
       sk: bigger ? 'prompt_cmp_more' : 'prompt_cmp_less',
       stage:`<div class="prompt">באיזה צד יש <b>${bigger?'יותר':'פחות'}</b> חיות?</div>
-        <div style="display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap">
-          <button class="grp" data-v="${a}">${Array.from({length:a},()=>`<span class="an">${em}</span>`).join('')}</button>
+        <div style="display:flex;gap:12px;align-items:flex-start;justify-content:center">
+          <button class="grp" data-v="${a}">${col(a)}</button>
           <div class="op">מול</div>
-          <button class="grp" data-v="${b}">${Array.from({length:b},()=>`<span class="an">${em2}</span>`).join('')}</button>
+          <button class="grp" data-v="${b}">${col(b)}</button>
         </div>`,
       groups:true, groupWin:winner
     };
@@ -1188,7 +1225,7 @@ function hint(){
 /* =========================================================
    משחק זיכרון
    ========================================================= */
-let mem = {open:[], lock:false, done:0, pairs:0};
+let mem = {open:[], lock:false, done:0, pairs:0, miss:0};
 /* כמות חיות בתוך קלף — רשת מדורגת כדי שלא תחרוג מהקלף */
 function qtyFace(n, em){
   const cols = n<=2 ? 1 : n<=4 ? 2 : n<=9 ? 3 : 4;
@@ -1208,7 +1245,7 @@ function buildMemory(){
     cards.push({k:n, face:qtyFace(n, em)});
   });
   cards = shuffle(cards);
-  mem = {open:[], lock:false, done:0, pairs};
+  mem = {open:[], lock:false, done:0, pairs, miss:0};
 
   const cols = pairs===5 ? 5 : 4;
   $('#answers').innerHTML='';
@@ -1239,12 +1276,19 @@ function flip(el, c){
         sfxGood(); confetti(12);
         const k = pick(praiseKeys()); coach(L(k),'ok'); say(k);
         mem.open=[]; mem.lock=false; mem.done++;
-        if(mem.done===mem.pairs){ S.correct = QPER; S.q = QPER; setTimeout(finishRound, 1400); }
+        if(mem.done===mem.pairs){
+          /* דיווח אמיתי: לוח שנפתר בעשרים טעויות אינו 8 מתוך 8.
+             הרמה עצמה נקבעת רק בזמן (mem נמצא ב-TIME_ONLY), אבל
+             הכוכבים והנתון שמסך ההורה קורא חייבים להיות נכונים. */
+          S.correct = Math.max(0, QPER - mem.miss); S.q = QPER;
+          setTimeout(finishRound, 1400);
+        }
       }, 450);
     }else{
       setTimeout(()=>{
         a.el.classList.remove('flip'); b.el.classList.remove('flip');
         sfxBad();
+        mem.miss++;
         const k = pick(encKeys()); coach(L(k),'oops'); say(k);
         mem.open=[]; mem.lock=false;
       }, 1000);

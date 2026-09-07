@@ -307,7 +307,6 @@ h1{font-size:clamp(30px,8vw,54px);margin:2px 0 0;color:var(--green-d);letter-spa
       <button class="icon-btn" data-back="who" aria-label="החלפת ילד">→</button>
       <div class="spacer"></div>
       <div class="pill">⭐ <span id="menuStars">0</span></div>
-      <button class="icon-btn" id="numBtn" title="כל המספרים" aria-label="כל המספרים">✏️</button>
       <button class="icon-btn" id="albumBtn" title="אלבום החיות" aria-label="אלבום החיות">📖</button>
       <button class="icon-btn" id="setBtn" title="הגדרות" aria-label="הגדרות">⚙️</button>
     </div>
@@ -335,7 +334,7 @@ h1{font-size:clamp(30px,8vw,54px);margin:2px 0 0;color:var(--green-d);letter-spa
   <section class="screen" id="nums">
     <div class="topbar">
       <button class="icon-btn" data-back="menu" aria-label="חזרה">→</button>
-      <div class="pill">✏️ כל המספרים</div>
+      <div class="pill">✏️ לכתוב מספרים</div>
     </div>
     <p class="sub" id="nmCount" style="text-align:center;margin:2px 0 8px"></p>
     <div class="nums" id="numGrid"></div>
@@ -455,7 +454,7 @@ const GAMES = [
   {id:'add',  e:'🐒', t:'הקופים מצטרפים', d:'חיבור פשוט',     min:2},
   {id:'sub',  e:'🐦', t:'הציפורים עפו',   d:'חיסור פשוט',     min:3},
   {id:'clock',e:'🕐', t:'מה השעה?',       d:'לקרוא שעון דיגיטלי', min:2},
-  {id:'trace',e:'✏️', t:'לכתוב מספרים',   d:'לשרטט 0 עד 20',   min:1},
+  {id:'trace',e:'✏️', t:'לכתוב מספרים',   d:'בוחרים מספר וכותבים', min:1},
   {id:'mem',  e:'🃏', t:'זוגות ביער',     d:'משחק זיכרון',    min:1}
 ];
 
@@ -676,7 +675,12 @@ function show(id){
   if(id==='settings') renderSettings();
   if(id==='who')      renderWho();
 }
-$$('[data-back]').forEach(b=>b.addEventListener('click', ()=>{ sfxTap(); clearSeq(); show(b.dataset.back); }));
+$$('[data-back]').forEach(b=>b.addEventListener('click', ()=>{
+  sfxTap(); clearSeq();
+  /* יציאה באמצע סבב נמדדת — ראו abandonRound */
+  if($('#play').classList.contains('on')) abandonRound();
+  show(b.dataset.back);
+}));
 
 /* =========================================================
    בחירת שחקן
@@ -709,7 +713,6 @@ function renderHome(){
   { const sw = $("#swKid"); if(sw) sw.onclick = (e)=>{ e.stopPropagation(); sfxTap(); show('who'); }; }
   { const sb = $('#startBtn'); if(sb) sb.textContent = gt('בוא נשחק! 🎉','בואי נשחק! 🎉'); }
 }
-$('#numBtn').onclick   = ()=>{ ac(); sfxTap(); renderNums(); show('nums'); };
 $('#albumBtn').onclick = ()=>{ ac(); sfxTap(); show('album'); };
 $('#setBtn').onclick = ()=>{ ac(); sfxTap(); pgAsk(function(){ if(typeof renderSettings==='function') renderSettings(); show('settings'); }); };
 
@@ -727,6 +730,9 @@ function renderMenu(){
     c.onclick = ()=>{
       sfxTap();
       if(locked){ say('ui_gamelock'); return; }
+      /* משחקון הכתיבה לא מתחיל סבב: הוא פותח את לוח המספרים
+         והילד בוחר מה לכתוב — כמו מסלול האותיות בעברית. */
+      if(gm.id === 'trace'){ renderNums(); show('nums'); return; }
       startGame(gm.id);
     };
     g.appendChild(c);
@@ -831,24 +837,29 @@ function progGate(r, wrong){
 function levelDecide(){
   const id = S.game, r = mrec(id), lv = r.lv;
   const tot = S.total || QPER;
+  const wrong = Math.max(0, tot - S.correct);
   const acc = S.correct / tot;
   const med = medianTime();
   const ratio = Math.max(0.4, Math.min(2.5, med / baseOf(id, lv)));
   const timeOnly = !!TIME_ONLY[id];
-  /* אימון של פריט אחד מהלוח הוא לא סבב, ולכן הוא לא נספר לשער
-     ולא מאפס אותו. */
+  /* אימון של פריט אחד מהלוח אינו סבב: הוא לא מקדם, לא מוריד,
+     ולא מאפס את הקִדמה. */
   const full = tot >= QPER;
   /* במשחקון שנמדד רק בזמן אין תשובה שגויה, ולכן השער תמיד נפתח —
      ושם המהירות היא שקובעת אם באמת נהיה קל מדי. */
-  const gate = full ? progGate(r, timeOnly ? 0 : (tot - S.correct)) : false;
+  const gate = full ? progGate(r, timeOnly ? 0 : wrong) : false;
   let dir = 0, weak = false;
 
-  if(timeOnly){
+  if(full && timeOnly){
     if(gate && ratio <= 0.85)                          dir = 1;
     else if(ratio >= 1.7){ weak = true; r.bad++; if(r.bad >= 2 || r.seeded) dir = -1; }
-  }else{
+  }else if(full){
     if(gate)                                           dir = 1;
-    else if(acc < 0.5 || (acc < 0.65 && ratio >= 1.6)){
+    /* חצי מהשאלות ומעלה שגויות — הרמה גבוהה מדי, יורדים מיד
+       ולא מחכים לסבב שני. */
+    else if(wrong >= Math.ceil(tot / 2)){ weak = true; dir = -1; }
+    /* שלוש טעויות זה סבב חלש. שניים כאלה מורידים רמה. */
+    else if(wrong >= 3 || (acc < 0.65 && ratio >= 1.6)){
       weak = true; r.bad++; if(r.bad >= 2 || r.seeded) dir = -1;
     }
   }
@@ -862,6 +873,28 @@ function levelDecide(){
 
   return {dir: next - lv, acc:acc, ratio:ratio, med:med,
           rocket: med <= (ROCKET[id] || 1.7) && (timeOnly || acc >= 0.9)};
+}
+
+/* ---- יציאה באמצע סבב ---------------------------------------
+   ילד שנכנס, טעה פעם או פעמיים, ויצא — כנראה נתקל בקושי.
+   בלי המדידה הזאת אפשר להיתקע לנצח: סבב שלא נגמר לא נמדד,
+   והרמה נשארת גבוהה מדי לתמיד. יציאה בלי אף טעות לא נחשבת —
+   אז הילד פשוט הלך. */
+function abandonRound(){
+  if(!S.game) return;
+  const tot = S.total || QPER;
+  if(S.q >= tot) return;                     /* הסבב כבר נגמר כרגיל */
+  if(tot < QPER){ S.game = null; return; }   /* אימון פריט בודד, לא סבב */
+  const r = mrec(S.game);
+  /* טעויות עד כה: שאלות שנענו לא בניסיון ראשון, ועוד השאלה
+     שבאמצע אם כבר נטעה בה. */
+  const wrong = (S.q - S.correct) + (S.tries > 0 ? 1 : 0);
+  if(wrong >= 1){
+    if(r.lv > 1){ r.lv--; r.at = 0; r.cool = 2; }
+    r.bad = 0; r.p = 0; r.mid = 0;
+  }
+  S.game = null;
+  save();
 }
 
 /* ---- "פתרתי ב'טיל'" ----------------------------------------

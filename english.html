@@ -176,7 +176,6 @@ h1{font-size:27px;text-align:center;margin:6px 0 4px}
       <div class="spacer"></div>
       <div class="pill">⭐ <span id="menuStars">0</span></div>
       <button class="icon-btn" id="albBtn" title="אוצר המילים" aria-label="אוצר המילים">📖</button>
-      <button class="icon-btn" id="ltBtn" title="כל האותיות" aria-label="כל האותיות">🔤</button>
       <button class="icon-btn" id="setBtn" title="הגדרות" aria-label="הגדרות">⚙️</button>
     </div>
     <div class="hello" id="hello"></div>
@@ -212,7 +211,7 @@ h1{font-size:27px;text-align:center;margin:6px 0 4px}
   <section class="screen" id="letters">
     <div class="topbar">
       <button class="icon-btn" data-back="menu" aria-label="חזרה">→</button>
-      <div class="pill">🔤 כל האותיות</div>
+      <div class="pill">✏️ לכתוב אותיות</div>
     </div>
     <p class="sub" id="ltCount"></p>
     <div class="abc" id="letterGrid" style="overflow:auto"></div>
@@ -391,24 +390,29 @@ function progGate(r, wrong){
 function levelDecide(){
   const id = S.game, r = mrec(id), lv = r.lv;
   const tot = S.total || QPER;
+  const wrong = Math.max(0, tot - S.correct);
   const acc = S.correct / tot;
   const med = medianTime();
   const ratio = Math.max(0.4, Math.min(2.5, med / baseOf(id, lv)));
   const timeOnly = !!TIME_ONLY[id];
-  /* אימון של פריט אחד מהלוח הוא לא סבב, ולכן הוא לא נספר לשער
-     ולא מאפס אותו. */
+  /* אימון של פריט אחד מהלוח אינו סבב: הוא לא מקדם, לא מוריד,
+     ולא מאפס את הקִדמה. */
   const full = tot >= QPER;
   /* במשחקון שנמדד רק בזמן אין תשובה שגויה, ולכן השער תמיד נפתח —
      ושם המהירות היא שקובעת אם באמת נהיה קל מדי. */
-  const gate = full ? progGate(r, timeOnly ? 0 : (tot - S.correct)) : false;
+  const gate = full ? progGate(r, timeOnly ? 0 : wrong) : false;
   let dir = 0, weak = false;
 
-  if(timeOnly){
+  if(full && timeOnly){
     if(gate && ratio <= 0.85)                          dir = 1;
     else if(ratio >= 1.7){ weak = true; r.bad++; if(r.bad >= 2 || r.seeded) dir = -1; }
-  }else{
+  }else if(full){
     if(gate)                                           dir = 1;
-    else if(acc < 0.5 || (acc < 0.65 && ratio >= 1.6)){
+    /* חצי מהשאלות ומעלה שגויות — הרמה גבוהה מדי, יורדים מיד
+       ולא מחכים לסבב שני. */
+    else if(wrong >= Math.ceil(tot / 2)){ weak = true; dir = -1; }
+    /* שלוש טעויות זה סבב חלש. שניים כאלה מורידים רמה. */
+    else if(wrong >= 3 || (acc < 0.65 && ratio >= 1.6)){
       weak = true; r.bad++; if(r.bad >= 2 || r.seeded) dir = -1;
     }
   }
@@ -422,6 +426,28 @@ function levelDecide(){
 
   return {dir: next - lv, acc:acc, ratio:ratio, med:med,
           rocket: med <= (ROCKET[id] || 1.7) && (timeOnly || acc >= 0.9)};
+}
+
+/* ---- יציאה באמצע סבב ---------------------------------------
+   ילד שנכנס, טעה פעם או פעמיים, ויצא — כנראה נתקל בקושי.
+   בלי המדידה הזאת אפשר להיתקע לנצח: סבב שלא נגמר לא נמדד,
+   והרמה נשארת גבוהה מדי לתמיד. יציאה בלי אף טעות לא נחשבת —
+   אז הילד פשוט הלך. */
+function abandonRound(){
+  if(!S.game) return;
+  const tot = S.total || QPER;
+  if(S.q >= tot) return;                     /* הסבב כבר נגמר כרגיל */
+  if(tot < QPER){ S.game = null; return; }   /* אימון פריט בודד, לא סבב */
+  const r = mrec(S.game);
+  /* טעויות עד כה: שאלות שנענו לא בניסיון ראשון, ועוד השאלה
+     שבאמצע אם כבר נטעה בה. */
+  const wrong = (S.q - S.correct) + (S.tries > 0 ? 1 : 0);
+  if(wrong >= 1){
+    if(r.lv > 1){ r.lv--; r.at = 0; r.cool = 2; }
+    r.bad = 0; r.p = 0; r.mid = 0;
+  }
+  S.game = null;
+  save();
 }
 function lvNote(dec){
   if(!dec || !dec.dir) return '';
@@ -548,6 +574,8 @@ function avatar(g){
 function show(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); }
 $$('[data-back]').forEach(b => b.onclick = ()=>{
   sfxTap(); speakStop();
+  /* יציאה באמצע סבב נמדדת — ראו abandonRound */
+  if($('#play').classList.contains('on')) abandonRound();
   const t = b.dataset.back;
   if(t === 'menu'){ toMenu(); } else { show(t); }
 });
@@ -575,7 +603,7 @@ function renderHello(){
 const GAMES = [
   {id:'pick', e:'🖼️', t:'איפה זה?',   d:'שומעים מילה, בוחרים תמונה'},
   {id:'say',  e:'💬', t:'איזו מילה?', d:'רואים תמונה, בוחרים מילה'},
-  {id:'write',e:'✏️', t:'לכתוב אותיות', d:'גדולה וקטנה, אות אחרי אות'}
+  {id:'write',e:'✏️', t:'לכתוב אותיות', d:'בוחרים אות, כותבים גדולה וקטנה'}
 ];
 function renderMenu(){
   const g = $('#gameGrid'); g.innerHTML = '';
@@ -583,7 +611,11 @@ function renderMenu(){
     const c = document.createElement('button');
     c.className = 'card';
     c.innerHTML = '<div class="e">'+gm.e+'</div><div class="t">'+gm.t+'</div><div class="d">'+gm.d+'</div>';
-    c.onclick = ()=>{ ac(); sfxTap(); startGame(gm.id); };
+    /* משחקון הכתיבה לא מתחיל סבב: הוא פותח את לוח האותיות
+       והילד בוחר מה לכתוב — בדיוק כמו במסלול האותיות בעברית. */
+    c.onclick = ()=>{ ac(); sfxTap();
+      if(gm.id === 'write'){ renderLetters(); show('letters'); }
+      else startGame(gm.id); };
     g.appendChild(c);
   });
 }
@@ -1168,7 +1200,6 @@ function renderSettings(){
 $('#tVoice').onclick = ()=>{ P.voice = !P.voice; save(); renderSettings(); };
 $('#tSound').onclick = ()=>{ ac(); P.sound = !P.sound; save(); renderSettings(); sfxTap(); };
 $('#albBtn').onclick = ()=>{ ac(); sfxTap(); renderAlbum(); show('album'); };
-$('#ltBtn').onclick  = ()=>{ ac(); sfxTap(); renderLetters(); show('letters'); };
 $('#setBtn').onclick = ()=>{ ac(); sfxTap(); pgAsk(function(){ renderSettings(); show('settings'); }); };
 
 let PG_OK = null, PG_TRY = 0;

@@ -3053,6 +3053,8 @@ function mergeGames(x, y){
     Object.keys(s).forEach(f => {
       if(f === 'stats' || f === 'hist') return;
       if(typeof p[f] === 'number' && typeof q[f] === 'number') s[f] = Math.max(p[f], q[f]);
+      else if(p[f] && q[f] && typeof p[f] === 'object' && typeof q[f] === 'object' && !Array.isArray(p[f]) && !Array.isArray(q[f]))
+        s[f] = mergeProgress(p[f], q[f]);
       else if(Array.isArray(p[f]) && Array.isArray(q[f])){
         const seen = {}, u = [];
         p[f].concat(q[f]).forEach(v => { const kk = JSON.stringify(v);
@@ -3064,10 +3066,31 @@ function mergeGames(x, y){
   });
   return o;
 }
+/* אובייקט התקדמות מקונן — למשל הרמות הפנימיות של המשחקונים.
+   Object.assign היה נותן לצד המרוחק לדרוס אותו שלם: אבא מעלה
+   את הילד לרמה 4, אמא נכנסת ממכשיר שלא שיחקו בו שבוע, והרמות
+   חוזרות אחורה. לכן ממזגים לעומק — מספר תמיד הגבוה. */
+function mergeProgress(p, q){
+  const o = {};
+  Object.keys(Object.assign({}, p || {}, q || {})).forEach(k => {
+    const u = (p || {})[k], v = (q || {})[k];
+    if(u === undefined){ o[k] = v; return; }
+    if(v === undefined){ o[k] = u; return; }
+    if(typeof u === 'number' && typeof v === 'number'){ o[k] = Math.max(u, v); return; }
+    if(u && v && typeof u === 'object' && typeof v === 'object' && !Array.isArray(u) && !Array.isArray(v)){
+      o[k] = mergeProgress(u, v); return;
+    }
+    o[k] = v;
+  });
+  return o;
+}
 function mergeKid(a, b){
-  const nw = (b.mt || 0) > (a.mt || 0) ? b : a;
-  const k = {id:a.id, name:nw.name, g:nw.g, dob:nw.dob, frame:nw.frame, av:nw.av,
-             mt: Math.max(a.mt || 0, b.mt || 0)};
+  const nw = (b.mt || 0) > (a.mt || 0) ? b : a, ol = (nw === b) ? a : b;
+  /* מתחילים מהעותק המלא של שני הצדדים, כדי ששדה שנוסף בעתיד
+     לא ייעלם בשקט רק מפני שהוא לא ברשימה כאן. */
+  const k = Object.assign({}, ol, nw);
+  k.id = a.id;
+  k.mt = Math.max(a.mt || 0, b.mt || 0);
   const seen = {}; k.logs = [];
   (a.logs || []).concat(b.logs || []).forEach(l => {
     const key = l.a + '|' + l.d;
@@ -3081,16 +3104,30 @@ function mergeKid(a, b){
     k.lvl[id] = !x ? y : !y ? x : (x.done ? x : y.done ? y : ((y.fails || 0) > (x.fails || 0) ? y : x));
   });
   k.games = mergeGames(a.games, b.games);
+  /* משחק שההורה הדליק או כיבה ידנית — ההחלטה נשמרת משני הצדדים */
+  k.gamesOn = Object.assign({}, ol.gamesOn || {}, nw.gamesOn || {});
+  if(!Object.keys(k.gamesOn).length) delete k.gamesOn;
   return k;
 }
+/* ילד שנמחק חוזר מהמכשיר השני בסנכרון הבא, לנצח — אלא אם
+   המחיקה עצמה מסונכרנת. DB.del שומר מתי כל ילד נמחק, והמיזוג
+   מכבד את המאוחר מבין השניים: מחיקה או עריכה. */
 function mergeDB(local, remote){
+  const del = Object.assign({}, local.del || {});
+  Object.keys(remote.del || {}).forEach(id => {
+    del[id] = Math.max(del[id] || 0, remote.del[id] || 0);
+  });
   const out = {v: local.v || 1, kids: []}, at = {};
   (local.kids || []).forEach(k => at[k.id] = {a:k, b:null});
   (remote.kids || []).forEach(k => { if(at[k.id]) at[k.id].b = k; else at[k.id] = {a:null, b:k}; });
   Object.keys(at).forEach(id => {
     const p = at[id];
-    out.kids.push(!p.b ? p.a : !p.a ? p.b : mergeKid(p.a, p.b));
+    const k = !p.b ? p.a : !p.a ? p.b : mergeKid(p.a, p.b);
+    /* נמחק אחרי העריכה האחרונה שלו — נשאר מחוק */
+    if(del[id] && del[id] >= (k.mt || 0)) return;
+    out.kids.push(k);
   });
+  if(Object.keys(del).length) out.del = del;
   return out;
 }
 
@@ -3258,7 +3295,7 @@ function renderSettings(){
   $('#st-body').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
     const k = DB.kids.find(x=>x.id===b.dataset.del);
     if(!confirm('למחוק את ' + k.name + ' לגמרי? כל ההיסטוריה תימחק.')) return;
-    DB.kids = DB.kids.filter(x => x.id !== k.id); save(); renderSettings(); renderShelf(); toast('נמחק');
+    DB.kids = DB.kids.filter(x => x.id !== k.id); if(!DB.del) DB.del = {}; DB.del[k.id] = Date.now(); save(); renderSettings(); renderShelf(); toast('נמחק');
   });
   $('#b-switch').onclick = () => { renderWelcome(); show('s-welcome'); };
   $('#b-link').onclick = async () => {
@@ -3358,6 +3395,7 @@ function setGameEnabled(k, id, val){
   const auto = g ? ageMonths(k.dob) >= g.from : false;
   if(val === auto) delete k.gamesOn[id];      /* חזרה לברירת המחדל */
   else k.gamesOn[id] = val;
+  touch(k);
   save();
 }
 function gamesFor(k){ return GAMES.filter(g => gameEnabled(k, g)); }
@@ -3511,6 +3549,47 @@ function histChart(st){
   </div>`;
 }
 
+/* ---------------------------------------------------------------
+   רמות לפי משחקון
+   ---------------------------------------------------------------
+   אין יותר רמה אחת לכל משחק. לכל משחקון רמה משלו, שנקבעת לבד
+   לפי איך שהילד הסתדר. ההורה לא בוחר אותה — אבל הוא כן צריך
+   לראות אותה, אחרת השינוי קרה בשקט מאחורי גבו.
+   --------------------------------------------------------------- */
+const MG_NAMES = {
+  numbers: {find:'מי אני?', count:'כמה חיות?', seq:'השרשרת', cmp:'מי גדול', add:'חיבור',
+            sub:'חיסור', clock:'מה השעה?', trace:'לכתוב מספרים', mem:'זוגות'},
+  letters: {snd:'חרוזים וצלילים', trc:'מסלול האותיות', wrd:'בונים מילה',
+            typ:'מקלידים', nkd:'ניקוד', read:'קוראים מילה'},
+  english: {pick:'איפה זה?'},
+  objects: {}
+};
+const MLV_MAXP = 4;
+function mgLevels(gid, st){
+  const m = (st && st.m) || {};
+  const names = MG_NAMES[gid] || {};
+  return Object.keys(m)
+    .filter(id => m[id] && m[id].lv)
+    .map(id => ({id, name: names[id] || id, lv: Math.max(1, Math.min(MLV_MAXP, m[id].lv|0)),
+                 at: m[id].at || 0}))
+    .sort((a,b) => b.lv - a.lv);
+}
+/* תגית קצרה לכרטיס המשחק: כמה משחקונים נפתחו ומה הרמה הגבוהה */
+function mgBadge(gid, st){
+  const rows = mgLevels(gid, st);
+  if(!rows.length) return '';
+  const top = rows[0].lv;
+  return rows.length === 1 ? 'רמה ' + top : 'עד רמה ' + top;
+}
+/* שורת צ'יפים בתוך הנתונים — משחקון, רמה, וכמה סבבים הוא שם */
+function mgRow(gid, st){
+  const rows = mgLevels(gid, st);
+  if(!rows.length) return '';
+  return `<div class="insrow"><span class="il">רמות</span>` +
+    rows.map(r => `<span class="ic ${r.lv >= 3 ? 'good' : r.lv === 2 ? 'mid' : ''}">${esc(r.name)}<b>${r.lv}</b></span>`).join('') +
+    `</div><div class="meta">הרמה נקבעת לבד לפי הביצועים — עולה כשקל, יורדת כששני סבבים קשים ברצף.</div>`;
+}
+
 function gameInsight(g, st){
   const items = st && st.stats && st.stats.items;
   if(!items) return histChart(st);
@@ -3542,12 +3621,7 @@ function gameInsight(g, st){
         .join('') + `</div>`;
   }
 
-  const lv = st.stats.levels || {};
-  const lvRows = Object.keys(lv).map(k=>({k, v:lv[k], n:(lv[k].ok||0)+(lv[k].miss||0)})).filter(r=>r.n>=MIN_SEEN);
-  if(lvRows.length){
-    h += `<div class="insrow"><span class="il">רמות</span>` +
-         lvRows.sort((a,b)=>a.k-b.k).map(r=>`<span class="ic ${itemScore(r.v)>=0.8?'good':itemScore(r.v)>=0.5?'mid':'bad'}">רמה ${r.k}<b>${Math.round(itemScore(r.v)*100)}%</b></span>`).join('') + `</div>`;
-  }
+  h += mgRow(g.id, st);
   if(weak.length) h += `<div class="meta" style="margin-top:8px">כדאי לתרגל בבית דווקא את אלה שמסומנים "מתקשה".</div>`;
   h += `</div>`;
   h += histChart(st);
@@ -3586,7 +3660,7 @@ function renderPlayGame(){
   /* כרטיסים בגודל אחיד, סמל גדול וצבעוני — ילד שלא קורא מזהה לפי הסמל */
   $('#pg-body').innerHTML = `<div class="games2">` + gs.map(g => {
     const st = gameState(k, g.id);
-    const lvl = st && st.level ? 'רמה ' + st.level : '';
+    const lvl = mgBadge(g.id, st);
     const stars = st && st.stars ? ' ⭐ ' + st.stars : '';
     return `<button class="gcard" data-pg="${g.id}" style="border-color:${g.bg}">
       <div class="gm">${GMARK[g.id] || ''}</div>

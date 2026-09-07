@@ -134,6 +134,29 @@ h1{font-size:27px;text-align:center;margin:6px 0 4px}
 #pad.hideAll .tube-o,#pad.hideAll .tube-i,#pad.hideAll .ink{opacity:0}
 #pad.perfect .free{opacity:0;transition:opacity .35s ease}
 .prompt .pos{font-size:14px;color:var(--brown-l);font-weight:400;margin-inline-start:8px}
+/* ---------- אוצר המילים ---------- */
+.albsec{font-size:16px;font-weight:700;color:var(--brown-l);margin:12px 2px 6px}
+.albrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.wcard{background:#fff;border-radius:18px;padding:6px 4px 4px;box-shadow:var(--shadow);border:4px solid transparent;
+  font:inherit;display:flex;flex-direction:column;align-items:center;gap:1px;position:relative}
+.wcard svg{width:100%;height:auto;aspect-ratio:1;display:block;filter:grayscale(1) opacity(.35)}
+.wcard.got svg{filter:none}
+.wcard .we{font-size:14px;font-weight:700;font-family:'Segoe UI',system-ui,sans-serif;color:#B7A78F}
+.wcard.got .we{color:var(--brown)}
+.wcard .wh{font-size:11.5px;color:var(--brown-l);min-height:1.1em}
+.wcard.got{border-color:var(--green);background:#F6FBF1}
+.wcard .wv{position:absolute;top:3px;left:5px;font-size:13px;color:var(--green-d)}
+.wcard .wdots{font-size:9px;color:var(--orange);letter-spacing:1px;line-height:1}
+.albwrap{overflow:auto;padding-bottom:18px}
+/* ---------- כל האותיות ---------- */
+.abc{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px;padding-bottom:18px}
+.lt{background:#fff;border-radius:20px;padding:7px 4px 5px;box-shadow:var(--shadow);border:4px solid transparent;
+  font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--brown)}
+.lt .g{display:flex;gap:2px;align-items:flex-end}
+.lt .g svg{width:30px;height:36px;display:block}
+.lt .n{font-size:12px;color:var(--brown-l);font-family:'Segoe UI',system-ui,sans-serif;font-weight:700}
+.lt.done{border-color:var(--green);background:#F6FBF1;color:var(--green-d)}
+.lt:active{transform:translateY(3px)}
 </style>
 </head>
 <body>
@@ -152,6 +175,8 @@ h1{font-size:27px;text-align:center;margin:6px 0 4px}
       <button class="icon-btn" data-back="who" aria-label="החלפת ילד">→</button>
       <div class="spacer"></div>
       <div class="pill">⭐ <span id="menuStars">0</span></div>
+      <button class="icon-btn" id="albBtn" title="אוצר המילים" aria-label="אוצר המילים">📖</button>
+      <button class="icon-btn" id="ltBtn" title="כל האותיות" aria-label="כל האותיות">🔤</button>
       <button class="icon-btn" id="setBtn" title="הגדרות" aria-label="הגדרות">⚙️</button>
     </div>
     <div class="hello" id="hello"></div>
@@ -171,6 +196,26 @@ h1{font-size:27px;text-align:center;margin:6px 0 4px}
     <div class="stage" id="stage"></div>
     <div class="opts" id="opts"></div>
     <div class="coach"><div class="face">🦜</div><div class="bubble" id="bubble"></div></div>
+  </section>
+
+  <!-- ============ VOCABULARY ============ -->
+  <section class="screen" id="album">
+    <div class="topbar">
+      <button class="icon-btn" data-back="menu" aria-label="חזרה">→</button>
+      <div class="pill">📖 אוצר המילים</div>
+    </div>
+    <p class="sub" id="albCount"></p>
+    <div class="albwrap"><div id="albumGrid"></div></div>
+  </section>
+
+  <!-- ============ ALL LETTERS ============ -->
+  <section class="screen" id="letters">
+    <div class="topbar">
+      <button class="icon-btn" data-back="menu" aria-label="חזרה">→</button>
+      <div class="pill">🔤 כל האותיות</div>
+    </div>
+    <p class="sub" id="ltCount"></p>
+    <div class="abc" id="letterGrid" style="overflow:auto"></div>
   </section>
 
   <!-- ============ SETTINGS ============ -->
@@ -277,7 +322,7 @@ const gt = (m,f) => (G()==='f' ? f : m);
    מצב
    ========================================================= */
 const KEY = 'english.v1';
-const DEF = {player:null, m:{}, stars:0, voice:true, sound:true,
+const DEF = {player:null, m:{}, ws:{}, wd:{}, stars:0, voice:true, sound:true,
              stats:{items:{}, skills:{}, bySkill:{}, levels:{}}};
 const HOSTED = (function(){ try{ return !!window.parent && window.parent !== window; }catch(e){ return false; } })();
 const freshStats = () => ({items:{}, skills:{}, bySkill:{}, levels:{}});
@@ -285,7 +330,7 @@ function load(){
   if(HOSTED) return {...DEF, m:{}, stats:freshStats()};
   try{ const raw = localStorage.getItem(KEY);
     if(raw){ const o = JSON.parse(raw);
-      return {...DEF, ...o, m:{...(o.m||{})}, stats:{...freshStats(), ...(o.stats||{})}}; }
+      return {...DEF, ...o, m:{...(o.m||{})}, ws:{...(o.ws||{})}, wd:{...(o.wd||{})}, stats:{...freshStats(), ...(o.stats||{})}}; }
   }catch(e){}
   return {...DEF, m:{}, stats:freshStats()};
 }
@@ -509,6 +554,7 @@ function startGame(id){
   S.snap = {game:id, rec:JSON.parse(JSON.stringify(mrec(id))), stats:JSON.parse(JSON.stringify(P.stats||{}))};
   const gm = GAMES.find(x=>x.id===id) || {e:'', t:''};
   $('#playTitle').textContent = gm.e + ' ' + gm.t;
+  $('#play [data-back]').dataset.back = 'menu';
   show('play');
   if(id === 'write'){ startWrite(); return; }
   renderTrail();
@@ -536,7 +582,7 @@ $('#repeatBtn').onclick = ()=>{ ac(); if(lastKeys) say(lastKeys); };
    מקבוצה אחת, עד שהן נרכשות, ורק אז נפתחות הבאות. */
 const GROUP_ORDER = ['animals','colors','food','transport','home'];
 function seen(w){ return ((P.stats && P.stats.items) || {})[w.en]; }
-function mastered(w){ const s = seen(w); return !!(s && s.ok >= 4 && !s.miss); }
+function mastered(w){ return collected(w.en); }
 
 function buildSet(){
   const size = LV <= 1 ? 4 : 6;
@@ -681,7 +727,7 @@ function sayJudge(w, el){
     S.answered = true;
     el.classList.add('good');
     sfxGood(); confetti(18);
-    if(S.tries === 0){ S.correct++; rec(true); if(S.qStart) S.times.push((performance.now()-S.qStart)/1000); }
+    if(S.tries === 0){ S.correct++; rec(true); bumpStreak(t.en, true); if(S.qStart) S.times.push((performance.now()-S.qStart)/1000); }
     $$('#opts .wopt').forEach(b => b.style.pointerEvents = 'none');
     coach(t.en + ' — ' + t.he, 'ok');
     /* "נכון, CAT זה חתול — חתול, CAT" */
@@ -690,7 +736,7 @@ function sayJudge(w, el){
     afterSpeech(nextQ, 1200);
   }else{
     S.tries++;
-    if(S.tries === 1) rec(false);
+    if(S.tries === 1){ rec(false); bumpStreak(t.en, false); }
     el.classList.add('bad'); el.style.pointerEvents = 'none';
     sfxBad();
     /* המילה שנבחרה בטעות היא הזדמנות ללמד אותה */
@@ -893,6 +939,103 @@ function wrDone(){
   afterSpeech(finishRound, 1200);
 }
 
+/* =========================================================
+   אוצר המילים
+   =========================================================
+   מילה נכנסת לאוסף אחרי **שלוש הצלחות רצופות בניסיון ראשון**,
+   והרצף נמשך על פני משחקים — לא בתוך סבב אחד. טעות אחת
+   מאפסת אותו. מילה שנאספה נשארת אספת לתמיד.
+   ========================================================= */
+const NEED_STREAK = 3;
+function wstreak(en){ return ((P.ws || {})[en]) || 0; }
+function collected(en){ return !!((P.wd || {})[en]); }
+/* ok=true רק אם זו הייתה תשובה נכונה בניסיון הראשון */
+function bumpStreak(en, ok){
+  if(!P.ws) P.ws = {};
+  if(!P.wd) P.wd = {};
+  if(ok){
+    P.ws[en] = (P.ws[en] || 0) + 1;
+    if(P.ws[en] >= NEED_STREAK) P.wd[en] = 1;
+  }else{
+    P.ws[en] = 0;
+  }
+}
+function collectedCount(){ return WORDS.filter(function(w){ return collected(w.en); }).length; }
+
+function renderAlbum(){
+  $('#albCount').textContent = 'אספנו ' + collectedCount() + ' מתוך ' + WORDS.length + ' מילים';
+  const order = ['animals','colors','food','transport','home'];
+  const g = $('#albumGrid');
+  g.innerHTML = order.map(function(grp){
+    const ws = WORDS.filter(function(w){ return w.g === grp; });
+    if(!ws.length) return '';
+    return '<div class="albsec">' + L('gr_' + grp) + '</div>' +
+      '<div class="albrow">' + ws.map(function(w){
+        const got = collected(w.en), st = wstreak(w.en);
+        return '<button class="wcard' + (got ? ' got' : '') + '" data-w="' + w.id + '">' +
+          '<svg viewBox="0 0 100 100">' + w.s + '</svg>' +
+          '<div class="we"><bdi dir="ltr">' + w.en + '</bdi></div>' +
+          '<div class="wh">' + (got ? w.he : '') + '</div>' +
+          (got ? '<div class="wv">★</div>'
+               : '<div class="wdots">' + '●'.repeat(st) + '○'.repeat(NEED_STREAK - st) + '</div>') +
+        '</button>';
+      }).join('') + '</div>';
+  }).join('');
+  /* לחיצה על מילה שנאספה משמיעה אותה שוב — אנגלית ואז עברית */
+  $$('#albumGrid .wcard').forEach(function(b){
+    b.onclick = function(){
+      ac(); sfxTap();
+      const w = WORDS.find(function(x){ return x.id === b.dataset.w; });
+      if(!w) return;
+      say(collected(w.en) ? ['en_' + w.id, 'he_' + w.id] : ['en_' + w.id]);
+    };
+  });
+}
+
+/* =========================================================
+   כל האותיות
+   =========================================================
+   לוח של 26 האותיות, גדולה וקטנה זו לצד זו. לחיצה נכנסת
+   ישר לכתיבה של אותה אות — בלי לחכות שהסבב יגיע אליה.
+   ========================================================= */
+function letterDone(ch){
+  const s = ((P.stats && P.stats.items) || {})['letter ' + ch];
+  return !!(s && s.ok >= 1);
+}
+function letterSvg(ds){
+  return '<svg viewBox="0 0 100 120">' + (ds || []).map(function(d){
+    return '<path d="' + d + '" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>';
+  }).join('') + '</svg>';
+}
+function renderLetters(){
+  const done = ABC.filter(letterDone).length;
+  $('#ltCount').textContent = 'כתבנו ' + done + ' מתוך ' + ABC.length + ' אותיות';
+  const g = $('#letterGrid');
+  g.innerHTML = ABC.map(function(ch){
+    return '<button class="lt' + (letterDone(ch) ? ' done' : '') + '" data-ch="' + ch + '">' +
+      '<div class="g">' + letterSvg(CAPS[ch]) + letterSvg(LOWS[ch.toLowerCase()]) + '</div>' +
+      '<div class="n"><bdi dir="ltr">' + ch + ' ' + ch.toLowerCase() + '</bdi></div>' +
+    '</button>';
+  }).join('');
+  $$('#letterGrid .lt').forEach(function(b){
+    b.onclick = function(){ ac(); sfxTap(); startOneLetter(b.dataset.ch); };
+  });
+}
+/* אימון של אות אחת שנבחרה ביד */
+function startOneLetter(ch){
+  S.game = 'write'; S.tries = 0; S.answered = false;
+  LV = mlv('write');
+  S.times = []; S.roundStart = performance.now();
+  S.snap = {game:'write', rec:JSON.parse(JSON.stringify(mrec('write'))), stats:JSON.parse(JSON.stringify(P.stats||{}))};
+  S.list = [ch]; S.at = 0; S.q = 0; S.correct = 0; S.total = 1;
+  $('#play [data-back]').dataset.back = 'letters';
+  $('#playTitle').textContent = '✏️ ' + ch + ' ' + ch.toLowerCase();
+  show('play');
+  $('#trail').innerHTML = '';
+  $('#opts').innerHTML = '';
+  buildWrite(ch, 'cap');
+}
+
 function rec(ok){
   const t = S.cur; if(!t) return;
   if(!P.stats) P.stats = freshStats();
@@ -919,7 +1062,7 @@ function judge(ok, el, w){
     S.answered = true;
     el.classList.add('good');
     sfxGood(); confetti(18);
-    if(S.tries === 0){ S.correct++; rec(true); if(S.qStart) S.times.push((performance.now()-S.qStart)/1000); }
+    if(S.tries === 0){ S.correct++; rec(true); bumpStreak(t.en, true); if(S.qStart) S.times.push((performance.now()-S.qStart)/1000); }
     $$('#opts .opt').forEach(b => b.style.pointerEvents = 'none');
     /* עכשיו, ורק עכשיו, המילה הכתובה — חשיפה בלי דרישה */
     const q = $('#q');
@@ -936,7 +1079,7 @@ function judge(ok, el, w){
     afterSpeech(nextQ, 1200);
   }else{
     S.tries++;
-    if(S.tries === 1) rec(false);
+    if(S.tries === 1){ rec(false); bumpStreak(t.en, false); }
     el.classList.add('bad'); el.style.pointerEvents = 'none';
     sfxBad();
     /* הילד נכשל — הוא חייב לשמוע שוב בדיוק את מה שהוא מחפש */
@@ -982,6 +1125,8 @@ function renderSettings(){
 }
 $('#tVoice').onclick = ()=>{ P.voice = !P.voice; save(); renderSettings(); };
 $('#tSound').onclick = ()=>{ ac(); P.sound = !P.sound; save(); renderSettings(); sfxTap(); };
+$('#albBtn').onclick = ()=>{ ac(); sfxTap(); renderAlbum(); show('album'); };
+$('#ltBtn').onclick  = ()=>{ ac(); sfxTap(); renderLetters(); show('letters'); };
 $('#setBtn').onclick = ()=>{ ac(); sfxTap(); pgAsk(function(){ renderSettings(); show('settings'); }); };
 
 let PG_OK = null, PG_TRY = 0;
@@ -1017,7 +1162,7 @@ if(HOSTED){
   window.addEventListener('message', ev => {
     const d = ev.data;
     if(!d || d.type !== 'ns-init') return;
-    if(d.state) P = {...DEF, ...d.state, m:{...(d.state.m||{})}, stats:{...freshStats(), ...(d.state.stats||{})}};
+    if(d.state) P = {...DEF, ...d.state, m:{...(d.state.m||{})}, ws:{...(d.state.ws||{})}, wd:{...(d.state.wd||{})}, stats:{...freshStats(), ...(d.state.stats||{})}};
     P.player = (d.child && d.child.g === 'f') ? 'f' : 'm';
     if(d.child && d.child.name && KIDS[P.player]) KIDS[P.player].name = d.child.name;
     toMenu();

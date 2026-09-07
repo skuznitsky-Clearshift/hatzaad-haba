@@ -269,6 +269,15 @@ h1{font-size:clamp(30px,8vw,54px);margin:2px 0 0;color:var(--green-d);letter-spa
 .aclock .hand.lit{stroke:#D9534F}
 .aclock .hand.dim{stroke:#CFC4B4}
 .aclock .pin{fill:#4A3728}
+/* ---------- כל המספרים ---------- */
+.nums{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;overflow:auto;padding-bottom:18px}
+.nt{background:#fff;border-radius:20px;padding:7px 4px 5px;box-shadow:var(--shadow);border:4px solid transparent;
+  font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--brown)}
+.nt .g{height:40px;display:flex;align-items:center}
+.nt .g svg{height:40px;width:auto;display:block}
+.nt .n{font-size:12px;color:var(--brown-l);font-weight:700}
+.nt.done{border-color:var(--green);background:#F6FBF1;color:var(--green-d)}
+.nt:active{transform:translateY(3px)}
 </style>
 </head>
 <body>
@@ -297,6 +306,7 @@ h1{font-size:clamp(30px,8vw,54px);margin:2px 0 0;color:var(--green-d);letter-spa
       <button class="icon-btn" data-back="who" aria-label="החלפת ילד">→</button>
       <div class="spacer"></div>
       <div class="pill">⭐ <span id="menuStars">0</span></div>
+      <button class="icon-btn" id="numBtn" title="כל המספרים" aria-label="כל המספרים">✏️</button>
       <button class="icon-btn" id="albumBtn" title="אלבום החיות" aria-label="אלבום החיות">📖</button>
       <button class="icon-btn" id="setBtn" title="הגדרות" aria-label="הגדרות">⚙️</button>
     </div>
@@ -318,6 +328,16 @@ h1{font-size:clamp(30px,8vw,54px);margin:2px 0 0;color:var(--green-d);letter-spa
     <div class="stage" id="stage"></div>
     <div class="answers" id="answers"></div>
     <div class="coach" id="coach"><div class="face">🦁</div><div class="bubble" id="bubble"></div></div>
+  </section>
+
+  <!-- ============ ALL NUMBERS ============ -->
+  <section class="screen" id="nums">
+    <div class="topbar">
+      <button class="icon-btn" data-back="menu" aria-label="חזרה">→</button>
+      <div class="pill">✏️ כל המספרים</div>
+    </div>
+    <p class="sub" id="nmCount" style="text-align:center;margin:2px 0 8px"></p>
+    <div class="nums" id="numGrid"></div>
   </section>
 
   <!-- ============ ALBUM ============ -->
@@ -447,7 +467,7 @@ const QPER = 8;
 /* =========================================================
    מצב ושמירה
    ========================================================= */
-const DEF = {player:null, m:{}, level:1, unlocked:1, stars:0, animals:0, good:{1:0,2:0,3:0,4:0}, stats:{items:{},skills:{},levels:{}}, voice:true, sound:true, allLevels:false};
+const DEF = {player:null, m:{}, nw:{}, level:1, unlocked:1, stars:0, animals:0, good:{1:0,2:0,3:0,4:0}, stats:{items:{},skills:{},levels:{}}, voice:true, sound:true, allLevels:false};
 const HOSTED = (function(){ try{ return !!window.parent && window.parent !== window; }catch(e){ return false; } })();
 const freshStats = () => ({items:{}, skills:{}, levels:{}});
 let P = load();
@@ -688,6 +708,7 @@ function renderHome(){
   { const sw = $("#swKid"); if(sw) sw.onclick = (e)=>{ e.stopPropagation(); sfxTap(); show('who'); }; }
   { const sb = $('#startBtn'); if(sb) sb.textContent = gt('בוא נשחק! 🎉','בואי נשחק! 🎉'); }
 }
+$('#numBtn').onclick   = ()=>{ ac(); sfxTap(); renderNums(); show('nums'); };
 $('#albumBtn').onclick = ()=>{ ac(); sfxTap(); show('album'); };
 $('#setBtn').onclick = ()=>{ ac(); sfxTap(); pgAsk(function(){ if(typeof renderSettings==='function') renderSettings(); show('settings'); }); };
 
@@ -855,6 +876,7 @@ function startGame(id){
   $('#playTitle').textContent = gm.e + ' ' + gm.t;
   renderTrail();
   $('#demoBtn').classList.toggle('hidden', id!=='trace');
+  $('#play [data-back]').dataset.back = 'menu';
   S.total = QPER;
   if(id==='mem') buildMemory();
   else if(id==='trace') startTrace();
@@ -1622,6 +1644,52 @@ function ntDemo(){
   })(t0);
 }
 
+/* =========================================================
+   כל המספרים
+   =========================================================
+   לוח של 0 עד 20. מספר שנכתב מסומן. לחיצה נכנסת ישר לכתיבה
+   של אותו מספר — בלי לחכות שהסבב יגיע אליו.
+   ========================================================= */
+function numDone(n){ return !!((P.nw || {})[n]); }
+function markNumDone(n){ if(!P.nw) P.nw = {}; P.nw[n] = 1; }
+function numTile(n){
+  const gl = numGlyph(n);
+  return '<svg viewBox="0 0 ' + gl.w + ' 120">' + gl.paths.map(function(d){
+    return '<path d="' + d + '" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>';
+  }).join('') + '</svg>';
+}
+function renderNums(){
+  let done = 0;
+  for(let i = 0; i <= 20; i++) if(numDone(i)) done++;
+  $('#nmCount').textContent = 'כתבנו ' + done + ' מתוך 21 מספרים';
+  const g = $('#numGrid');
+  let h = '';
+  for(let n = 0; n <= 20; n++){
+    h += '<button class="nt' + (numDone(n) ? ' done' : '') + '" data-n="' + n + '">' +
+         '<div class="g">' + numTile(n) + '</div>' +
+         '<div class="n">' + (LINE['n_' + n] || NUM_HE[n] || n) + '</div></button>';
+  }
+  g.innerHTML = h;
+  $$('#numGrid .nt').forEach(function(b){
+    b.onclick = function(){ ac(); sfxTap(); startOneNumber(+b.dataset.n); };
+  });
+}
+/* אימון של מספר אחד שנבחר ביד */
+function startOneNumber(n){
+  migrateLevels();
+  S.game = 'trace'; S.tries = 0; S.answered = false;
+  LV = mlv('trace');
+  S.times = []; S.roundStart = performance.now();
+  S.snap = {game:'trace', rec:JSON.parse(JSON.stringify(mrec('trace'))), stats:JSON.parse(JSON.stringify(P.stats||{}))};
+  S.list = [n]; S.at = 0; S.q = 0; S.correct = 0; S.total = 1;
+  $('#playTitle').textContent = '✏️ ' + n;
+  $('#demoBtn').classList.remove('hidden');
+  $('#play [data-back]').dataset.back = 'nums';
+  show('play');
+  $('#trail').innerHTML = '';
+  buildTrace(n);
+}
+
 function buildTrace(n){
   const gl = numGlyph(n);
   $('#answers').innerHTML = '';
@@ -1672,6 +1740,7 @@ function ntDone(){
   setTimeout(function(){ if(T && T.svg){ T.svg.classList.remove('hideAll'); T.svg.classList.add('reveal'); } }, 650);
   sfxGood(); confetti(24);
   coach(L('nt_done_' + G()),'ok');
+  markNumDone(T.n);
   S.cur = {stat:{item:String(T.n), skill:'כתיבת מספר'}};
   S.tries = 0; rec(true); if(S.qStart) S.times.push((performance.now()-S.qStart)/1000);
   S.correct++; S.q++;

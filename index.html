@@ -395,12 +395,67 @@ if('serviceWorker' in navigator){
         <div class="ttl">הצעד הבא</div>
         <div class="sub">מה עושים היום עם כל אחד</div>
       </div>
+      <button class="iconb" id="b-share" aria-label="שיתוף">↗</button>
       <button class="iconb" id="b-home" aria-label="מסך הבית">🏠</button>
       <button class="iconb" id="b-settings" aria-label="הגדרות">⚙</button>
     </div>
     <div class="shelf" id="shelf"></div>
   </div>
 
+
+  <!-- 1b · שיתוף — בחירה בין שיתוף ילדים לשיתוף האפליקציה -->
+  <div class="scr" id="s-share">
+    <div class="top">
+      <div style="flex:1">
+        <div class="ttl">שיתוף</div>
+        <div class="sub">מה להעביר, ולמי</div>
+      </div>
+      <button class="iconb" id="sh-back" aria-label="חזרה">→</button>
+    </div>
+    <button class="chk" id="sh-kids" style="align-items:center">
+      <div class="bx" style="background:var(--green);border-color:var(--green)">👶</div>
+      <div><b>לשתף מעקב על ילד</b>
+        <div class="meta">מי שיקבל יראה את אותו ילד אצלו, והשינויים יעברו בין שניכם. אפשר ילד אחד או כמה.</div></div>
+    </button>
+    <button class="chk" id="sh-app" style="align-items:center">
+      <div class="bx" style="background:#8FA9C0;border-color:#8FA9C0">📱</div>
+      <div><b>לשתף את האפליקציה</b>
+        <div class="meta">רק קישור להצעד הבא, בלי שום נתונים. למי שרוצה להתחיל מאפס עם הילדים שלו.</div></div>
+    </button>
+    <div class="note" id="sh-note"></div>
+  </div>
+
+  <!-- 1c · בחירת הילדים לשיתוף -->
+  <div class="scr" id="s-share-kids">
+    <div class="top">
+      <div style="flex:1">
+        <div class="ttl">איזה ילד להעביר?</div>
+        <div class="sub" id="shk-sub">אפשר לסמן כמה שרוצים</div>
+      </div>
+      <button class="iconb" id="shk-back" aria-label="חזרה">→</button>
+    </div>
+    <div id="shk-list"></div>
+    <div class="btnrow">
+      <button class="btn full" id="shk-go">העבר</button>
+    </div>
+    <div class="note">מי שיקבל יראה את הילדים שסימנת בלבד. ילד שלא סימנת לא ייראה לו, ולא יעלה לענן.</div>
+  </div>
+
+  <!-- 1d · קיבלתי שיתוף -->
+  <div class="scr" id="s-invite">
+    <div class="top">
+      <div style="flex:1">
+        <div class="ttl" id="inv-ttl">שיתפו איתך</div>
+        <div class="sub" id="inv-sub"></div>
+      </div>
+    </div>
+    <div id="inv-list"></div>
+    <div class="note" id="inv-note"></div>
+    <div class="btnrow">
+      <button class="btn full" id="inv-go">הוספה</button>
+      <button class="btn ghost full" id="inv-no">לא עכשיו</button>
+    </div>
+  </div>
   <!-- 2 · new child wizard -->
   <div class="scr" id="s-new">
     <div class="top"><button class="back" data-back="s-kids" aria-label="חזרה">→</button><div class="ttl" id="wiz-ttl">ילד חדש</div></div>
@@ -3735,6 +3790,8 @@ async function cloudSync(quiet){
     });
     const j = await r.json().catch(()=>({}));
     if(!r.ok || !j.ok){ if(!quiet) toast('הסנכרון נכשל: ' + (j.error || r.status)); return false; }
+    /* חדרי הילדים המשותפים — כל ילד בנפרד, אחרי הפרופיל */
+    try{ await roomsSync(true); }catch(e){}
     if(typeof renderShelf === 'function') renderShelf();
     if(typeof renderRoot  === 'function') renderRoot();
     if(!quiet) toast('סונכרן · ' + DB.kids.length + ' ילדים');
@@ -3781,8 +3838,334 @@ async function cloudPull(){
   toast('הורדו ' + n + ' ילדים מהענן');
 }
 
+
 /* ---------------------------------------------------------------
-   14.5 שמירת קובץ
+   14.5 חדר לכל ילד — הבסיס לשיתוף חלקי
+   ---------------------------------------------------------------
+   סנכרון הפרופיל (/p/<CODE>) הוא "המכשירים שלי". הוא לא יכול
+   לתאר מה שההורה ביקש: לשתף ילד אחד ולא את כולם, ושגננת תאסוף
+   ילדים מהרבה הורים — כל ילד מקושר להורים שלו.
+   לכן לכל ילד יש חדר משלו: `k.sid` מזהה אותו בענן, `k.rk` הוא
+   מפתח הכתיבה **האישי** של המכשיר הזה לאותו חדר.
+   שני השדות נוצרים בשיתוף הראשון בלבד — ילד שלא שותף מעולם
+   לא עולה לענן בכלל.
+   --------------------------------------------------------------- */
+const SID_LEN = 14, RK_LEN = 22;
+function randId(n){
+  const A = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  const r = new Uint8Array(n);
+  if((window.crypto || {}).getRandomValues) crypto.getRandomValues(r);
+  else for(let i=0;i<n;i++) r[i] = Math.floor(Math.random()*256);
+  let s = '';
+  for(let i=0;i<n;i++) s += A[r[i] % A.length];
+  return s;
+}
+function syncBase(){ return (syncCfg().url || '').replace(/\/+$/,''); }
+function roomOf(k){ return (k && k.sid) ? k.sid : null; }
+function shared(k){ return !!(k && k.sid); }
+
+/* הילד כפי שהוא נשלח לחדר — בלי שדות שהם מקומיים למכשיר */
+function kidForRoom(k){
+  const c = JSON.parse(JSON.stringify(k));
+  delete c.rk;                 /* מפתח הכתיבה הוא של המכשיר, לא של הילד */
+  return c;
+}
+async function roomPut(k, opts){
+  if(!syncOn() || !k.sid || !k.rk) return {ok:false, error:'not_shared'};
+  const body = {kid: kidForRoom(k)};
+  if(opts && opts.del) body.del = 1;
+  const r = await fetch(syncBase() + '/k/' + k.sid, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json', 'X-Room-Key': k.rk},
+    body: JSON.stringify(body)
+  });
+  return await r.json().catch(()=>({ok:false, error:'bad_reply'}));
+}
+async function roomGet(sid){
+  if(!syncOn() || !sid) return null;
+  const r = await fetch(syncBase() + '/k/' + sid);
+  if(!r.ok) return null;
+  return await r.json().catch(()=>null);
+}
+async function roomInvite(k){
+  if(!syncOn() || !k.sid || !k.rk) return null;
+  const r = await fetch(syncBase() + '/k/' + k.sid + '/invite', {
+    method:'POST', headers:{'X-Room-Key': k.rk}
+  });
+  const j = await r.json().catch(()=>null);
+  return (j && j.ok) ? j.inv : null;
+}
+async function roomJoin(sid, inv){
+  if(!syncOn()) return null;
+  const r = await fetch(syncBase() + '/k/' + sid + '/join', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({inv: inv})
+  });
+  return await r.json().catch(()=>null);
+}
+/* פתיחת חדר לילד שעוד לא שותף. הכותב הראשון הוא הבעלים. */
+async function roomOpen(k){
+  if(k.sid && k.rk) return true;
+  k.sid = randId(SID_LEN);
+  k.rk  = randId(RK_LEN);
+  const j = await roomPut(k);
+  if(!j || !j.ok){ delete k.sid; delete k.rk; return false; }
+  save();
+  return true;
+}
+/* סנכרון חדר אחד: מושכים, ממזגים, מעלים בחזרה */
+async function roomSync(k){
+  const j = await roomGet(k.sid);
+  if(!j || !j.ok) return false;
+  if(j.kid && j.kid.id){
+    /* הזיווג הוא לפי החדר ולא לפי ה-id, כי שני מכשירים שהקימו
+       את אותו ילד בנפרד מחזיקים id-ים שונים. */
+    const merged = mergeKid(k, Object.assign({}, j.kid, {id: k.id}));
+    Object.keys(merged).forEach(f => { k[f] = merged[f]; });
+    k.sid = j.kid.sid || k.sid;   /* ה-sid קנוני ובא מהחדר */
+  }
+  /* מחיקה מסונכרנת רק מהבעלים; אצל חבר זה פשוט אומר שהילד הוסר */
+  if(j.del){ return 'deleted'; }
+  await roomPut(k);
+  return true;
+}
+async function roomsSync(quiet){
+  const ks = (DB.kids || []).filter(shared);
+  if(!ks.length) return 0;
+  let n = 0, gone = [];
+  for(const k of ks){
+    try{
+      const r = await roomSync(k);
+      if(r === 'deleted') gone.push(k.id);
+      else if(r) n++;
+    }catch(e){}
+  }
+  if(gone.length){
+    DB.kids = DB.kids.filter(k => gone.indexOf(k.id) < 0);
+    DB.del = DB.del || {};
+    gone.forEach(id => DB.del[id] = Date.now());
+  }
+  if(n || gone.length) save();
+  return n;
+}
+
+/* ---------------------------------------------------------------
+   14.7 שיתוף — הזרימה שההורה רואה
+   ---------------------------------------------------------------
+   כפתור ↗ במסך הילדים -> שער ההורים -> שתי אפשרויות:
+   לשתף מעקב על ילד, או לשתף את האפליקציה בלי נתונים.
+   בחירת ילדים -> "העבר" -> חלון השיתוף של המכשיר (ווטסאפ וכל
+   השאר). המקבל פותח את הקישור, מאשר, והילדים נכנסים **בנוסף**
+   לילדים שכבר יש לו.
+   --------------------------------------------------------------- */
+let SH_PICK = {};      /* id -> true, מה שסומן */
+
+function shareStart(){
+  askParent(() => {
+    $('#sh-note').innerHTML = syncOn()
+      ? 'השיתוף עובר דרך השרת שהגדרת בהגדרות. מי שיקבל צריך את אותה כתובת ואותו סוד.'
+      : '<b>הסנכרון עוד לא מוגדר.</b> בלי כתובת שרת אפשר לשתף רק את האפליקציה. הגדרות → סנכרון בענן.';
+    $('#sh-kids').disabled = !syncOn();
+    $('#sh-kids').style.opacity = syncOn() ? '' : '.5';
+    show('s-share');
+  });
+}
+/* אפליקציה בלבד — בלי נתונים, בלי ענן */
+async function shareApp(){
+  const txt = 'הצעד הבא — מה לעשות עם הילד היום, לפי הגיל שלו. שווה נסיון:';
+  await shareOut(txt, WEB_URL, 'הצעד הבא');
+}
+
+function renderSharePick(){
+  SH_PICK = {};
+  DB.kids.forEach(k => SH_PICK[k.id] = true);   /* ברירת מחדל: כולם */
+  const el = $('#shk-list');
+  el.innerHTML = DB.kids.map(k => '<button class="chk yes" data-p="' + k.id + '" style="align-items:center">' +
+      '<div class="bx">✓</div>' +
+      '<div style="width:44px;flex:none">' + avatarSVG(Object.assign({alt:k.name}, k.av)) + '</div>' +
+      '<div><b>' + esc(k.name) + '</b><div class="meta">' + esc(ageText(k)) +
+      (shared(k) ? ' · משותף כבר' : '') + '</div></div></button>').join('');
+  el.querySelectorAll('[data-p]').forEach(b => b.onclick = () => {
+    const id = b.dataset.p;
+    SH_PICK[id] = !SH_PICK[id];
+    b.classList.toggle('yes', !!SH_PICK[id]);
+    b.querySelector('.bx').textContent = SH_PICK[id] ? '✓' : '';
+    shareBtnText();
+  });
+  shareBtnText();
+  show('s-share-kids');
+}
+function sharePicked(){ return DB.kids.filter(k => SH_PICK[k.id]); }
+function shareBtnText(){
+  const n = sharePicked().length;
+  const b = $('#shk-go');
+  b.disabled = !n;
+  b.style.opacity = n ? '' : '.45';
+  b.textContent = !n ? 'העבר' : n === 1 ? ('העבר את ' + sharePicked()[0].name) : ('העבר ' + n + ' ילדים');
+}
+
+/* בונה את הקישור: לכל ילד חדר והזמנה חד-פעמית */
+async function shareGo(){
+  const ks = sharePicked();
+  if(!ks.length) return;
+  const b = $('#shk-go');
+  const was = b.textContent;
+  b.disabled = true; b.textContent = 'מכין…';
+  const parts = [], names = [], failed = [];
+  for(const k of ks){
+    try{
+      const opened = await roomOpen(k);
+      if(!opened){ failed.push(k.name); continue; }
+      const inv = await roomInvite(k);
+      if(!inv){ failed.push(k.name); continue; }
+      parts.push(k.sid + '.' + inv);
+      names.push(k.name);
+    }catch(e){ failed.push(k.name); }
+  }
+  b.disabled = false; b.textContent = was;
+  if(!parts.length){ toast('לא הצלחתי להכין את השיתוף. יש חיבור לרשת?'); return; }
+  if(failed.length) toast('לא הצלחתי להכין: ' + failed.join(', '));
+  save();
+  const link = WEB_URL + '#j=' + parts.join('~');
+  const who  = names.length === 1 ? names[0]
+             : names.slice(0,-1).join(', ') + ' ו' + names[names.length-1];
+  /* הקישור בשורה נפרדת ואחרון — קישור בתוך משפט עברי נחתך בווטסאפ */
+  const txt = 'היי, פתחתי לך מעקב על ' + who + ' באפליקציה "הצעד הבא". הקישור מוסיף ' +
+              (names.length === 1 ? 'אותו' : 'אותם') + ' אצלך:';
+  await shareOut(txt, link, 'הצעד הבא · ' + who);
+}
+
+/* חלון השיתוף של המכשיר. אם אין — העתקה, ואם גם זה לא, ווטסאפ. */
+async function shareOut(text, link, title){
+  const full = text + '\n' + link;
+  if(navigator.share){
+    try{ await navigator.share({title: title, text: text, url: link}); return; }
+    catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  try{
+    await navigator.clipboard.writeText(full);
+    toast('הקישור הועתק — אפשר להדביק בווטסאפ');
+  }catch(e){
+    window.open('https://wa.me/?text=' + encodeURIComponent(full), '_blank');
+  }
+}
+
+/* ---------------------------------------------------------------
+   14.8 קיבלתי שיתוף
+   ---------------------------------------------------------------
+   #j=<sid>.<inv>~<sid>.<inv>  — לכל ילד חדר והזמנה.
+   קודם מציגים מי נכנס ומה קורה למה שכבר יש, ורק אחרי אישור
+   מצטרפים. הצטרפות צורבת את ההזמנה, ולכן זה קורה פעם אחת.
+   --------------------------------------------------------------- */
+let INV_PEND = null;
+
+function parseInvite(s){
+  return String(s || '').split('~').map(p => {
+    const i = p.indexOf('.');
+    if(i < 1) return null;
+    return {sid: p.slice(0, i), inv: p.slice(i+1)};
+  }).filter(Boolean);
+}
+async function inviteShow(raw){
+  const items = parseInvite(raw);
+  if(!items.length) return false;
+  INV_PEND = items;
+  $('#inv-sub').textContent = 'בודק…';
+  $('#inv-list').innerHTML = '';
+  $('#inv-note').textContent = '';
+  show('s-invite');
+  /* קריאה בלבד — מראים את הילדים לפני שמצטרפים לשום דבר */
+  const have = {};
+  (DB.kids || []).forEach(k => { if(k.sid) have[k.sid] = k; });
+  let mine = 0;
+  for(const it of items){
+    let j = null;
+    try{ j = await roomGet(it.sid); }catch(e){}
+    it.kid = (j && j.ok) ? j.kid : null;
+    it.already = !!have[it.sid];
+    if(it.kid && it.already) mine++;
+  }
+  const live = items.filter(it => it.kid);
+  if(!live.length){
+    $('#inv-sub').textContent = 'הקישור לא תקף';
+    $('#inv-note').textContent = 'ייתכן שמישהו אחר כבר השתמש בו, או שהוא פג. אפשר לבקש קישור חדש.';
+    $('#inv-go').style.display = 'none';
+    $('#inv-no').textContent = 'המשך לאפליקציה';
+    return true;
+  }
+  const already = live.filter(function(x){ return x.already; }).length;
+  $('#inv-sub').textContent =
+    already === live.length ? (live.length === 1 ? 'הילד הזה כבר אצלך' : 'הילדים האלה כבר אצלך')
+    : live.length === 1 ? 'ילד אחד מחכה להוספה'
+    : live.length + ' ילדים מחכים להוספה';
+  $('#inv-list').innerHTML = live.map(it => '<div class="chk" style="align-items:center">' +
+      '<div style="width:44px;flex:none">' + avatarSVG(Object.assign({alt:it.kid.name}, it.kid.av || {})) + '</div>' +
+      '<div><b>' + esc(it.kid.name || 'ילד') + '</b><div class="meta">' +
+      esc(it.kid.dob ? ageText(it.kid) : '') + (it.already ? ' · כבר אצלך, יתעדכן' : '') +
+      '</div></div></div>').join('');
+  const add = live.length - mine;
+  $('#inv-note').innerHTML =
+    (DB.kids || []).length
+      ? '<b>הילדים שלך נשארים.</b> ' + (add ? 'אלה מתווספים אליהם.' : 'אין כאן ילד חדש — רק עדכון.')
+      : 'אחרי ההוספה אפשר להוסיף גם ילד משלך.';
+  $('#inv-go').style.display = '';
+  $('#inv-go').textContent = !add ? 'בדיקת עדכונים' : add > 1 ? ('הוספת ' + add + ' ילדים') : 'הוספה';
+  $('#inv-no').textContent = 'לא עכשיו';
+  return true;
+}
+async function inviteAccept(){
+  if(!INV_PEND) return;
+  const b = $('#inv-go');
+  b.disabled = true; b.textContent = 'מצטרף…';
+  let added = 0, updated = 0, failed = 0;
+  for(const it of INV_PEND){
+    if(!it.kid) continue;
+    const have = (DB.kids || []).filter(function(k){ return k.sid === it.sid && k.rk; })[0];
+    /* ילד שכבר הצטרף — ההזמנה שלו נצרבה מזמן ואין בה צורך.
+       פתיחה חוזרת של אותו קישור היא בקשת עדכון, לא הצטרפות. */
+    if(have){
+      try{ await roomSync(have); updated++; }catch(e){ failed++; }
+      continue;
+    }
+    let j = null;
+    try{ j = await roomJoin(it.sid, it.inv); }catch(e){}
+    if(!j || !j.ok || !j.key){ failed++; continue; }
+    const kid = j.kid || it.kid;
+    const exist = (DB.kids || []).filter(k => k.sid === it.sid)[0];
+    if(exist){
+      const m = mergeKid(exist, Object.assign({}, kid, {id: exist.id}));
+      Object.keys(m).forEach(f => { exist[f] = m[f]; });
+      exist.rk = j.key;
+      updated++;
+    }else{
+      const k = Object.assign({}, kid);
+      k.id  = 'k' + Date.now() + '-' + randId(4);   /* id מקומי — ה-sid הוא הזהות */
+      k.sid = it.sid;
+      k.rk  = j.key;
+      k.logs = k.logs || []; k.seeds = k.seeds || {}; k.lvl = k.lvl || {};
+      k.mt = k.mt || Date.now();
+      if(DB.del) delete DB.del[k.id];
+      DB.kids.push(k);
+      added++;
+    }
+  }
+  save();
+  INV_PEND = null;
+  try{ history.replaceState(null, '', location.pathname + location.search + (UID ? '#u=' + UID : '')); }catch(e){}
+  b.disabled = false;
+  renderShelf(); renderRoot();
+  show('s-kids');
+  toast(added ? ('נוספו ' + added + ' ילדים') : updated ? 'עודכן' : 'לא הצלחתי להצטרף');
+  if(failed) setTimeout(function(){ toast('קישור אחד לא היה תקף'); }, 2200);
+  a2hsShow();
+}
+function inviteSkip(){
+  INV_PEND = null;
+  try{ history.replaceState(null, '', location.pathname + location.search + (UID ? '#u=' + UID : '')); }catch(e){}
+  renderShelf(); show(DB.kids.length ? 's-kids' : 's-welcome');
+}
+/* ---------------------------------------------------------------
+   14.6 שמירת קובץ
    ---------------------------------------------------------------
    קישור <a download> פשוט אינו עובד כשהדף רץ בתוך צופה Artifact —
    שם שמירה עוברת דרך יכולת downloads שהצופה מאשר. תומכים בשתי הדרכים.
@@ -3823,6 +4206,14 @@ async function exportFile(){
    15. מסך 8 — הגדרות
    --------------------------------------------------------------- */
 $('#b-settings').onclick  = () => { ST_BACK = 's-kids';  renderSettings(); show('s-settings'); };
+$('#b-share').onclick     = shareStart;
+$('#sh-back').onclick     = () => show('s-kids');
+$('#sh-kids').onclick     = renderSharePick;
+$('#sh-app').onclick      = shareApp;
+$('#shk-back').onclick    = () => show('s-share');
+$('#shk-go').onclick      = shareGo;
+$('#inv-go').onclick      = inviteAccept;
+$('#inv-no').onclick      = inviteSkip;
 $('#b-settings2').onclick = () => { ST_BACK = 's-child'; renderSettings(); show('s-settings'); };
 function renderSettings(){
   let html = `<div class="lbl">הילדים</div>`;
@@ -4494,11 +4885,14 @@ async function importTransfer(raw){
   if(problem) return err(problem);
 }
 
-function boot(uid, isNew){
+/* quiet=true — טוענים את הפרופיל בלי לצייר מסך, כי מסך ההזמנה
+   הוא זה שאמור להופיע. */
+function boot(uid, isNew, quiet){
   DB = load(uid);
   if(!DB) DB = emptyDB();
   UID = uid;
   save();
+  if(quiet){ setHash(uid); return; }
   renderShelf(); renderRoot();
   show(DB.kids.length ? 's-root' : 's-new');
   if(!DB.kids.length) startWizard();
@@ -4535,6 +4929,21 @@ async function consumeTransfer(p){
 (async function start(){
   const p = hashParams();
   if(p.d){ let bad; try{ bad = await consumeTransfer(p); }catch(e){ bad = 1; } if(!bad) return; }
+
+  /* קישור שיתוף. הפרופיל נטען קודם — הילדים שנכנסים מתווספים
+     למה שכבר יש, ולא מחליפים אותו. */
+  if(p.j){
+    let uid = cleanCode(p.u);
+    if(uid.length !== 6){ try{ uid = cleanCode(localStorage.getItem(LASTKEY)); }catch(e){} }
+    if(uid.length === 6 && profileExists(uid)) boot(uid, false, true);
+    else {
+      let c; do{ c = newCode(); } while(profileExists(c));
+      UID = c; DB = {v:1, kids:[]}; save(); setHash(c);
+    }
+    let shown = false;
+    try{ shown = await inviteShow(p.j); }catch(e){}
+    if(shown) return;
+  }
 
   let uid = cleanCode(p.u);
   if(uid.length === 6){ boot(uid, !profileExists(uid)); return; }   /* קוד מהכתובת — קיים או חדש */

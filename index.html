@@ -4164,6 +4164,49 @@ function inviteSkip(){
   try{ history.replaceState(null, '', location.pathname + location.search + (UID ? '#u=' + UID : '')); }catch(e){}
   renderShelf(); show(DB.kids.length ? 's-kids' : 's-welcome');
 }
+
+/* ---------------------------------------------------------------
+   14.9 פינג שימוש — כמה פעמים האפליקציה נפתחת, בלי לזהות אף אחד
+   ---------------------------------------------------------------
+   נשלח פעם אחת לכל חלון של חצי שעה, לשרת הסנכרון, בלי סוד — כי
+   הכתובת מגיעה עם כל עותק של הקוד, ואין שום דבר בגוף הבקשה
+   ששווה להגן עליו. אין שם ילד, אין log, אין UA ואין IP בגוף —
+   רק מזהה אקראי שנוצר פעם אחת במכשיר, התאריך המקומי (לא של
+   השרת — כדי שלילה בישראל לא ייפול על "אתמול" ב-UTC), והקוד
+   אם כבר יש כזה. משמש רק את מסך הניהול הפנימי, לא את האפליקציה.
+   PING_URL ריק = אין פינג בכלל; מאפשר build מקומי בלי דיווח. */
+const PING_URL = 'https://next-step-sync.skuznitsky.workers.dev';
+const DEV_KEY  = 'nextstep.dev';
+const PING_KEY = 'nextstep.ping.last';
+function devId(){
+  try{
+    let d = localStorage.getItem(DEV_KEY);
+    if(d) return d;
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    const r = new Uint8Array(16);
+    if((window.crypto || {}).getRandomValues) crypto.getRandomValues(r);
+    else for(let i=0;i<16;i++) r[i] = Math.floor(Math.random()*256);
+    d = ''; for(let i=0;i<16;i++) d += A[r[i] % A.length];
+    localStorage.setItem(DEV_KEY, d);
+    return d;
+  }catch(e){ return null; }
+}
+function localDay(){
+  const n = new Date();
+  return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
+}
+function pingMaybe(){
+  if(!PING_URL) return;
+  const dev = devId(); if(!dev) return;
+  let last = 0;
+  try{ last = +localStorage.getItem(PING_KEY) || 0; }catch(e){}
+  if(Date.now() - last < 30*60*1000) return;   /* חצי שעה מהפינג האחרון — לא נספר שוב */
+  try{ localStorage.setItem(PING_KEY, String(Date.now())); }catch(e){}
+  fetch(PING_URL + '/ping', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({dev, code: UID || null, day: localDay()})
+  }).catch(()=>{});
+}
 /* ---------------------------------------------------------------
    14.6 שמירת קובץ
    ---------------------------------------------------------------
@@ -4927,6 +4970,7 @@ async function consumeTransfer(p){
 }
 
 (async function start(){
+  try{ pingMaybe(); }catch(e){}   /* לפני הכול, ולא חוסם שום דבר */
   const p = hashParams();
   if(p.d){ let bad; try{ bad = await consumeTransfer(p); }catch(e){ bad = 1; } if(!bad) return; }
 

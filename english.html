@@ -62,6 +62,10 @@ h1{font-size:27px;text-align:center;margin:6px 0 4px}
 .opt:active{transform:translateY(3px)}
 .opt.good{border-color:var(--green);background:#F2F8EA}
 .opt.bad{border-color:var(--pink);opacity:.5}
+/* אות גדולה כאפשרות בחירה — אותו כרטיס, רק ציור אות במקום תמונה */
+.opt.ltr{color:var(--brown);display:flex;align-items:center;justify-content:center;padding:9px}
+.opt.ltr svg{width:auto;height:100%;max-width:100%}
+.opt.ltr.good{color:var(--green-d)}
 .coach{display:flex;align-items:flex-end;gap:8px;flex:none;padding:4px 0 2px}
 .coach .face{font-size:36px;line-height:1}
 .bubble{background:#fff;border-radius:20px;padding:9px 15px;box-shadow:var(--shadow);font-size:15.5px;
@@ -367,7 +371,7 @@ function mrec(id){
 }
 function mlv(id){ return mrec(id).lv; }
 
-const BASE = {pick:[6,7,8,9], say:[7,8,9,10], write:[26,28,30,32]};
+const BASE = {pick:[6,7,8,9], say:[7,8,9,10], lpick:[5,6,7,8], write:[26,28,30,32]};
 /* בכתיבת אות אין תשובה שגויה — הדיוק תמיד 1, ולכן רק הזמן מעיד */
 const TIME_ONLY = {write:1};
 const ROCKET = {};
@@ -616,6 +620,7 @@ function renderHello(){
 const GAMES = [
   {id:'pick', e:'🖼️', t:'איפה זה?',   d:'שומעים מילה, בוחרים תמונה'},
   {id:'say',  e:'💬', t:'איזו מילה?', d:'רואים תמונה, בוחרים מילה'},
+  {id:'lpick',e:'🔤', t:'איפה האות?', d:'שומעים אות, בוחרים את הנכונה'},
   {id:'write',e:'✏️', t:'לכתוב אותיות', d:'בוחרים אות, כותבים גדולה וקטנה'}
 ];
 function renderMenu(){
@@ -637,7 +642,7 @@ function startGame(id){
   S.game = id; S.q = 0; S.correct = 0; S.tries = 0; S.answered = false;
   LV = mlv(id);
   S.times = []; S.total = QPER; S.roundStart = performance.now(); S.qStart = performance.now();
-  S.set = buildSet(); S.last = null;
+  S.set = (id === 'lpick') ? buildLtrSet() : buildSet(); S.last = null;
   S.snap = {game:id, rec:JSON.parse(JSON.stringify(mrec(id))), stats:JSON.parse(JSON.stringify(P.stats||{}))};
   const gm = GAMES.find(x=>x.id===id) || {e:'', t:''};
   $('#playTitle').textContent = gm.e + ' ' + gm.t;
@@ -731,6 +736,7 @@ function nextQ(){
   S.tries = 0; S.answered = false; S.qStart = performance.now();
   if(S.game === 'write'){ return; }   /* המשחקון הזה מנהל את הסבב בעצמו */
   if(S.game === 'say'){ buildSay(); return; }
+  if(S.game === 'lpick'){ nextLtrQ(); return; }
   const t = nextWord();
   S.last = t; S.cur = t;
   const opts = shuffle([t].concat(distractors(t, OPTS_N() - 1)));
@@ -753,6 +759,121 @@ function nextQ(){
   coach(gt('מה שמעת? 🤔','מה שמעת? 🤔'));
   renderTrail();
   ask(['en_' + t.id]);
+}
+
+/* =========================================================
+   איפה האות?
+   =========================================================
+   אותה מכניקה של "איפה זה?", רק שהאפשרויות הן אותיות גדולות
+   מצוירות ולא תמונות. הילד שומע "איפה A" ובוחר.
+
+   האות הכתובה לא מופיעה בשאלה, מאותה סיבה שהמילה לא מופיעה
+   שם: אחרת זו התאמת צורות ולא זיהוי לפי צליל. היא נחשפת רק
+   אחרי תשובה נכונה, יחד עם הצורה הקטנה.
+
+   על הצליל: כרגע מושמע שם האות בלבד, כי אין הקלטות של הצלילים
+   עצמם. כשיהיו — מוסיפים מפתחות ph_A עד ph_Z ל-CLIPS ומשרשרים
+   אותם ב-say שאחרי תשובה נכונה.
+   ========================================================= */
+
+/* אותיות שנראות דומה ולכן מבלבלות. ברמות הנמוכות הן נפסלות
+   כמסיחים, ומרמה 3 דווקא הן שנבחרות. */
+const LTR_NEAR = {
+  A:'HVR', B:'DPRE', C:'GOQU', D:'BOPQ', E:'FBL', F:'EPT', G:'CQOS',
+  H:'AMNK', I:'JLTF', J:'ILUT', K:'XRHY', L:'ITJE', M:'WNHV',
+  N:'MWHZ', O:'QCGD', P:'BRFD', Q:'OGCD', R:'PBKA', S:'GZC',
+  T:'ILFJ', U:'VJOY', V:'UWYA', W:'MVNU', X:'KYZV', Y:'VXTK', Z:'SNX'
+};
+const ltrItem  = ch => 'ltr ' + ch;
+const ltrSeen  = ch => ((P.stats && P.stats.items) || {})[ltrItem(ch)];
+const ltrGot   = ch => collected(ltrItem(ch));
+
+/* סט עבודה קטן לפי סדר האלפבית, בדיוק כמו במילים: עובדים על
+   ארבע עד שש אותיות עד שהן נרכשות, ורק אז נפתחות הבאות. */
+function buildLtrSet(){
+  const size = LV <= 1 ? 4 : 6;
+  const set = ABC.filter(ch => !ltrGot(ch)).slice(0, size);
+  if(set.length < size){
+    const got = shuffle(ABC.filter(ch => ltrGot(ch) && set.indexOf(ch) < 0));
+    set.push.apply(set, got.slice(0, size - set.length));
+  }
+  return set.length ? set : shuffle(ABC.slice()).slice(0, size);
+}
+function nextLtr(){
+  const set = S.set;
+  const fresh = set.filter(ch => !ltrSeen(ch));
+  if(fresh.length) return pick(fresh);
+  let best = null, bestN = 1e9;
+  shuffle(set).forEach(ch => {
+    const s = ltrSeen(ch), n = (s.ok || 0) + (s.miss || 0) * 0.5;
+    if(ch !== S.last && n < bestN){ bestN = n; best = ch; }
+  });
+  return best || pick(set);
+}
+function ltrDistractors(ch, n){
+  const rest = ABC.filter(c => c !== ch);
+  const near = (LTR_NEAR[ch] || '').split('');
+  let from;
+  if(LV <= 1)      from = rest.filter(c => near.indexOf(c) < 0);
+  else if(LV === 2) from = rest;
+  else              from = near.length >= n ? near : rest;
+  if(from.length < n) from = rest;
+  return shuffle(from).slice(0, n);
+}
+
+function nextLtrQ(){
+  const ch = nextLtr();
+  S.last = ch;
+  /* אותו מבנה כמו מילה, כדי ש-rec ו-bumpStreak יעבדו בלי שינוי */
+  S.cur = {id:'ltr_' + ch, ch:ch, en:ltrItem(ch), he:ch, g:'אותיות'};
+  const opts = shuffle([ch].concat(ltrDistractors(ch, OPTS_N() - 1)));
+
+  $('#stage').innerHTML =
+    '<div class="prompt tap" id="q"><span class="spk">🔊</span><span>איפה האות?</span></div>';
+  const box = $('#opts'); box.innerHTML = '';
+  box.className = 'opts' + (opts.length > 3 ? ' four' : '');
+  opts.forEach(c=>{
+    const b = document.createElement('button');
+    b.className = 'opt ltr';
+    b.dataset.ch = c;
+    b.innerHTML = letterSvg(CAPS[c]);
+    b.onclick = ()=> judgeLtr(c === ch, b, c);
+    box.appendChild(b);
+  });
+  $('#q').onclick = ()=>{ ac(); say(['ui_find', 'ln_' + ch]); };
+  coach('איפה האות? 🤔');
+  renderTrail();
+  ask(['ui_find', 'ln_' + ch]);
+}
+
+function judgeLtr(ok, el, c){
+  if(S.answered) return;
+  ac();
+  const t = S.cur;
+  if(ok){
+    S.answered = true;
+    el.classList.add('good');
+    sfxGood(); confetti(18);
+    if(S.tries === 0){ S.correct++; rec(true); bumpStreak(t.en, true); if(S.qStart) S.times.push((performance.now()-S.qStart)/1000); }
+    $$('#opts .opt').forEach(b => b.style.pointerEvents = 'none');
+    /* עכשיו נחשפת האות הכתובה, גדולה וקטנה */
+    const low = t.ch.toLowerCase();
+    const q = $('#q');
+    if(q) q.innerHTML = '<span class="spk">🔊</span><span><bdi dir="ltr" class="word">' + t.ch + ' ' + low + '</bdi></span>';
+    coach(t.ch + ' ' + low, 'ok');
+    say(['ln_' + t.ch, 'ln_' + t.ch, pick(['ok_1','ok_2','ok_3','ok_4'])]);
+    S.q++; renderTrail();
+    afterSpeech(nextQ, 1200);
+  }else{
+    S.tries++;
+    if(S.tries === 1){ rec(false); bumpStreak(t.en, false); }
+    el.classList.add('bad'); el.style.pointerEvents = 'none';
+    sfxBad();
+    /* הילד חייב לשמוע שוב בדיוק את מה שהוא מחפש */
+    const k = 'enc_' + G() + '_' + ri(1,2);
+    coach(L(k), 'oops');
+    say([k, 'ui_find', 'ln_' + t.ch]);
+  }
 }
 
 /* =========================================================

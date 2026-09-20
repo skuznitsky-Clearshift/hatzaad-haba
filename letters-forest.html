@@ -1001,7 +1001,9 @@ const SWORDS = /*__SWORDS__*/{
 /* =========================================================
    נתונים
    ========================================================= */
-const KIDS = { f:{name:'ליאן'}, m:{name:'ינאי'} };
+/* שמות ברירת מחדל בלבד. בתוך האפליקציה השם האמיתי מגיע ב-ns-init,
+   ובהפעלה עצמאית לא מציגים שם של אף ילד מסוים. */
+const KIDS = { f:{name:'ילדה'}, m:{name:'ילד'} };
 
 /* אותיות לפי רמה — סדר אלף־בית; אפשר להחליף לסדר של המורה כאן */
 const LVL_LETTERS = [
@@ -1218,7 +1220,7 @@ function confetti(n){
    ========================================================= */
 let uidN=0;
 function avatarGirl(){
-  return `<svg viewBox="0 0 120 148" role="img" aria-label="ליאן">
+  return `<svg viewBox="0 0 120 148" role="img" aria-label="ילדה">
     <path d="M20 62 Q18 112 27 138 L46 138 Q35 106 35 68 Z" fill="#E0AE38"/>
     <path d="M100 62 Q102 112 93 138 L74 138 Q85 106 85 68 Z" fill="#E0AE38"/>
     <ellipse cx="60" cy="56" rx="42" ry="45" fill="#F2C74F"/>
@@ -1248,7 +1250,7 @@ function avatarGirl(){
 }
 function avatarBoy(){
   const c='shirt'+(++uidN);
-  return `<svg viewBox="0 0 120 148" role="img" aria-label="ינאי">
+  return `<svg viewBox="0 0 120 148" role="img" aria-label="ילד">
     <defs><clipPath id="${c}"><path d="M60 82 L86 94 Q99 101 102 140 L18 140 Q21 101 34 94 Z"/></clipPath></defs>
     <g clip-path="url(#${c})">
       <rect x="14" y="78" width="92" height="66" fill="#004D98"/>

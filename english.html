@@ -594,6 +594,9 @@ $$('[data-back]').forEach(b => b.onclick = ()=>{
   /* יציאה באמצע סבב נמדדת — ראו abandonRound */
   if($('#play').classList.contains('on')) abandonRound();
   const t = b.dataset.back;
+  /* בתוך האפליקציה הילד כבר נבחר שם, ואין למשחק בורר משלו —
+     החץ שמוביל ל"מי משחק?" יוצא מהמשחק במקום להציג מסך זר. */
+  if(HOSTED && t === 'who'){ try{ window.parent.postMessage({type:'ns-exit'}, '*'); }catch(e){} return; }
   if(t === 'menu'){ toMenu(); } else { show(t); }
 });
 function toMenu(){ renderHello(); renderMenu(); show('menu'); say('ui_which'); }

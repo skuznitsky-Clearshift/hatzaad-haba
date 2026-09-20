@@ -669,7 +669,9 @@ const LEVELS_DEF = [
 
 const L = k => (LINE[k] || '');
 
-const KIDS = { f:{name:'ליאן'}, m:{name:'ינאי'} };
+/* שמות ברירת מחדל בלבד. בתוך האפליקציה השם האמיתי מגיע ב-ns-init,
+   ובהפעלה עצמאית לא מציגים שם של אף ילד מסוים. */
+const KIDS = { f:{name:'ילדה'}, m:{name:'ילד'} };
 const DEF = {player:null, level:1, unlocked:1, stars:0,
              stats:{items:{},skills:{},levels:{}}, voice:true, sound:true, allLevels:false};
 
@@ -806,7 +808,11 @@ function rec(ok, item, skill){
 /* ---------- ניווט ---------- */
 function toMenu(){ renderHome(); renderMenu(); show('menu'); say('ui_which'); }
 function show(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); }
-$$('[data-back]').forEach(b=> b.onclick = ()=>{ sfxTap(); speakStop(); if(b.dataset.back==='menu'){ toMenu(); } else { show(b.dataset.back); } });
+$$('[data-back]').forEach(b=> b.onclick = ()=>{ sfxTap(); speakStop();
+  /* בתוך האפליקציה הילד כבר נבחר שם, ואין למשחק בורר משלו —
+     החץ שמוביל ל"מי משחק?" יוצא מהמשחק במקום להציג מסך זר. */
+  if(HOSTED && b.dataset.back === 'who'){ try{ window.parent.postMessage({type:'ns-exit'}, '*'); }catch(e){} return; }
+  if(b.dataset.back==='menu'){ toMenu(); } else { show(b.dataset.back); } });
 
 /* ---------- מסכים ---------- */
 function renderWho(){

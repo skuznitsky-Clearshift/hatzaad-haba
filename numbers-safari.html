@@ -411,9 +411,11 @@ const CLIPS = {"an_0":"//OExAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 /* =========================================================
    נתונים
    ========================================================= */
+/* שמות ברירת מחדל בלבד. בתוך האפליקציה השם האמיתי מגיע ב-ns-init,
+   ובהפעלה עצמאית לא מציגים שם של אף ילד מסוים. */
 const KIDS = {
-  f: {name:'ליאן', g:'f'},
-  m: {name:'ינאי', g:'m'}
+  f: {name:'ילדה', g:'f'},
+  m: {name:'ילד',  g:'m'}
 };
 
 /* [אמוג'י, שם, מין] — המין נחוץ כדי שהתואר בסדרות הצבע יוטה נכון */
@@ -522,7 +524,7 @@ const gt = (m,f) => (G()==='f' ? f : m);
    דמויות (SVG)
    ========================================================= */
 function avatarGirl(uid){
-  return `<svg viewBox="0 0 120 148" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ליאן">
+  return `<svg viewBox="0 0 120 148" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ילדה">
     <path d="M20 62 Q18 112 27 138 L46 138 Q35 106 35 68 Z" fill="#E0AE38"/>
     <path d="M100 62 Q102 112 93 138 L74 138 Q85 106 85 68 Z" fill="#E0AE38"/>
     <ellipse cx="60" cy="56" rx="42" ry="45" fill="#F2C74F"/>
@@ -553,7 +555,7 @@ function avatarGirl(uid){
 }
 function avatarBoy(uid){
   const c = 'shirt' + uid;
-  return `<svg viewBox="0 0 120 148" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ינאי">
+  return `<svg viewBox="0 0 120 148" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ילד">
     <defs><clipPath id="${c}"><path d="M60 82 L86 94 Q99 101 102 140 L18 140 Q21 101 34 94 Z"/></clipPath></defs>
     <g clip-path="url(#${c})">
       <rect x="14" y="78" width="92" height="66" fill="#004D98"/>
@@ -692,6 +694,9 @@ $$('[data-back]').forEach(b=>b.addEventListener('click', ()=>{
   sfxTap(); clearSeq();
   /* יציאה באמצע סבב נמדדת — ראו abandonRound */
   if($('#play').classList.contains('on')) abandonRound();
+  /* בתוך האפליקציה הילד כבר נבחר שם, ואין למשחק בורר משלו —
+     החץ שמוביל ל"מי משחק?" יוצא מהמשחק במקום להציג מסך זר. */
+  if(HOSTED && b.dataset.back === 'who'){ try{ window.parent.postMessage({type:'ns-exit'}, '*'); }catch(e){} return; }
   show(b.dataset.back);
 }));
 

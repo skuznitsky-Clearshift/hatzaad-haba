@@ -1,0 +1,15 @@
+/* הגדרות הפריסה של שרת הסנכרון.
+   Cloudflare מושך את התיקייה הזאת מ-GitHub ופורס אותה לבד.
+   הסודות (SECRET, ADMIN_SECRET) לא כתובים כאן — הם יושבים
+   ב-Cloudflare, ופריסה לא נוגעת בהם. */
+{
+  "name": "next-step-sync",
+  "main": "sync-worker.js",
+  "compatibility_date": "2026-08-27",
+  "workers_dev": true,
+  "preview_urls": false,
+  "keep_vars": true,
+  "kv_namespaces": [
+    { "binding": "NS", "id": "9459e1cbc0a3427680807df84e1ada4d" }
+  ]
+}

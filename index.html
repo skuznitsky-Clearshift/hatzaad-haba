@@ -273,6 +273,14 @@ p{margin:0}
 .tgl.on{background:var(--green)}
 .tgl.on i{transform:translateX(-22px)}
 .ins{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.verdict{margin-top:12px;background:var(--paper2);border-radius:14px;padding:13px 15px;line-height:1.55}
+.verdict b{font-size:17px;display:block;margin-bottom:2px}
+.verdict p{margin:7px 0 0;font-size:15px;color:var(--soft)}
+.verdict p.up{color:#2E7D52;font-weight:600}
+.verdict p.calm{font-size:14px;opacity:.82}
+.todo{margin-top:11px;background:#fff;border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.5;
+  box-shadow:0 1px 0 rgba(0,0,0,.05)}
+.todo span{display:block;font-weight:700;font-size:12.5px;letter-spacing:.03em;margin-bottom:3px;color:#8A7A5E}
 .advice{margin-top:12px;font-size:16px;line-height:1.6;background:var(--paper2);
   border-radius:14px;padding:12px 14px}
 .datalink{margin-top:10px;font-size:14.5px;font-weight:700;color:var(--blue);
@@ -342,7 +350,7 @@ select.input{width:100%;padding:12px;border-radius:14px;border:1.5px solid var(-
 .hcx{font-size:8px;fill:var(--muted);text-anchor:middle;font-family:inherit}
 .hleg{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:11px}
 .hd{width:9px;height:9px;border-radius:3px;display:inline-block;margin-left:4px}
-.hd.hg{background:#5FA98A}.hd.hm{background:#D8A657}.hd.hb{background:#D97A6C}.hd.hn{background:#E9A0A0}
+.hd.hg{background:#5FA98A}.hd.hm{background:#D8A657}.hd.hb{background:#D97A6C}.hd.hn{background:#D8D2C4}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -3159,6 +3167,22 @@ function renderTabGames(){
     const auto = ageMonths(k.dob) >= g.from;
     const st   = gameState(k, g.id);
     const has  = !!(st && st.stats);
+    const o    = readOut(g, st, k);
+
+    let body;
+    if(o.empty){
+      body = `<div class="advice">${esc(o.empty)}</div>`;
+    }else{
+      body = `<div class="verdict">
+        ${o.head ? `<b>${esc(o.head)}</b>` : ''}
+        ${o.sub  ? `<p>${esc(o.sub)}</p>` : ''}
+        ${o.trend ? `<p class="up">${esc(o.trend)}</p>` : ''}
+        ${o.skill ? `<p>${esc(o.skill)}</p>` : ''}
+        ${o.age  ? `<p class="calm">${esc(o.age)}</p>` : ''}
+        ${o.act  ? `<div class="todo"><span>${esc(o.act.t)}</span>${esc(o.act.d)}</div>` : ''}
+      </div>`;
+    }
+
     html += `<div class="card" style="margin-top:12px">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:52px;flex:none">${GMARK[g.id]||''}</div>
@@ -3167,13 +3191,13 @@ function renderTabGames(){
             (k.gamesOn||{})[g.id] !== undefined ? ' · נקבע ידנית' : ''}</div></div>
         <button class="tgl ${on?'on':''}" data-gt="${g.id}" role="switch" aria-checked="${on}"><i></i></button>
       </div>
-      <div class="advice">${esc(gameAdvice(g, st))}</div>
-      ${has ? `<button class="datalink" data-open="${g.id}">לחץ לצפייה בנתונים מהמשחק</button>
+      ${body}
+      ${has ? `<button class="datalink" data-open="${g.id}">כל המספרים והאותיות, אחד אחד</button>
                <div class="databox" id="dbx-${g.id}" hidden>${gameInsight(g, st)}</div>` : ''}
     </div>`;
   });
   $('#ch-body').innerHTML = html +
-    `<div class="note">ההמלצה נבנית ממה שהילד באמת עשה במשחק — רק פריטים שנפגשו לפחות ${MIN_SEEN} פעמים נספרים.</div>`;
+    `<div class="note">מה שכתוב כאן נבנה ממה שהילד באמת עשה במשחק. פריט שנבדק פחות מ-${SURE} פעמים לא נכנס למסקנה.</div>`;
 
   $('#ch-body').querySelectorAll('[data-gt]').forEach(b => b.onclick = () => {
     const g = GAMES.find(x => x.id === b.dataset.gt);
@@ -3183,7 +3207,7 @@ function renderTabGames(){
   $('#ch-body').querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
     const box = $('#dbx-' + b.dataset.open);
     box.hidden = !box.hidden;
-    b.textContent = box.hidden ? 'לחץ לצפייה בנתונים מהמשחק' : 'הסתרת הנתונים';
+    b.textContent = box.hidden ? 'כל המספרים והאותיות, אחד אחד' : 'לסגור את הפירוט';
   });
 }
 
@@ -3643,12 +3667,88 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferr
 window.addEventListener('appinstalled', () => { a2hsDone(); a2hsHide(); });
 
 const SYNCKEY = 'nextstep.sync';
+/* אותו Worker של הפינג. מוגדר כאן בנפרד ולא דרך PING_URL כדי
+   שלא תהיה תלות בסדר ההצהרות בקובץ. */
+const SYNC_URL = 'https://next-step-sync.skuznitsky.workers.dev';
+
+/* ---------------------------------------------------------------
+   מפתח הפרופיל
+   ---------------------------------------------------------------
+   עד כה כל המכשירים חלקו סוד אחד, ולכן מי שידע קוד של משפחה אחרת
+   יכול היה לדרוס לה את הפרופיל. עכשיו לכל פרופיל מפתח אקראי משלו
+   שנוצר במכשיר ולא עוזב אותו: הוא נשלח לשרת רק כדי להוכיח בעלות,
+   והשרת שומר ממנו גיבוב בלבד. מכשיר שני מצטרף בהזמנה חד-פעמית
+   ומקבל מפתח משלו, במקום שנעביר את הסוד עצמו בוואטסאפ.
+   --------------------------------------------------------------- */
+const PKEYPFX = 'nextstep.pkey.';
+function profKey(uid){
+  const id = cleanCode(uid || UID);
+  if(!id) return '';
+  try{
+    let k = localStorage.getItem(PKEYPFX + id);
+    if(k) return k;
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    const r = new Uint8Array(22);
+    if((window.crypto || {}).getRandomValues) crypto.getRandomValues(r);
+    else for(let i=0;i<22;i++) r[i] = Math.floor(Math.random()*256);
+    k = ''; for(let i=0;i<22;i++) k += A[r[i] % A.length];
+    localStorage.setItem(PKEYPFX + id, k);
+    return k;
+  }catch(e){ return ''; }
+}
+function setProfKey(uid, key){
+  const id = cleanCode(uid || UID);
+  try{ if(id && key) localStorage.setItem(PKEYPFX + id, key); }catch(e){}
+}
+function syncHeaders(uid){
+  const c = syncCfg();
+  const h = {'Content-Type':'application/json'};
+  const k = profKey(uid);
+  if(k) h['X-Profile-Key'] = k;
+  if(c.secret) h['X-Secret'] = c.secret;   /* נשאר לתאימות עם שרת ישן */
+  return h;
+}
+
 function syncCfg(){
-  try{ return JSON.parse(localStorage.getItem(SYNCKEY) || 'null') || {url:'', secret:''}; }
-  catch(e){ return {url:'', secret:''}; }
+  let c = null;
+  try{ c = JSON.parse(localStorage.getItem(SYNCKEY) || 'null'); }catch(e){}
+  if(!c || typeof c !== 'object') c = {url:'', secret:''};
+  /* ברירת המחדל היא השרת של האפליקציה, כך שסנכרון עובד בלי
+     שההורה יגדיר דבר. מי שהזין כתובת אחרת — שלו גובר. */
+  if(!c.url) c.url = SYNC_URL;
+  return c;
 }
 function syncSave(c){ try{ localStorage.setItem(SYNCKEY, JSON.stringify(c)); }catch(e){} }
 function syncOn(){ const c = syncCfg(); return !!(c.url && /^https:\/\//.test(c.url)); }
+
+/* ---------------------------------------------------------------
+   הודעה חד-פעמית על הסנכרון
+   ---------------------------------------------------------------
+   הסנכרון נדלק לבד, וזה אומר ששמות הילדים והיומן עולים לענן.
+   הורה שלא ידע על כך ויגלה בדיעבד — זו בדיוק הדרך לאבד אמון,
+   ולכן זה נאמר פעם אחת, בלי לחסום כלום, עם הפניה לאן לכבות.
+   --------------------------------------------------------------- */
+const SYNCNOTE = 'nextstep.syncnote';
+function syncNotice(){
+  if(!syncOn()) return;
+  try{ if(localStorage.getItem(SYNCNOTE) === '1') return; }catch(e){ return; }
+  const box = document.createElement('div');
+  box.setAttribute('role', 'status');
+  box.style.cssText = 'position:fixed;inset-inline:12px;bottom:12px;z-index:60;background:#FFFDF6;' +
+    'border:1px solid var(--line,#E8DCC0);border-radius:18px;padding:14px 16px;max-width:460px;' +
+    'margin-inline:auto;box-shadow:0 10px 30px rgba(74,55,40,.22);font-size:14.5px;line-height:1.5';
+  box.innerHTML =
+    '<b>הנתונים שלכם מגובים בענן</b><br>' +
+    'כך ההתקדמות עוברת בין הטלפון למחשב, אפשר לשחזר אם המכשיר אובד, ואפשר לשתף ילד עם הגננת. ' +
+    'מה שנשמר: שמות הילדים, תאריכי הלידה, היומן וההתקדמות במשחקים. ' +
+    'אפשר לכבות בכל רגע בהגדרות · סנכרון בענן.' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">' +
+    '<button class="btn sm" id="sn-ok">הבנתי</button></div>';
+  document.body.appendChild(box);
+  const done = ()=>{ try{ localStorage.setItem(SYNCNOTE,'1'); }catch(e){} box.remove(); };
+  const b = box.querySelector('#sn-ok');
+  if(b) b.onclick = done; else setTimeout(done, 12000);
+}
 
 /* ---------------------------------------------------------------
    מיזוג בין מכשירים
@@ -3683,6 +3783,20 @@ function mergeGames(x, y){
     s.stats = {items:  mergeCounters(ps.items,  qs.items),
                skills: mergeCounters(ps.skills, qs.skills),
                levels: mergeCounters(ps.levels, qs.levels)};
+    /* הפילוח לפי מיומנות ותמונת הבלבול נפלו כאן בשקט עד היום:
+       מיזוג משני מכשירים בנה stats מחדש ושכח אותם. */
+    if(ps.bySkill || qs.bySkill){
+      const b = {};
+      Object.keys(Object.assign({}, ps.bySkill || {}, qs.bySkill || {})).forEach(sk => {
+        b[sk] = mergeCounters((ps.bySkill||{})[sk], (qs.bySkill||{})[sk]);
+      });
+      s.stats.bySkill = b;
+    }
+    if(ps.conf || qs.conf){
+      const cf = Object.assign({}, ps.conf || {});
+      Object.keys(qs.conf || {}).forEach(kk => { cf[kk] = Math.max(cf[kk]|0, qs.conf[kk]|0); });
+      s.stats.conf = cf;
+    }
     const h = {};
     Object.keys(Object.assign({}, p.hist || {}, q.hist || {})).forEach(d => {
       const u = (p.hist || {})[d] || {ok:0, miss:0}, v = (q.hist || {})[d] || {ok:0, miss:0};
@@ -3785,7 +3899,7 @@ async function cloudSync(quiet){
     const c = syncCfg();
     const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + UID, {
       method:'PUT',
-      headers:{'Content-Type':'application/json', 'X-Secret': c.secret || ''},
+      headers: syncHeaders(UID),
       body: JSON.stringify(DB)
     });
     const j = await r.json().catch(()=>({}));
@@ -3808,7 +3922,7 @@ async function cloudPush(){
   try{
     const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + UID, {
       method:'PUT',
-      headers:{'Content-Type':'application/json', 'X-Secret': c.secret || ''},
+      headers: syncHeaders(UID),
       body: JSON.stringify(DB)
     });
     const j = await r.json().catch(()=>({}));
@@ -3820,7 +3934,7 @@ async function cloudPush(){
 async function cloudFetch(code){
   const c = syncCfg();
   if(!syncOn()) return null;
-  const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + cleanCode(code));
+  const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + cleanCode(code), {headers: syncHeaders(code)});
   if(!r.ok) return null;
   const j = await r.json().catch(()=>null);
   if(!j || !j.ok || !j.data || !Array.isArray(j.data.kids)) return null;
@@ -4207,6 +4321,135 @@ function pingMaybe(){
     body: JSON.stringify({dev, code: UID || null, day: localDay()})
   }).catch(()=>{});
 }
+
+/* ---------------------------------------------------------------
+   14.5ב ניטור שימוש
+   ---------------------------------------------------------------
+   הפינג לבדו סופר פתיחות אפליקציה, ומזה אי אפשר לדעת למה ילד
+   הפסיק לשחק. כאן נאסף מה שכן עונה על זה: הרמה שאליה הגיע, לאן
+   היא זזה, וכמה הוא מדייק. אלה בדיוק שלושת המדדים שהמשחק עצמו
+   משתמש בהם כדי להחליט אם להקל או להקשות, ולכן הם מספרים את
+   אותו סיפור — עלייה עקבית עם דיוק גבוה היא שעמום, ירידות עם
+   דיוק נמוך הן קושי.
+
+   שום שם לא נשלח. ילד מיוצג במספר הסידורי שלו בפרופיל ובגיל
+   בחודשים. הנתונים נגזרים מהמצב שהמשחק ממילא מחזיר בכל שמירה,
+   ולכן אף אחד מקובצי המשחקים לא נדרש לשנות דבר.
+   --------------------------------------------------------------- */
+const EVKEY  = 'nextstep.ev';
+const EV_MIN = 4 * 60 * 1000;      /* לא שולחים יותר מפעם בארבע דקות */
+const Q_PER_ROUND = 8;
+
+function evBlank(){ return {day: localDay(), kids:{}, sentAt:0}; }
+function evLoad(){
+  try{
+    const o = JSON.parse(localStorage.getItem(EVKEY) || 'null');
+    /* יום חדש = מצטבר חדש, כדי שלא נייחס פעילות ליום הלא נכון */
+    return (o && o.day === localDay() && o.kids) ? o : evBlank();
+  }catch(e){ return evBlank(); }
+}
+function evSave(o){ try{ localStorage.setItem(EVKEY, JSON.stringify(o)); }catch(e){} }
+function evSlot(k){
+  const i = (DB.kids || []).findIndex(x => x && x.id === k.id);
+  return i < 0 ? 0 : i;
+}
+function evKid(o, k){
+  const slot = evSlot(k);
+  o.kids[slot] = o.kids[slot] || {i: slot, am: null, opens: 0, games: {}};
+  try{ if(k.dob) o.kids[slot].am = ageMonths(k.dob); }catch(e){}
+  return o.kids[slot];
+}
+function evOpen(k){
+  if(!PING_URL || !k) return;
+  const o = evLoad(); evKid(o, k).opens++; evSave(o); evFlush();
+}
+
+/* ההפרש בין שני צילומי מצב של אותו משחק הוא מה שקרה בינתיים */
+function evTotals(st){
+  let ok = 0, miss = 0;
+  const it = (st && st.stats && st.stats.items) || {};
+  Object.keys(it).forEach(x => { ok += (it[x].ok || 0); miss += (it[x].miss || 0); });
+  return {ok, miss};
+}
+function evFromGame(k, id, prev, st){
+  if(!PING_URL || !k || !st) return;
+  const gid = String(id || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 24);
+  if(!gid) return;
+  const o = evLoad();
+  const K = evKid(o, k);
+  K.games[gid] = K.games[gid] || {lv:null, rounds:0, ok:0, miss:0, up:0, dn:0, ab:0};
+  const G = K.games[gid];
+
+  /* לכל משחקון פנימי רשומת רמה משלו ב-m. הרמה המדווחת היא הגבוהה
+     שבהן, ותנועות הרמה נספרות בכל המשחקונים יחד. */
+  const pm = (prev && prev.m) || {}, nm = st.m || {};
+  let top = 0;
+  Object.keys(nm).forEach(mg => {
+    const a = (pm[mg] && pm[mg].lv) || 0;
+    const b = (nm[mg] && nm[mg].lv) || 0;
+    if(b > top) top = b;
+    if(a && b > a) G.up++;
+    if(a && b < a) G.dn++;      /* כולל ירידה מיציאה באמצע סבב */
+  });
+  if(top) G.lv = top;
+
+  const a = evTotals(prev), b = evTotals(st);
+  const dok = Math.max(0, b.ok - a.ok), dmiss = Math.max(0, b.miss - a.miss);
+  if(dok + dmiss){
+    G.ok += dok; G.miss += dmiss;
+    G.rounds += Math.max(1, Math.round((dok + dmiss) / Q_PER_ROUND));
+  }
+  evSave(o);
+  evFlush();
+}
+
+function evFlush(force){
+  if(!PING_URL) return;
+  const o = evLoad();
+  const slots = Object.keys(o.kids || {});
+  if(!slots.length) return;
+  if(!force && Date.now() - (o.sentAt || 0) < EV_MIN) return;
+
+  const kids = slots.map(s => {
+    const K = o.kids[s];
+    return {
+      i: K.i, am: K.am, opens: K.opens,
+      games: Object.keys(K.games).map(g => {
+        const G = K.games[g];
+        const n = G.ok + G.miss;
+        return {g, lv:G.lv, rounds:G.rounds, ok:G.ok,
+                acc: n ? (G.ok / n) : null, up:G.up, dn:G.dn, ab:G.ab};
+      })
+    };
+  });
+
+  /* מרוקנים לפני השליחה ולא אחריה: השרת מחבר ולא דורס, ולכן
+     שליחה כפולה תנפח את המספרים. אם השליחה נכשלה — מחזירים. */
+  evSave({day: o.day, kids: {}, sentAt: Date.now()});
+  fetch(PING_URL + '/ev', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({dev: devId(), code: UID || null, day: o.day, kids})
+  }).then(r => { if(!r.ok) throw 0; }).catch(() => {
+    const now = evLoad();
+    if(now.day !== o.day) return;            /* עבר יום — מוותרים */
+    slots.forEach(s => {
+      const K = o.kids[s];
+      if(!now.kids[s]){ now.kids[s] = K; return; }
+      const T = now.kids[s];
+      T.opens += K.opens;
+      Object.keys(K.games).forEach(g => {
+        if(!T.games[g]){ T.games[g] = K.games[g]; return; }
+        const x = T.games[g], y = K.games[g];
+        x.rounds += y.rounds; x.ok += y.ok; x.miss += y.miss;
+        x.up += y.up; x.dn += y.dn; x.ab += y.ab;
+        if(y.lv && !x.lv) x.lv = y.lv;
+      });
+    });
+    now.sentAt = 0;
+    evSave(now);
+  });
+}
+
 /* ---------------------------------------------------------------
    14.6 שמירת קובץ
    ---------------------------------------------------------------
@@ -4436,9 +4679,55 @@ function stampHist(st){
   while(days.length > 60) delete st.hist[days.shift()];
 }
 
+/* =================================================================
+   צילום שבועי
+   =================================================================
+   המשחקים שולחים סכום מצטבר מאז ומתמיד, ולכן אי אפשר לגזור מהם
+   מה קרה השבוע. כאן נשמר צילום קטן פעם בשבוע — לא כל פריט, רק
+   קבוצות — וההפרש בין שני צילומים הוא "מה זז". כמה שורות לכל
+   משחק, וזה כל מה שצריך כדי לומר "לפני שבועיים 20%, היום 45%".
+   ================================================================= */
+const TREND_KEEP = 6;
+function trendBuckets(gid, st){
+  const b = {};
+  const add = (key, ok, miss) => { const t = b[key] || (b[key] = [0,0]); t[0] += ok; t[1] += miss; };
+  const items = (st.stats && st.stats.items) || {};
+  Object.keys(items).forEach(key => {
+    const v = items[key], ok = v.ok||0, miss = v.miss||0;
+    if(gid === 'numbers' && /^\d+$/.test(key)){
+      const n = +key;
+      add(n <= 10 ? 'מספרים עד 10' : n <= 20 ? 'מספרים 11 עד 20'
+        : n <= 50 ? 'מספרים 21 עד 50' : 'מספרים 51 עד 100', ok, miss);
+    }else if(gid === 'letters' && key.length === 1){
+      add('האות ' + key, ok, miss);
+    }
+  });
+  const sk = (st.stats && st.stats.skills) || {};
+  Object.keys(sk).forEach(key => add(key, sk[key].ok||0, sk[key].miss||0));
+  return b;
+}
+function weekKey(iso){
+  const t = parseISO(iso);
+  t.setDate(t.getDate() - t.getDay());          /* ראשון של אותו שבוע */
+  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+}
+function trendSnap(k, gid, st){
+  if(!st || !st.stats) return;
+  if(!k.trend) k.trend = {};
+  const arr = k.trend[gid] || (k.trend[gid] = []);
+  const wk  = weekKey(todayISO());
+  const b   = trendBuckets(gid, st);
+  if(arr.length && arr[arr.length-1].d === wk) arr[arr.length-1].b = b;   /* השבוע הנוכחי מתעדכן */
+  else arr.push({d: wk, b: b});
+  while(arr.length > TREND_KEEP) arr.shift();
+}
+
 function setGameState(k, id, st){
   if(!k.games) k.games = {};
+  try{ trendSnap(k, id, st); }catch(e){}
   stampHist(st);
+  /* הניטור נגזר מההפרש מול המצב הקודם, ולכן חייב לרוץ לפני הדריסה */
+  try{ evFromGame(k, id, k.games[id], st); }catch(e){}
   k.games[id] = st;
   save();
 }
@@ -4479,35 +4768,280 @@ function weakBySkill(st){
 }
 const listHe = a => a.length <= 1 ? (a[0]||'') : a.slice(0,-1).join(', ') + ' ו' + a[a.length-1];
 
-function gameAdvice(g, st){
-  if(!st || !st.stats) return 'עוד לא שיחקתם, אז אין לי על מה להמליץ.';
-  const skills = weakestSkills(st);
-  const by     = weakBySkill(st);
-  const all    = by['_'] || [];
-  const bits   = [];
+/* =================================================================
+   מה הנתונים אומרים — בשפה של הורה
+   =================================================================
+   הגרסה הקודמת רשמה פריטים: "כדאי לעבוד על 15, 17, 13, 19, 18
+   ו-14". הורה קורא שש ספרות בסדר אקראי ולא מבין כלום. אבל בתוך
+   הרשימה הזאת מסתתרת עובדה אחת פשוטה: כל השגיאות היו בין 13
+   ל-19, ואף אחת לא מתחת ל-12. זה לא רשימה — זה גבול.
 
-  /* אילו פריטים חלשים, ובאילו מיומנויות */
-  const keys = Object.keys(by).filter(s => s !== '_' && by[s].length);
-  if(keys.length >= 2){
-    const a = by[keys[0]], b = by[keys[1]];
-    const both = a.filter(x => b.indexOf(x) >= 0);
-    const onlyB = b.filter(x => a.indexOf(x) < 0);
-    if(both.length) bits.push('הייתי ממליץ לעבוד יחד על ' + listHe(both) + ' — גם ב' + keys[0] + ' וגם ב' + keys[1]);
-    if(onlyB.length) bits.push(listHe(onlyB) + ' רק ב' + keys[1]);
-  } else if(all.length){
-    bits.push('הייתי ממליץ לעבוד יחד על ' + listHe(all.slice(0,6)));
+   לכן כאן מחפשים קודם **תבנית**: גבול טווח, קבוצה שלמה שנופלת,
+   מיומנות אחת שמפגרת אחרי השאר. רק אם אין תבנית נופלים לרשימה.
+
+   שלושה כללים שאסור לשבור:
+   1. לא מחווים דעה על פריט שנבדק פחות מ-SURE פעמים. "עוד אין לי
+      מספיק נתונים" הוא משפט שבונה אמון, לא משפט שמתנצל.
+   2. כל מסקנה מגיעה עם עוגן גיל. דיוק בלי הרגעה מייצר הורה מבוהל.
+   3. כל חולשה מגיעה עם דבר אחד לעשות הערב, בשלוש דקות.
+   ================================================================= */
+
+const SURE   = 6;    /* מדידות לפריט בודד לפני שמחווים עליו דעה */
+const SURE_G = 15;   /* מדידות לקבוצה שלמה */
+const SURE_S = 12;   /* מדידות למיומנות */
+
+function rowsOf(st, which){
+  const bag = (st && st.stats && st.stats[which]) || {};
+  return Object.keys(bag).map(k => {
+    const v = bag[k], n = (v.ok||0) + (v.miss||0);
+    return {k, n, s: n ? (v.ok||0)/n : 0};
+  });
+}
+function agg(rows){
+  let ok = 0, n = 0;
+  rows.forEach(r => { ok += r.s * r.n; n += r.n; });
+  return {n, s: n ? ok/n : 0};
+}
+/* ציון למילה. בלי אחוזים — הורה קורא אחוז כציון בית ספר. */
+function scoreWord(sc, k){
+  if(sc >= 0.85) return gx('{יודע|יודעת}', k);
+  if(sc >= 0.70) return 'כמעט';
+  if(sc >= 0.50) return 'לפעמים';
+  return 'עוד לא';
+}
+
+/* ---------------- מספרים: איפה עובר הגבול ---------------- */
+function numPattern(st, k){
+  const rows = rowsOf(st, 'items').filter(r => /^\d+$/.test(r.k)).map(r => ({...r, v:+r.k}));
+  if(!rows.length) return null;
+  const inRange = (lo, hi) => agg(rows.filter(r => r.v >= lo && r.v <= hi));
+  const top = Math.max(...rows.map(r => r.v));
+
+  /* הגבול: המספר הגבוה ביותר שעד אליו הכול יושב, ומעליו נופל */
+  const CAND = [5, 10, 12, 15, 20, 30, 50];
+  let best = null;
+  CAND.forEach(b => {
+    if(b >= top) return;
+    const lo = inRange(1, b), hi = inRange(b+1, 1000);
+    if(lo.n < SURE_G || hi.n < SURE_G) return;
+    /* ממוצע לבד משקר: מאה תשובות נכונות על 1 עד 12 מחפות על
+       שלוש נפילות ב-13. מתחת לגבול אסור שיהיה אפילו פריט אחד
+       שנמדד מספיק ובכל זאת נופל. */
+    const leak = rows.some(r => r.v <= b && r.n >= SURE && r.s < 0.5);
+    if(leak) return;
+    if(lo.s >= 0.85 && hi.s <= 0.55 && (!best || b > best.b)) best = {b, lo, hi};
+  });
+  if(best) return {
+    id: 'bound',
+    head: gx('{name} {מזהה|מזהה} בביטחון כל מספר עד ' + best.b + '.', k),
+    sub:  'מספרים גדולים מ-' + best.b + ' עדיין לא. מתוך ' + Math.round(best.hi.n) +
+          ' פעמים שנשאל' + (k.g==='f'?'ה':'') + ' עליהם, ' +
+          gx('{צדק|צדקה}', k) + ' ב-' + Math.round(best.hi.s * best.hi.n) + '.',
+    age:  best.b <= 12 ? 'המעבר מעל עשר הוא קפיצה בפני עצמה, והוא קורה אצל רוב הילדים בין גיל ארבע וחצי לשש.' : '',
+    act:  {t:'הערב, שלוש דקות',
+           d:'לשים ' + (best.b + 2) + ' פתיתים על השולחן ולספור יחד בקול עד הסוף — לא בעל פה, עם האצבע על כל אחד.'}
+  };
+
+  /* אין גבול חד — אולי העשרה כקבוצה */
+  const u10 = inRange(1,10), teen = inRange(11,19);
+  if(u10.n >= SURE_G && teen.n >= SURE_G && u10.s >= 0.8 && teen.s < 0.55) return {
+    id: 'teen',
+    head: gx('המספרים עד עשר יושבים. ', k) + 'מ-11 עד 19 עוד לא.',
+    sub:  'זה לא מפוזר. מתחת לעשר כמעט אין טעויות; מ-11 עד 19 כמעט חצי מהתשובות שגויות.',
+    age:  'שמות המספרים בעברית מבלבלים דווקא שם — "שתים עשרה" לא נשמע כמו "שתיים".',
+    act:  {t:'הערב, שלוש דקות', d:'לספור יחד 14 קוביות, ולעצור בכל מספר כדי לומר אותו בקול.'}
+  };
+  return null;
+}
+
+/* ---------------- אותיות: צורה, צליל, או פשוט מעט חשיפה ---------------- */
+const SHAPE_PAIRS = [['ב','כ'],['ד','ר'],['ה','ח'],['ח','ת'],['ו','ז'],['ג','נ'],['ס','ם'],['ע','צ'],['י','ו']];
+const SOUND_PAIRS = [['כ','ק'],['ת','ט'],['ס','ש'],['א','ע'],['ב','ו'],['ח','כ']];
+const pairOf = (a, b, list) => list.some(p => (p[0]===a && p[1]===b) || (p[1]===a && p[0]===b));
+/* "ט וז" לא נקרא. אות בודדת אחרי ו' צריכה מקף. */
+function heList(a){
+  a = a.filter(Boolean);
+  if(a.length <= 1) return a[0] || '';
+  const last = String(a[a.length-1]);
+  const vav = last.length === 1 ? ' ו-' : ' ו';
+  return a.slice(0,-1).join(', ') + vav + last;
+}
+
+/* ---------------------------------------------------------------
+   בלבול בין אותיות — רק עם ראיה
+   ---------------------------------------------------------------
+   אסור לומר להורה "היא מתבלבלת בין ב ל-כ" רק כי שתיהן ברשימת
+   החלשות. זו מסקנה שנשמעת חכמה ואין מאחוריה כלום. המשחקים
+   רושמים עכשיו גם **מה נבחר בטעות** (stats.conf, בצורה "נכונה>נבחרה"),
+   ורק ממנו אפשר לדעת אם יש כאן בלבול אמיתי. אין נתון — אין משפט.
+   --------------------------------------------------------------- */
+function confusions(st){
+  const conf = (st && st.stats && st.stats.conf) || null;
+  if(!conf) return null;
+  const rows = Object.keys(conf).map(key => {
+    const p = key.split('>');
+    return {want:p[0], got:p[1], n:conf[key]|0};
+  }).filter(r => r.want && r.got && r.n > 0);
+  if(!rows.length) return null;
+  const tot = rows.reduce((t,r)=>t+r.n, 0);
+  const shape = rows.filter(r => pairOf(r.want, r.got, SHAPE_PAIRS));
+  const sound = rows.filter(r => pairOf(r.want, r.got, SOUND_PAIRS));
+  return {rows, tot,
+          shape, shapeN: shape.reduce((t,r)=>t+r.n,0),
+          sound, sound_n: sound.reduce((t,r)=>t+r.n,0)};
+}
+
+function letPattern(st, k){
+  const rows = rowsOf(st, 'items').filter(r => r.k.length === 1);
+  const sure = rows.filter(r => r.n >= SURE);
+  if(sure.length < 4) return null;
+  const weak = sure.filter(r => r.s < 0.5).sort((a,b)=>a.s-b.s);
+  const strong = sure.filter(r => r.s >= 0.85);
+  const wk = weak.map(r => r.k);
+
+  /* קודם כול: האם יש בכלל ראיה לבלבול */
+  const c = confusions(st);
+  if(c && c.tot >= 8){
+    if(c.shapeN >= 4 && c.shapeN / c.tot >= 0.5){
+      const top = c.shape.sort((a,b)=>b.n-a.n).slice(0,3);
+      return {
+        id:'shape',
+        head: gx('{name} {מזהה|מזהה} את האותיות. מה שמתבלבל זה אותיות שנראות דומה.', k),
+        sub:  'מתוך ' + c.tot + ' הטעויות האחרונות, ' + c.shapeN + ' היו בחירה באות דומה בצורה: ' +
+              heList(top.map(r => r.want + ' במקום ' + r.got)) + '.',
+        age:  'זה שלב מוכר, והוא נפתר מעצמו עם חשיפה — לא עם תרגול נוסף של האות עצמה.',
+        act:  {t:'הערב, שלוש דקות',
+               d:'לכתוב את ' + top[0].want + ' ואת ' + top[0].got +
+                 ' זו ליד זו על דף גדול, ולחפש יחד מה שונה ביניהן.'}
+      };
+    }
+    if(c.sound_n >= 4 && c.sound_n / c.tot >= 0.5){
+      const top = c.sound.sort((a,b)=>b.n-a.n).slice(0,3);
+      return {
+        id:'sound',
+        head: 'הבלבול הוא בצליל, לא בצורה.',
+        sub:  'מתוך ' + c.tot + ' הטעויות האחרונות, ' + c.sound_n + ' היו בין אותיות שנשמעות כמעט זהה: ' +
+              heList(top.map(r => r.want + ' ו' + r.got)) + '.',
+        age:  'בעברית של היום כמה אותיות באמת נשמעות אותו דבר, ולכן זה נלמד מהכתיב ולא מהאוזן.',
+        act:  {t:'הערב, שלוש דקות',
+               d:'לומר מילה עם ' + top[0].want + ' ומילה עם ' + top[0].got + ', ולכתוב יחד את שתיהן.'}
+      };
+    }
   }
 
-  /* על איזו מיומנות ללחוץ יותר */
-  if(skills.length){
-    const worst = skills[0], best = skills[skills.length-1];
-    let s = 'ובכללי הייתי עובד יותר חזק על ' + worst.k;
-    if(skills.length > 1 && itemScore(skills[1].v) < .8) s += ' וטיפה על ' + skills[1].k;
-    bits.push(s);
-    if(itemScore(best.v) >= .85 && best.k !== worst.k) bits.push(best.k + ' כבר במקום טוב');
+  if(!weak.length) return strong.length >= 6 ? {
+    id:'allgood',
+    head: gx('כל האותיות שנמדדו יושבות אצל {name}.', k),
+    sub:  strong.length + ' אותיות, בלי אף אחת שנופלת.',
+    age:  '', act:null
+  } : null;
+
+  /* חלשות שגם נראו הכי מעט — זו עוד לא מסקנה */
+  const avgSeen = sure.reduce((t,r)=>t+r.n,0) / sure.length;
+  if(weak.every(r => r.n < avgSeen * 0.7)) return {
+    id:'thin',
+    head: (wk.length === 1 ? 'האות ' + wk[0] + ' עוד לא הסתדרה.'
+                           : heList(wk.slice(0,3)) + ' עוד לא הסתדרו.'),
+    sub:  (function(){
+            const lo = Math.min(...weak.map(r=>r.n)), hi = Math.max(...weak.map(r=>r.n));
+            const many = wk.length > 1;
+            const times = lo === hi ? ('רק ' + lo + ' פעמים') : ('בין ' + lo + ' ל-' + hi + ' פעמים');
+            return (many ? 'אבל הן גם הופיעו ' : 'אבל היא גם הופיעה ') + times +
+                   ', וזה מעט מדי כדי להסיק ממנו. עוד כמה ימים של משחק ואדע להגיד.';
+          })(),
+    age:  '',
+    act:  {t:'בינתיים', d:'לחפש את ' + wk[0] + ' על שלטים ברחוב. זה עושה יותר מכל תרגול.'}
+  };
+
+  return {
+    id:'letters',
+    head: (wk.length === 1 ? 'האות ' + wk[0] + ' היא היחידה שעדיין לא נכנסה.'
+                           : 'האותיות שעדיין לא נכנסו: ' + heList(wk.slice(0,4)) + '.'),
+    sub:  strong.length ? heList(strong.slice(0,4).map(r=>r.k)) + ' לעומת זאת כבר יושבות טוב.' : '',
+    age:  '',
+    act:  {t:'הערב, שלוש דקות', d:'לצייר את ' + wk[0] + ' גדולה על דף ולהדביק עליה גרגרי אורז.'}
+  };
+}
+
+/* ---------------- מיומנות אחת שנופלת אחרי השאר ---------------- */
+function skillGap(st){
+  const rows = rowsOf(st, 'skills').filter(r => r.n >= SURE_S).sort((a,b)=>a.s-b.s);
+  if(rows.length < 2) return null;
+  const worst = rows[0], rest = agg(rows.slice(1));
+  if(worst.s >= 0.65 || rest.s - worst.s < 0.2) return null;
+  return {k: worst.k, s: worst.s, n: worst.n, bestK: rows[rows.length-1].k, bestS: rows[rows.length-1].s};
+}
+
+const SKILL_ACT = {
+  'חיסור':      'שלושה חטיפים על השולחן. לאכול אחד. "כמה נשאר?"',
+  'חיבור':      'שתי אצבעות ביד אחת, שלוש בשנייה. "כמה ביחד?"',
+  'רצף':        'לעלות במדרגות ולספור בקול. לדלג על מספר ולראות אם ' + 'שמים לב.',
+  'ספירה':      'לספור את הכפות בזמן סידור השולחן.',
+  'השוואה':     'שתי ערמות של קוביות. "באיזו יש יותר?" בלי לספור.',
+  'ניקוד':      'לפתוח ספר ולהצביע על הנקודות מתחת לאות אחת.',
+  'הקלדה':      'לכתוב יחד את השם שלו על נייר, אות אחרי אות.',
+  'בניית מילה': 'לומר מילה קצרה ולשאול באיזו אות היא מתחילה.',
+  'צלילים':     'לחפש שתי מילים בבית שמתחילות באותו צליל.',
+  'קריאת מילה': 'לקרוא יחד שלט אחד ברחוב, אות אחרי אות.',
+  'כתיבת אות':  'לכתוב את האות באוויר עם האצבע, גדול.',
+  'זיהוי מספר': 'לחפש מספרים על דלתות ועל מכוניות.'
+};
+
+/* ---------------- מה זז מאז ---------------- */
+function trendLine(k, gid, st){
+  const snaps = ((k.trend || {})[gid] || []).slice();
+  if(snaps.length < 2) return null;
+  const now = snaps[snaps.length-1], then = snaps[0];
+  const key = Object.keys(now.b).find(b => {
+    const a = then.b[b], c = now.b[b];
+    return a && c && (a[0]+a[1]) >= 8 && (c[0]+c[1]) - (a[0]+a[1]) >= 8;
+  });
+  if(!key) return null;
+  const a = then.b[key], c = now.b[key];
+  const was = a[0] / (a[0] + a[1]);
+  const isn = (c[0] - a[0]) / Math.max(1, (c[0]+c[1]) - (a[0]+a[1]));
+  if(isn - was < 0.12) return null;
+  return key + ': לפני ' + weeksAgoText(then.d) + ' ' + Math.round(was*100) +
+         '%, עכשיו ' + Math.round(isn*100) + '%. זה זז.';
+}
+function weeksAgoText(d){
+  const w = Math.max(1, Math.round(daysAgo(d) / 7));
+  return w === 1 ? 'שבוע' : w === 2 ? 'שבועיים' : w + ' שבועות';
+}
+
+/* ---------------- הרכבת המסקנה ---------------- */
+function readOut(g, st, k){
+  if(!st || !st.stats) return {empty:'עוד לא שיחקתם, אז אין לי על מה לספר.'};
+  const total = rowsOf(st, 'items').reduce((t,r)=>t+r.n, 0);
+  if(total < 25) return {empty:'רק ' + total + ' תשובות עד עכשיו. תנו לזה עוד כמה סבבים ויהיה לי מה לומר.'};
+
+  const pat = g.id === 'numbers' ? numPattern(st, k)
+            : g.id === 'letters' ? letPattern(st, k)
+            : null;
+  const sk  = skillGap(st);
+  const tr  = trendLine(k, g.id, st);
+
+  if(!pat && !sk) return {empty:'הכול נראה יציב, בלי נקודה אחת שבולטת לרעה. ' + total + ' תשובות עד כה.'};
+
+  const o = pat ? Object.assign({}, pat) : {id:'skill', head:'', sub:'', age:'', act:null};
+  if(sk){
+    o.skill = sk.k + ' הוא הדבר הכי קשה כרגע — מתוך ' + sk.n + ' תרגילים ' +
+              gx('{פתר|פתרה}', k) + ' ' + Math.round(sk.s * sk.n) + '. ' +
+              sk.bestK + ' כבר במקום טוב.';
+    if(!o.act && SKILL_ACT[sk.k]) o.act = {t:'הערב, שלוש דקות', d:SKILL_ACT[sk.k]};
+    if(o.act && SKILL_ACT[sk.k] && o.id === 'skill') o.act = {t:'הערב, שלוש דקות', d:SKILL_ACT[sk.k]};
+    if(!o.head) o.head = 'הדבר האחד שכדאי לחזק עכשיו: ' + sk.k + '.';
   }
-  if(!bits.length) return 'הנתונים עוד דלילים. עוד כמה סיבובים ואוכל להמליץ.';
-  return bits.join(', ') + '.';
+  o.trend = tr;
+  o.total = total;
+  return o;
+}
+
+/* התקציר שנשאר על הכרטיס, בלי ללחוץ על כלום */
+function gameAdvice(g, st, k){
+  const o = readOut(g, st, k || CUR);
+  if(o.empty) return o.empty;
+  return [o.head, o.sub].filter(Boolean).join(' ');
 }
 
 /* ---------------------------------------------------------------
@@ -4546,7 +5080,8 @@ function histChart(st){
       if(n > 0) pct = dOk / n;
     }
     if(pct === null){
-      bars += `<rect x="${x.toFixed(1)}" y="${HH-4}" width="${bw.toFixed(1)}" height="4" rx="2" fill="#E9A0A0"></rect>`;
+      /* יום שלא שיחקו בו אינו כישלון. קו אפור, לא אדום. */
+      bars += `<rect x="${x.toFixed(1)}" y="${HH-3}" width="${bw.toFixed(1)}" height="3" rx="1.5" fill="#D8D2C4"></rect>`;
     }else{
       played++;
       const h = Math.max(5, Math.round(pct * (HH - 6)));
@@ -4565,7 +5100,7 @@ function histChart(st){
       <g>${bars}</g>
       <g transform="translate(0,${HH+2})">${labs}</g>
     </svg>
-    <div class="meta hleg"><i class="hd hg"></i>מצוין <i class="hd hm"></i>בסדר <i class="hd hb"></i>מתקשה <i class="hd hn"></i>לא שיחקו</div>
+    <div class="meta hleg"><i class="hd hg"></i>רוב נכון <i class="hd hm"></i>חצי חצי <i class="hd hb"></i>היה קשה <i class="hd hn"></i>לא שיחקנו</div>
   </div>`;
 }
 
@@ -4581,10 +5116,10 @@ const MG_NAMES = {
             sub:'חיסור', clock:'מה השעה?', trace:'לכתוב מספרים', mem:'זוגות'},
   letters: {snd:'חרוזים וצלילים', trc:'מסלול האותיות', wrd:'בונים מילה',
             typ:'מקלידים', nkd:'ניקוד', read:'קוראים מילה'},
-  english: {pick:'איפה זה?'},
-  objects: {}
+  english: {pick:'איפה זה?', say:'איזו מילה?', lpick:'איפה האות?', write:'לכתוב אותיות'},
+  objects: {}   /* "מה זה?" עדיין על רמה אחת גלובלית, בלי רמה למשחקון */
 };
-const MLV_MAXP = 4;
+const MLV_MAXP = 7;   /* המספרים הגיעו לשבע רמות; השאר עדיין בארבע */
 function mgLevels(gid, st){
   const m = (st && st.m) || {};
   const names = MG_NAMES[gid] || {};
@@ -4696,6 +5231,7 @@ let CURGAME = null;
 function openGame(id){
   const g = GAMES.find(x => x.id === id); if(!g) return;
   CURGAME = g;
+  try{ evOpen(CUR); }catch(e){}
   const fr = $('#game-frame');
   fr.src = g.file;
   $('#game-host').classList.add('on');
@@ -4971,6 +5507,8 @@ async function consumeTransfer(p){
 
 (async function start(){
   try{ pingMaybe(); }catch(e){}   /* לפני הכול, ולא חוסם שום דבר */
+  try{ evFlush(true); }catch(e){} /* מה שנשאר מהפעם הקודמת */
+  try{ syncNotice(); }catch(e){}
   const p = hashParams();
   if(p.d){ let bad; try{ bad = await consumeTransfer(p); }catch(e){ bad = 1; } if(!bad) return; }
 

@@ -1208,6 +1208,26 @@ let P = load();
 
 
 /* מדידה לכל אות ולכל מיומנות. רק הניסיון הראשון נספר. */
+/* איזו אות נבחרה במקום הנכונה. בלי זה אפשר לדעת רק ש"ב קשה
+   לו", ולא את הדבר המעניין באמת — שהוא בוחר כ כשמבקשים ב.
+   נשמר כמפתח "נכונה>נבחרה", ורק עבור אותיות אמיתיות. */
+function recConf(want, got){
+  want = FINALS[want] || want; got = FINALS[got] || got;
+  if(!want || !got || want === got) return;
+  if(ALL_LETTERS.indexOf(want) < 0 || ALL_LETTERS.indexOf(got) < 0) return;
+  if(!P.stats) P.stats = freshStats();
+  if(!P.stats.conf) P.stats.conf = {};
+  const key = want + '>' + got;
+  P.stats.conf[key] = (P.stats.conf[key] | 0) + 1;
+  /* התמונה מעניינת רק כשהיא עדכנית, ולכן היא לא גדלה בלי גבול */
+  const keys = Object.keys(P.stats.conf);
+  if(keys.length > 40){
+    let lo = keys[0];
+    keys.forEach(k2 => { if(P.stats.conf[k2] < P.stats.conf[lo]) lo = k2; });
+    delete P.stats.conf[lo];
+  }
+}
+
 function rec(ok, item, skill){
   if(!P.stats) P.stats = freshStats();
   const bump = (bag, key) => {
@@ -2080,7 +2100,7 @@ function tapKey(k){
       say(['nm_'+clean]);
     }
   }else{
-    TY.missed[TY.at]=1; S.tries++;
+    TY.missed[TY.at]=1; recConf(want, c); S.tries++;
     k.classList.add('bad');
     setTimeout(()=>k.classList.remove('bad'),460);
     sfxBad();
@@ -2921,6 +2941,7 @@ function tapTile(t){
     }
   }else{
     W.missed[W.at] = true;
+    recConf(want, c);
     W.wrong++; S.tries++;
     t.classList.add('bad');
     setTimeout(()=>t.classList.remove('bad'),460);

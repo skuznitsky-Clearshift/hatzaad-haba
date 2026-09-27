@@ -360,7 +360,7 @@ const S = {game:null, q:0, correct:0, tries:0, answered:false, cur:null, times:[
 /* =========================================================
    רמה פנימית לכל משחקון — מוסתרת מהילד
    ========================================================= */
-const MLV_MAX = 4;
+const MLV_MAX = 6;
 let LV = 1;
 function mrec(id){
   if(!P.m) P.m = {};
@@ -371,7 +371,10 @@ function mrec(id){
 }
 function mlv(id){ return mrec(id).lv; }
 
-const BASE = {pick:[6,7,8,9], say:[7,8,9,10], lpick:[5,6,7,8], write:[26,28,30,32]};
+/* קריאה לוקחת יותר זמן משמיעה, ולכן שתי הרמות האחרונות מקבלות
+   תקציב זמן גדול יותר ולא נחשבות לאיטיות. */
+const BASE = {pick:[6,7,8,9,10,13], say:[7,8,9,10,11,14],
+              lpick:[5,6,7,8,9,10], write:[26,28,30,32,34,36]};
 /* בכתיבת אות אין תשובה שגויה — הדיוק תמיד 1, ולכן רק הזמן מעיד */
 const TIME_ONLY = {write:1};
 const ROCKET = {};
@@ -680,7 +683,7 @@ function seen(w){ return ((P.stats && P.stats.items) || {})[w.en]; }
 function mastered(w){ return collected(w.en); }
 
 function buildSet(){
-  const size = LV <= 1 ? 4 : 6;
+  const size = LV <= 1 ? 4 : LV <= 4 ? 6 : 8;
   const tier = Math.min(3, LV);
   for(let i = 0; i < GROUP_ORDER.length; i++){
     const pool = WORDS.filter(w => w.g === GROUP_ORDER[i] && w.t <= tier);
@@ -747,8 +750,16 @@ function nextQ(){
   /* המילה הכתובה באותיות לטיניות לא מופיעה בשאלה. ילד בכיתה א'
      עוד רוכש קריאה בעברית, וכתב לטיני בשאלה הוא גירוי מתחרה —
      הוא גם ככה שומע את המילה. היא תופיע אחרי תשובה נכונה. */
-  $('#stage').innerHTML =
-    '<div class="prompt tap" id="q"><span class="spk">🔊</span><span>' + L('ui_listen') + '</span></div>';
+  /* מרמה 6 המילה כתובה והקול לא מתנגן מעצמו. זה המעבר משמיעה
+     לקריאה, וזה גם מה שמצפים ממנו בכיתה א'. הרמקול נשאר שם —
+     הקשה עליו עדיין מקריאה, כדי שילד שנתקע לא ייתקע לגמרי. */
+  /* מרמה 5 המילה כתובה והקול לא מתנגן מעצמו — זה המעבר משמיעה
+     לקריאה. ברמה 5 הרמקול עדיין עונה בהקשה; ברמה 6 הוא שותק עד
+     הטעות הראשונה, ואז חוזר. הקביים יורדים בשלב, לא בבת אחת. */
+  const reading = LV >= 5;
+  $('#stage').innerHTML = reading
+    ? '<div class="prompt tap" id="q"><span class="spk">🔊</span><bdi class="word" dir="ltr">' + t.en + '</bdi></div>'
+    : '<div class="prompt tap" id="q"><span class="spk">🔊</span><span>' + L('ui_listen') + '</span></div>';
   const box = $('#opts'); box.innerHTML = '';
   box.className = 'opts' + (opts.length > 3 ? ' four' : '');
   opts.forEach(w=>{
@@ -758,10 +769,10 @@ function nextQ(){
     b.onclick = ()=> judge(w.id === t.id, b, w);
     box.appendChild(b);
   });
-  $('#q').onclick = ()=>{ ac(); say('en_' + t.id); };
-  coach(gt('מה שמעת? 🤔','מה שמעת? 🤔'));
+  $('#q').onclick = ()=>{ ac(); if(LV < 6 || S.tries > 0) say('en_' + t.id); };
+  coach(reading ? 'מה כתוב? 🤔' : gt('מה שמעת? 🤔','מה שמעת? 🤔'));
   renderTrail();
-  ask(['en_' + t.id]);
+  if(!reading) ask(['en_' + t.id]);
 }
 
 /* =========================================================
@@ -1200,7 +1211,7 @@ function wrDemo(){
 
 /* ---- הסבב: אות אחרי אות, גדולה ואז קטנה ---- */
 function startWrite(){
-  const n = LV <= 1 ? 3 : LV === 2 ? 4 : 5;
+  const n = LV <= 1 ? 3 : LV === 2 ? 4 : LV <= 4 ? 5 : 7;
   const done = ((P.stats && P.stats.items) || {});
   const todo = ABC.filter(c => !(done['letter ' + c] && done['letter ' + c].ok >= 2));
   const pool = todo.length ? todo : ABC.slice();

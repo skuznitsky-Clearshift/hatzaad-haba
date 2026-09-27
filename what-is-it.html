@@ -672,7 +672,7 @@ const L = k => (LINE[k] || '');
 /* שמות ברירת מחדל בלבד. בתוך האפליקציה השם האמיתי מגיע ב-ns-init,
    ובהפעלה עצמאית לא מציגים שם של אף ילד מסוים. */
 const KIDS = { f:{name:'ילדה'}, m:{name:'ילד'} };
-const DEF = {player:null, level:1, unlocked:1, stars:0,
+const DEF = {player:null, level:1, unlocked:1, stars:0, m:{},
              stats:{items:{},skills:{},levels:{}}, voice:true, sound:true, allLevels:false};
 
 const HOSTED = (function(){ try{ return !!window.parent && window.parent !== window; }catch(e){ return false; } })();
@@ -866,6 +866,23 @@ function migrateLevels(){
 }
 
 function maxUnlocked(){ return P.allLevels ? LEVELS_DEF.length : P.unlocked; }
+
+/* ---------------------------------------------------------------
+   דרגת הקושי בתוך הנושא
+   ---------------------------------------------------------------
+   נשמרת לכל נושא בנפרד: ילד יכול להיות בדרגה 4 בצבעים ובדרגה 1
+   בדגלים, וזה בדיוק מה שאמור לקרות.
+   --------------------------------------------------------------- */
+const TIER_MAX = 4;
+function mrec(lv){
+  if(!P.m) P.m = {};
+  const k = 'lv' + lv;
+  if(!P.m[k]) P.m[k] = {lv:1, p:0, bad:0};
+  P.m[k].lv = Math.max(1, Math.min(TIER_MAX, (P.m[k].lv|0) || 1));
+  return P.m[k];
+}
+function mlv(lv){ return mrec(lv).lv; }
+const TIER_NAME = ['', 'להכיר', 'לדייק', 'להבחין', 'לקרוא'];
 /* לכל משחקון ציור משלו — ילד שאינו קורא בוחר לפי הצורה, לא לפי הכותרת */
 const LVM_SHAPE = '<svg viewBox="0 0 48 40"><path d="M13 6 L24 26 H2 Z" fill="#6FA05B"/><circle cx="34" cy="24" r="10" fill="#D9534F"/></svg>';
 const LVM_WEATHER = '<svg viewBox="0 0 48 40"><circle cx="24" cy="20" r="9" fill="#F2C14E"/><g stroke="#E8A33D" stroke-width="3" stroke-linecap="round"><path d="M24 4 V9 M24 31 V36 M8 20 H13 M35 20 H40 M13 9 L16 12 M32 28 L35 31 M35 9 L32 12 M16 28 L13 31"/></g></svg>';
@@ -908,6 +925,7 @@ function levelItems(lv){
 function startLevel(lv){
   P.level = lv; save();
   S.lv = lv; S.q = 0; S.correct = 0; S.tries = 0;
+  S.tier = mlv(lv);                       /* קפוא עד סוף הסבב */
   S.pool = shuffle(levelItems(lv));
   show('play');
   nextQ();
@@ -921,10 +939,22 @@ function nextQ(){
   const items = levelItems(S.lv);
   if(!S.pool.length) S.pool = shuffle(items);
   const target = S.pool.pop();
-  const naming = (LEVELS_DEF.find(x => x.lv === S.lv) || {}).mode === 'name';
-  const others = shuffle(items.filter(i=>i.id!==target.id)).slice(0, naming ? 2 : 3);
+  const tier = S.tier || 1;
+  /* דרגה 4 היא קריאה: התמונה למעלה, והתשובות הן מילים כתובות */
+  const naming = tier >= 4 || (LEVELS_DEF.find(x => x.lv === S.lv) || {}).mode === 'name';
+  const nOpt = naming ? 2 : (tier === 1 ? 2 : 3);
+
+  /* מדרגה 3 כל המסיחים מאותה קטגוריה של המטרה. אדום מול כתום
+     מול ורוד מכריח להכיר את השם; אדום מול כלב לא מכריח כלום. */
+  let near = items.filter(i => i.id !== target.id && i.c === target.c);
+  let far  = items.filter(i => i.id !== target.id && i.c !== target.c);
+  let others;
+  if(tier >= 3 && near.length >= nOpt)      others = shuffle(near).slice(0, nOpt);
+  else if(tier === 1 && far.length >= nOpt) others = shuffle(far).slice(0, nOpt);
+  else others = shuffle(near.concat(far)).slice(0, nOpt);
+
   const opts = shuffle([target, ...others]);
-  S.cur = {target, naming};
+  S.cur = {target, naming, tier};
   renderTrail();
   tip('');
 
@@ -947,7 +977,9 @@ function nextQ(){
 function judge(ok, el){
   ac();
   const t = S.cur.target;
-  const skill = S.cur.naming ? 'שיוך שם' : 'זיהוי בתמונה';
+  /* דרגה 4 היא מיומנות אחרת לגמרי — קריאת מילה, לא זיהוי תמונה.
+     בלי הפרדה הן היו מתערבבות לאותו אחוז חסר משמעות. */
+  const skill = S.cur.naming ? 'קריאת מילה' : 'זיהוי בתמונה';
   if(ok){
     if(S.tries === 0){ S.correct++; rec(true, t.id, skill); }
     el.classList.add('good');
@@ -967,16 +999,34 @@ function judge(ok, el){
     tip(L(k)); say(k);
   }
 }
+function tierDecide(){
+  const r = mrec(S.lv), wrong = QPER - S.correct;
+  let dir = 0;
+  if(wrong === 0){
+    /* סבב מושלם אחד מספיק בדרגה 1, שניים אחר כך */
+    r.p = (r.p || 0) + 1;
+    if(r.p >= (r.lv === 1 ? 1 : 2) && r.lv < TIER_MAX){ r.lv++; r.p = 0; r.bad = 0; dir = 1; }
+  }else if(wrong >= Math.ceil(QPER / 2)){
+    r.p = 0; r.bad = (r.bad || 0) + 1;
+    if(r.bad >= 2 && r.lv > 1){ r.lv--; r.bad = 0; dir = -1; }
+  }else{
+    r.bad = 0;
+  }
+  return dir;
+}
+
 function finishRound(){
   const pct = S.correct / QPER;
   const st = pct >= .9 ? 3 : pct >= .6 ? 2 : 1;
   P.stars += st;
+  const tierDir = tierDecide();
   let levelUp = false;
   if(pct >= .6 && P.unlocked === S.lv && S.lv < LEVELS_DEF.length){ P.unlocked = S.lv + 1; levelUp = true; }
   save();
   $('#rwStars').textContent = '⭐'.repeat(st);
   $('#rwTitle').textContent = levelUp ? (L('lvl_up')||'רמה חדשה!') : (L('done_'+G())||'כל הכבוד!');
-  $('#rwText').textContent  = 'תשובות נכונות: ' + S.correct + ' מתוך ' + QPER;
+  $('#rwText').textContent  = 'תשובות נכונות: ' + S.correct + ' מתוך ' + QPER +
+    (tierDir > 0 ? ' · עכשיו קצת יותר קשה' : tierDir < 0 ? ' · חוזרים צעד אחורה' : '');
   $('#reward').classList.add('on');
   confetti(40);
   say(levelUp ? 'lvl_up' : 'done_'+G());

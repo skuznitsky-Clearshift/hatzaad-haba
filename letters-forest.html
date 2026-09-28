@@ -1347,7 +1347,7 @@ function pickFair(pool, lettersOf){
 const DEF = {player:null, m:{}, level:1, unlocked:1, stars:0, letters:{}, wlv:{}, wfail:{}, seen:{}, stats:{items:{},skills:{},levels:{}}, good:{1:0,2:0,3:0,4:0},
              voice:true, sound:true, nikud:true, allLevels:false};
 const HOSTED = (function(){ try{ return !!window.parent && window.parent !== window; }catch(e){ return false; } })();
-const freshStats = () => ({items:{}, skills:{}, levels:{}});
+const freshStats = () => ({items:{}, skills:{}, bySkill:{}, levels:{}, quit:{}});
 let P = load();
 /* --- גשר לאפליקציית ההורים ---------------------------------------
    כשהמשחק רץ בתוך "הצעד הבא" ההתקדמות שייכת לילד שנבחר שם, ולכן היא
@@ -1392,6 +1392,73 @@ function rec(ok, item, skill){
     bump(P.stats.bySkill[skill], item);
   }
   bump(P.stats.levels, LV);
+}
+
+/* ---- יציאה באמצע שאלה --------------------------------------
+   ילד שיצא כששאלה פתוחה על המסך כנראה לא ידע לפתור אותה. זו עדות
+   אמיתית, אבל חשד ולא ידיעה — אפשר גם שקראו לו לארוחה — ולכן היא
+   נשמרת בנפרד ב-P.stats.quit ולא מתחזה לתשובה שגויה. כמיס אמיתית
+   נרשמת רק כשיש תימוכין: או שהילד כבר ניסה וטעה, או שישב על השאלה
+   יותר מפי שניים וחצי מהזמן הצפוי לרמה שלו. מי שפתח שאלה והלך
+   אחרי שתי שניות לא נמדד — הוא לא נתקע, הוא הלך.
+
+   לוח הצלילים הוא היחיד שלא נרשם: הוא זיווג של כמה זוגות בבת אחת
+   ולא שאלה אחת, ויציאה מאמצע לוח לא מצביעה על אות מסוימת. */
+function curItem(){
+  try{
+    switch(S.game){
+      case 'read': return RD && ITEMS[RD.id] ? {i:ITEMS[RD.id].w, s:'קריאת מילה'} : null;
+      case 'typ':  return TY && TY.letters ? {i:baseL(TY.letters[TY.at]), s:'הקלדה'} : null;
+      case 'wrd':  return W  && W.letters  ? {i:baseL(W.letters[W.at]),  s:'בניית מילה'} : null;
+      case 'trc':  return Q  && Q.base     ? {i:Q.base, s:'כתיבת אות'} : null;
+      default: return null;
+    }
+  }catch(e){ return null; }
+}
+/* יחידת הקצב היא **השאלה**, ולא הפריט שנרשם בסטטיסטיקה. בבניית
+   מילה ובהקלדה נרשמת אות-אות, אבל הילד פתר מילה שלמה — ולכן הזמן
+   מיוחס למילה. וחשוב מזה: כששוקלים את הזמן, W.at ו-TY.at כבר
+   התקדמו אל מעבר לסוף המילה, ולכן curItem לא מחזיק שם כלום. */
+function paceTarget(){
+  try{
+    switch(S.game){
+      case 'read': return RD && ITEMS[RD.id] ? {i:ITEMS[RD.id].w, s:'קריאת מילה'} : null;
+      case 'typ':  return TY && ITEMS[TY.id] ? {i:ITEMS[TY.id].w, s:'הקלדה'} : null;
+      case 'wrd':  return W  && ITEMS[W.id]  ? {i:ITEMS[W.id].w,  s:'בניית מילה'} : null;
+      case 'trc':  return Q  && Q.base       ? {i:Q.base, s:'כתיבת אות'} : null;
+      case 'mt':   return S.mt ? {i:baseL(S.mt), s:'התאמת כתב'} : null;
+      default: return null;                    /* לוח הצלילים והניקוד */
+    }
+  }catch(e){ return null; }
+}
+function recQuit(){
+  if(S.answered || S.quitRec) return;
+  const c = curItem(); if(!c || c.i == null) return;
+  S.quitRec = 1;
+  if(!P.stats) P.stats = freshStats();
+  if(!P.stats.quit) P.stats.quit = {};
+  const k = String(c.i);
+  if(P.stats.quit[k] === undefined && Object.keys(P.stats.quit).length >= 60) return;
+  P.stats.quit[k] = (P.stats.quit[k] | 0) + 1;
+  const on = S.qStart ? (performance.now() - S.qStart) / 1000 : 0;
+  if(S.tries > 0 || on >= 2.5 * baseOf(S.game, mlv(S.game))) rec(false, c.i, c.s);
+}
+
+
+/* קצב: כמה זמן לוקח לפתור, כשפתר נכון בניסיון הראשון. ראו הערה
+   ב-patch-pace — ניחוש מהיר איננו מהירות, ולכן לא נרשם כאן. */
+function recPace(skill, item, sec){
+  if(!(sec > 0) || item == null || item === '' || !skill) return;
+  const t = Math.max(0.3, Math.min(60, sec));
+  if(!P.stats) P.stats = freshStats();
+  if(!P.stats.pace) P.stats.pace = {};
+  const k = String(skill) + '|' + String(item);
+  const bag = P.stats.pace;
+  if(!bag[k]){
+    if(Object.keys(bag).length >= 240) return;      /* גבול גודל */
+    bag[k] = {n:0, t:0};
+  }
+  bag[k].n++; bag[k].t += t;
 }
 
 function load(){
@@ -1809,6 +1876,7 @@ function abandonRound(){
   const tot = S.total || QPER;
   if(S.q >= tot) return;                     /* הסבב כבר נגמר כרגיל */
   if(tot < QPER){ S.game = null; return; }   /* אימון פריט בודד, לא סבב */
+  recQuit();                                 /* השאלה שנשארה פתוחה */
   const r = mrec(S.game);
   /* טעויות עד כה: שאלות שנענו לא בניסיון ראשון, ועוד השאלה
      שבאמצע אם כבר נטעה בה. */
@@ -2153,7 +2221,7 @@ function dageshIntro(){
 function startGame(id){
   migrateLevels();
   if(P.script==='cursive'||P.script==='print') SCRIPT = P.script;
-  S.game=id; S.q=0; S.correct=0; S.tries=0; S.answered=false;
+  S.game=id; S.q=0; S.correct=0; S.tries=0; S.answered=false; S.quitRec=0;
   LV = mlv(id);
   S.times=[]; S.total=QPER; S.roundStart=performance.now(); S.qStart=performance.now();
   S.snap={game:id, rec:JSON.parse(JSON.stringify(mrec(id))), stats:JSON.parse(JSON.stringify(P.stats||{}))};
@@ -2174,11 +2242,20 @@ function nextQ(){
   /* בלי האיפוס הזה כל משחקון שנועל את עצמו ב-S.answered — ניקוד
      והתאמת דפוס־כתב — מת אחרי התשובה הנכונה הראשונה: הלחיצות
      על השאלות הבאות פשוט לא נקלטות. */
-  S.answered=false;
+  S.answered=false; S.quitRec=0;
   renderTrail();
   if(S.game==='snd') buildSounds(); else if(S.game==='typ') buildType(); else if(S.game==='read') buildRead(); else if(S.game==='nkd') buildNkQ(); else if(S.game==='mt') buildMatch(); else buildWord();
 }
-function scoreOk(){ if(S.tries===0){ S.correct++; if(S.qStart) S.times.push((performance.now()-S.qStart)/1000); } S.q++; S.qStart=performance.now(); renderTrail(); }
+function scoreOk(){
+  if(S.tries===0 && S.qStart){
+    S.correct++;
+    const sec = (performance.now()-S.qStart)/1000;
+    S.times.push(sec);
+    const c = paceTarget();
+    if(c) recPace(c.s, c.i, sec);
+  }else if(S.tries===0){ S.correct++; }
+  S.q++; S.qStart=performance.now(); renderTrail();
+}
 
 /* =========================================================
    משחק 4 — מקלידים מילה
@@ -3261,6 +3338,13 @@ function pgSubmit(){
 document.getElementById('pgok').onclick=pgSubmit;
 document.getElementById('pgno').onclick=pgClose;
 document.getElementById('pga').addEventListener('keydown',function(e){ if(e.key==='Enter') pgSubmit(); });
+
+/* ילד שסוגר את האפליקציה באמצע שאלה הוא המקרה השכיח יותר מכפתור
+   החזרה — הוא פשוט מניח את הטאבלט. כאן נרשם החשד בלבד, בלי לשנות
+   רמה: חזרה מהמסך הבית אחרי שנייה היא לא כישלון. */
+window.addEventListener('pagehide', function(){
+  try{ if(document.getElementById('play').classList.contains('on')){ recQuit(); save(); } }catch(e){}
+});
 </script>
 </body>
 </html>

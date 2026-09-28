@@ -358,6 +358,7 @@ select.input{width:100%;padding:12px;border-radius:14px;border:1.5px solid var(-
 .lvm{margin-top:12px}
 .lvm .lvhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .lvm .lvnow{font-size:26px;font-weight:700;line-height:1;color:var(--ink)}
+.lvm .lvnow em{font-style:normal;font-weight:700;font-size:19px;color:var(--soft)}
 .lvm .lvwhat{font-size:14px;color:var(--soft)}
 .lvm svg{display:block;width:100%;height:auto;overflow:visible}
 .lvm .lvseg{fill:var(--green-t)}
@@ -2983,6 +2984,9 @@ const LADDER = {
             'מילים שנשמעות דומה', 'קריאה באנגלית']
 };
 function ladderTop(gid){ return (LADDER[gid] || []).length || 4; }
+/* רק בשניים האלה תוויות הסולם הן שכבות גיל. באנגלית וב"מה זה?"
+   הן מתארות את המשימה, ומשפט כמו "זו הרמה של להבחין" לא נקרא. */
+const LADDER_IS_GRADE = {numbers:1, letters:1};
 function domainName(dm, stId){
   const al = DOMAIN_ALIAS[dm.id];
   if(al && al[stId]) return al[stId];
@@ -5394,6 +5398,8 @@ function histChart(st){
    שלילי. ההורה צריך לדעת איפה לעזור, לא להיבהל.
    --------------------------------------------------------------- */
 function heNum(n){ return String(n).replace(/\.5$/, '.5'); }
+/* באיזה נושא הרמה. בלי זה "רמה 5" מרחף בלי הקשר. */
+const LV_SUBJ = {numbers:'במספרים', letters:'באותיות', english:'באנגלית', objects:'בזיהוי'};
 function lvChart(gid, st, k){
   const cur = curLevel(gid, st);
   if(cur == null) return '';
@@ -5428,7 +5434,8 @@ function lvChart(gid, st, k){
              '" x2="' + x.toFixed(1) + '" y2="' + y2 + '"></line>' +
              '<line class="lvtgt" x1="' + x.toFixed(1) + '" y1="' + y1 +
              '" x2="' + x.toFixed(1) + '" y2="' + y2 + '"></line>' +
-             '<text class="lvtl" x="' + Math.min(W - 22, Math.max(22, x)).toFixed(1) + '" y="7">היעד עכשיו</text>';
+             '<text class="lvtl" x="' + Math.min(W - 24, Math.max(24, x)).toFixed(1) +
+             '" y="7">' + gx('הגיל {שלו|שלה}', k) + '</text>';
   }
   const grew = start != null && Math.round(start.l) < Math.round(cur);
   if(grew){
@@ -5454,7 +5461,7 @@ function lvChart(gid, st, k){
       say = 'היעד לתקופה הזאת ב' + esc(gt) + ' הוא רמה ' + tgt + ', ו' + esc(nm) +
             ' ברמה ' + heNum(cur) + ' — ' + (tgt - Math.round(cur) === 1 ? 'רמה אחת' : (tgt - Math.round(cur)) + ' רמות') + '.';
     src = 'היעדים לפי תוכנית הליבה במתמטיקה של משרד החינוך. החלוקה לאורך השנה היא הערכה שלנו.';
-  }else if(what){
+  }else if(what && LADDER_IS_GRADE[gid]){
     say = 'זו הרמה של <b>' + esc(what) + '</b>.';
   }
   if(grew) grewT = 'התחלנו ברמה ' + heNum(start.l) + ' ב' + monthName(start.m) +
@@ -5465,7 +5472,8 @@ function lvChart(gid, st, k){
   const spread = (hi > lo) ? ' · בין ' + lo + ' ל-' + hi + ' לפי המשחקון' : '';
 
   return '<div class="lvm">' +
-    '<div class="lvhead"><span class="lvnow">רמה ' + heNum(cur) + '</span>' +
+    '<div class="lvhead"><span class="lvnow">רמה ' + heNum(cur) +
+      (LV_SUBJ[gid] ? ' <em>' + LV_SUBJ[gid] + '</em>' : '') + '</span>' +
     (what ? '<span class="lvwhat">' + esc(what) + spread + '</span>' : (spread ? '<span class="lvwhat">' + spread.replace(' · ','') + '</span>' : '')) +
     '</div>' +
     '<svg viewBox="0 0 ' + W + ' ' + (TOP + TH + (grew ? 20 : 4)) + '" role="img" aria-label="רמה ' +

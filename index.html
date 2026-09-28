@@ -374,6 +374,13 @@ select.input{width:100%;padding:12px;border-radius:14px;border:1.5px solid var(-
 .lvm .lvgrew{font-size:14.5px;line-height:1.55;margin:6px 0 0;color:var(--soft)}
 .verdict .pace{color:var(--ink)}
 .lvm .lvsrc{font-size:12.5px;line-height:1.5;margin:8px 0 0;color:var(--faint)}
+/* ---- שלוש האמירות החזקות, בראש הלשונית ---- */
+.tops{margin-top:12px;border-right:4px solid var(--green)}
+.tops .topt{font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--soft);margin-bottom:9px}
+.tops .topr{font-size:15.5px;line-height:1.55;margin:0 0 9px;color:var(--ink)}
+.tops .topr.up{font-weight:700;color:var(--green-d)}
+.tops .topr:last-of-type{margin-bottom:10px}
+
 /* ---- שכבת הגיל: שאלה אחת, וגלגול קדימה ואחורה ---- */
 .grq{background:var(--paper2);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-top:12px}
 .grq .grt{font-size:15px;font-weight:700;margin:0 0 3px}
@@ -3320,9 +3327,66 @@ function bindGrade(k){
   });
 }
 
+/* ---------------------------------------------------------------
+   שלוש האמירות החזקות, על פני כל המשחקים
+   --------------------------------------------------------------- */
+function topFindings(k){
+  const out = [];
+  GAMES.forEach(g => {
+    const st = gameState(k, g.id);
+    if(!st || !st.stats || !gameEnabled(k, g)) return;
+    const nm = g.n;
+
+    /* 1. מול הציפייה — רק איפה שיש מקור, כלומר במספרים */
+    const tgt = expectLevel(g.id, k), cur = curLevel(g.id, st);
+    if(tgt && cur != null){
+      const gap = tgt - Math.round(cur);
+      if(gap < 0) out.push({good:1, w:4, t:'ב' + nm + ' ' + gx('{הוא|היא}', k) +
+        ' מעל הציפייה לגיל — רמה ' + heNum(cur) + ' במקום ' + tgt + '.'});
+      else if(gap >= 2) out.push({w:5, t:'ב' + nm + ' הציפייה לגיל היא רמה ' + tgt +
+        ', ו' + gx('{הוא|היא}', k) + ' ברמה ' + heNum(cur) + '.'});
+    }
+
+    /* 2. צמיחה — הסיפור שההורה הכי רוצה לשמוע */
+    const h = ((k.lvh || {})[g.id]) || [];
+    if(h.length > 1 && cur != null && Math.round(h[0].l) < Math.round(cur))
+      out.push({good:1, w:3, t:'ב' + nm + ' עלינו מרמה ' + heNum(h[0].l) + ' ב' +
+        monthName(h[0].m) + ' לרמה ' + heNum(cur) + '.'});
+
+    /* 3. המיומנות החלשה ביותר */
+    const sk = skillGap(st);
+    /* בלי "הוא/היא" כאן: הנושא הוא שם המיומנות ולא הילד, ו"חיסור"
+       זכר בעוד ש"ספירה" נקבה — כל ניסוח עם אוגד היה שגוי בחצי
+       מהמקרים. הצורה הזאת נכונה לכולן וגם קצרה יותר. */
+    if(sk) out.push({w: 4 + (1 - sk.s), t: nm + ': הכי קשה כרגע — ' + sk.k +
+      ', ' + Math.round(sk.s * 100) + '% מתוך ' + sk.n + '.'});
+
+    /* 4. נטישה — סימן חזק, ולכן נכנס רק מ-3 פעמים */
+    const q = (st.stats.quit) || {};
+    const worst = Object.keys(q).map(x => ({k:x, n:q[x]|0})).sort((a,b)=>b.n-a.n)[0];
+    if(worst && worst.n >= 3) out.push({w:4.5, t:'ב' + nm + ', על ' + esc(worst.k) + ' ' +
+      gx('{הוא יצא|היא יצאה}', k) + ' מהמשחק ' + timesHe(worst.n) + ' בלי לענות.'});
+  });
+
+  /* לכל היותר שתי אמירות על קושי, ואם יש חיובית אחת — היא נכנסת */
+  const good = out.filter(o => o.good).sort((a,b)=>b.w-a.w);
+  const hard = out.filter(o => !o.good).sort((a,b)=>b.w-a.w);
+  const pick = hard.slice(0, 2);
+  if(good.length) pick.unshift(good[0]);
+  return pick.slice(0, 3);
+}
+function findingsCard(k){
+  let rows;
+  try{ rows = topFindings(k); }catch(e){ return ''; }
+  if(!rows || rows.length < 2) return '';       /* שורה אחת אינה סיכום */
+  return '<div class="card tops"><div class="topt">מה בולט עכשיו</div>' +
+    rows.map(r => '<p class="topr' + (r.good ? ' up' : '') + '">' + r.t + '</p>').join('') +
+    '<div class="meta">מתוך כל המשחקים יחד. הפירוט לכל משחק למטה.</div></div>';
+}
+
 function renderTabGames(){
   const k = CUR;
-  let html = gradeCard(k);
+  let html = gradeCard(k) + findingsCard(k);
   GAMES.forEach(g => {
     const on   = gameEnabled(k, g);
     const auto = ageMonths(k.dob) >= g.from;

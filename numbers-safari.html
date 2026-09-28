@@ -531,6 +531,13 @@ function nKeys(n){
   return CLIPS['nu_' + u] ? ['n_' + t, 'nu_' + u] : ['n_' + t, 'n_' + u];
 }
 
+/* האם כל קטעי הקול של המספר קיימים. ראו ההערה למעלה: מספר
+   שמוקרא בחלקו מטעה יותר ממספר שלא מוקרא בכלל. */
+function canSay(n){
+  const k = nKeys(n);
+  return k.length > 0 && k.every(function(x){ return !!CLIPS[x]; });
+}
+
 /* ---------------------------------------------------------------
    בחירה עם זיכרון
    ---------------------------------------------------------------
@@ -1146,10 +1153,13 @@ function buildQuestion(){
     const opts = shuffle([t, ...distractors(t,2,1,M)]);
     /* אסור לרשום את הספרה — זו כל השאלה. הרמז הוא הקול.
        אם הדיבור כבוי מוצגת המילה בעברית, כדי שהמשחק יישאר אפשרי. */
-    const cue = P.voice ? 'איפה המספר?' : 'איפה ' + numHe(t) + '?';
+    /* מספר שאין לו קול מלא מוצג ככתוב, כמו כשהקול כבוי — עדיף
+       על חצי הקראה שמכוונת למספר אחר. */
+    const voiced = P.voice && (CLIPS['find_' + t] || canSay(t));
+    const cue = voiced ? 'איפה המספר?' : 'איפה ' + numHe(t) + '?';
     /* עד עשרים יש משפט שלם מוקלט. מעליו מקריאים את המספר בלבד,
        והשאלה עצמה כתובה על המסך. */
-    const findKeys = CLIPS['find_' + t] ? ['find_' + t] : nKeys(t);
+    const findKeys = !voiced ? [] : (CLIPS['find_' + t] ? ['find_' + t] : nKeys(t));
     return {
       stat:{item:t, skill:'זיהוי מספר'},
       sk: findKeys,
@@ -1345,8 +1355,10 @@ function buildQuestion(){
        החשיפה מדורגת ומסונכרנת עם הקול: קודם המספר, אחר כך "פחות",
        ואז הלהקה שעפה. אין תווית "עפו" — ילד בגיל הזה לא קורא אותה,
        והתנועה מסבירה את זה טוב יותר ממילה. */
-    seq:[ {sel:'#sA', key:nKeys(a)}, {sel:'#sOp', key:'ui_minus'},
-          {sel:'#sB', key: LV >= 5 ? nKeys(b) : 'ui_this'} ],
+    /* מרמה 5 התרגיל כתוב על המסך ממילא, ולכן מספר בלי קול מלא
+       פשוט לא מוקרא — במקום להישמע כמספר אחר. */
+    seq:[ {sel:'#sA', key: canSay(a) ? nKeys(a) : null}, {sel:'#sOp', key:'ui_minus'},
+          {sel:'#sB', key: LV >= 5 ? (canSay(b) ? nKeys(b) : null) : 'ui_this'} ],
     stage:`<div class="prompt">${L('prompt_sub')}</div>
       <div style="display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap">
         <div class="bignum stepin" id="sA"><span dir="ltr">${a}</span></div>

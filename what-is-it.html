@@ -676,7 +676,7 @@ const DEF = {player:null, level:1, unlocked:1, stars:0, m:{},
              stats:{items:{},skills:{},levels:{}}, voice:true, sound:true, allLevels:false};
 
 const HOSTED = (function(){ try{ return !!window.parent && window.parent !== window; }catch(e){ return false; } })();
-const freshStats = () => ({items:{}, skills:{}, levels:{}});
+const freshStats = () => ({items:{}, skills:{}, bySkill:{}, levels:{}, quit:{}});
 
 function load(){
   if(HOSTED) return {...DEF, stats:freshStats()};
@@ -805,10 +805,59 @@ function rec(ok, item, skill){
   bump(P.stats.levels, P.level);
 }
 
+
+/* קצב: כמה זמן לוקח לפתור, כשפתר נכון בניסיון הראשון. ראו הערה
+   ב-patch-pace — ניחוש מהיר איננו מהירות, ולכן לא נרשם כאן. */
+function recPace(skill, item, sec){
+  if(!(sec > 0) || item == null || item === '' || !skill) return;
+  const t = Math.max(0.3, Math.min(60, sec));
+  if(!P.stats) P.stats = freshStats();
+  if(!P.stats.pace) P.stats.pace = {};
+  const k = String(skill) + '|' + String(item);
+  const bag = P.stats.pace;
+  if(!bag[k]){
+    if(Object.keys(bag).length >= 240) return;      /* גבול גודל */
+    bag[k] = {n:0, t:0};
+  }
+  bag[k].n++; bag[k].t += t;
+}
+
+/* ---- יציאה באמצע שאלה ובאמצע סבב ---------------------------
+   ילד שיצא כששאלה פתוחה על המסך כנראה לא ידע לפתור אותה. זה חשד
+   ולא ידיעה — אפשר שקראו לו — ולכן הוא נשמר בנפרד ב-P.stats.quit
+   ולא מתחזה לתשובה שגויה. */
+function recQuit(){
+  if(S.quitRec) return;
+  const t = S.cur && S.cur.target; if(!t) return;
+  S.quitRec = 1;
+  if(!P.stats) P.stats = freshStats();
+  if(!P.stats.quit) P.stats.quit = {};
+  const k = String(t.id);
+  if(P.stats.quit[k] === undefined && Object.keys(P.stats.quit).length >= 60) return;
+  P.stats.quit[k] = (P.stats.quit[k] | 0) + 1;
+  if(S.tries > 0) rec(false, t.id, S.cur.naming ? 'קריאת מילה' : 'זיהוי בתמונה');
+}
+/* סבב שנעזב באמצע אחרי טעות אחת לפחות מוריד דרגה. בלי זה הדרגה
+   נתקעת גבוהה לתמיד, כי רק סבב שנגמר נמדד. */
+function abandonRound(){
+  if(S.q >= QPER) return;
+  recQuit();
+  const wrong = (S.q - S.correct) + (S.tries > 0 ? 1 : 0);
+  if(wrong >= 1){
+    const r = mrec(S.lv);
+    if(r.lv > 1){ r.lv--; }
+    r.p = 0; r.bad = 0;
+  }
+  S.q = QPER;                                /* לא נמדד שוב */
+  save();
+}
+
 /* ---------- ניווט ---------- */
 function toMenu(){ renderHome(); renderMenu(); show('menu'); say('ui_which'); }
 function show(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); }
 $$('[data-back]').forEach(b=> b.onclick = ()=>{ sfxTap(); speakStop();
+  /* יציאה באמצע סבב נמדדת — ראו abandonRound */
+  try{ if($('#play').classList.contains('on')) abandonRound(); }catch(e){}
   /* בתוך האפליקציה הילד כבר נבחר שם, ואין למשחק בורר משלו —
      החץ שמוביל ל"מי משחק?" יוצא מהמשחק במקום להציג מסך זר. */
   if(HOSTED && b.dataset.back === 'who'){ try{ window.parent.postMessage({type:'ns-exit'}, '*'); }catch(e){} return; }
@@ -935,7 +984,7 @@ function renderTrail(){
 }
 function nextQ(){
   if(S.q >= QPER) return finishRound();
-  S.tries = 0;
+  S.tries = 0; S.quitRec = 0; S.qStart = performance.now();
   const items = levelItems(S.lv);
   if(!S.pool.length) S.pool = shuffle(items);
   const target = S.pool.pop();
@@ -981,7 +1030,10 @@ function judge(ok, el){
      בלי הפרדה הן היו מתערבבות לאותו אחוז חסר משמעות. */
   const skill = S.cur.naming ? 'קריאת מילה' : 'זיהוי בתמונה';
   if(ok){
-    if(S.tries === 0){ S.correct++; rec(true, t.id, skill); }
+    if(S.tries === 0){
+      S.correct++; rec(true, t.id, skill);
+      if(S.qStart) recPace(skill, t.id, (performance.now()-S.qStart)/1000);
+    }
     el.classList.add('good');
     sfxGood(); confetti(18);
     const k = pick(['ok_1','ok_2','ok_3','ok_4','ok_5']);
@@ -1094,6 +1146,13 @@ function pgSubmit(){
 document.getElementById('pgok').onclick=pgSubmit;
 document.getElementById('pgno').onclick=pgClose;
 document.getElementById('pga').addEventListener('keydown',function(e){ if(e.key==='Enter') pgSubmit(); });
+
+/* ילד שסוגר את האפליקציה באמצע שאלה הוא המקרה השכיח יותר מכפתור
+   החזרה — הוא פשוט מניח את הטאבלט. כאן נרשם החשד בלבד, בלי לשנות
+   דרגה: חזרה מהמסך הבית אחרי שנייה היא לא כישלון. */
+window.addEventListener('pagehide', function(){
+  try{ if(document.getElementById('play').classList.contains('on')){ recQuit(); save(); } }catch(e){}
+});
 </script>
 </body>
 </html>

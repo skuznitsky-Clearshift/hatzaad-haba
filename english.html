@@ -341,7 +341,7 @@ const KEY = 'english.v1';
 const DEF = {player:null, m:{}, ws:{}, wd:{}, stars:0, voice:true, sound:true,
              stats:{items:{}, skills:{}, bySkill:{}, levels:{}}};
 const HOSTED = (function(){ try{ return !!window.parent && window.parent !== window; }catch(e){ return false; } })();
-const freshStats = () => ({items:{}, skills:{}, bySkill:{}, levels:{}});
+const freshStats = () => ({items:{}, skills:{}, bySkill:{}, levels:{}, quit:{}});
 function load(){
   if(HOSTED) return {...DEF, m:{}, stats:freshStats()};
   try{ const raw = localStorage.getItem(KEY);
@@ -458,6 +458,7 @@ function abandonRound(){
   const tot = S.total || QPER;
   if(S.q >= tot) return;                     /* הסבב כבר נגמר כרגיל */
   if(tot < QPER){ S.game = null; return; }   /* אימון פריט בודד, לא סבב */
+  recQuit();                                 /* השאלה שנשארה פתוחה */
   const r = mrec(S.game);
   /* טעויות עד כה: שאלות שנענו לא בניסיון ראשון, ועוד השאלה
      שבאמצע אם כבר נטעה בה. */
@@ -645,7 +646,7 @@ function renderMenu(){
 }
 
 function startGame(id){
-  S.game = id; S.q = 0; S.correct = 0; S.tries = 0; S.answered = false;
+  S.game = id; S.q = 0; S.correct = 0; S.tries = 0; S.answered = false; S.quitRec = 0;
   LV = mlv(id);
   S.times = []; S.total = QPER; S.roundStart = performance.now(); S.qStart = performance.now();
   S.set = (id === 'lpick') ? buildLtrSet() : buildSet(); S.last = null;
@@ -739,7 +740,7 @@ const OPTS_N = () => (LV <= 1 ? 2 : LV >= 4 ? 4 : 3);
 
 function nextQ(){
   if(S.q >= S.total){ finishRound(); return; }
-  S.tries = 0; S.answered = false; S.qStart = performance.now();
+  S.tries = 0; S.answered = false; S.quitRec = 0; S.qStart = performance.now();
   if(S.game === 'write'){ return; }   /* המשחקון הזה מנהל את הסבב בעצמו */
   if(S.game === 'say'){ buildSay(); return; }
   if(S.game === 'lpick'){ nextLtrQ(); return; }
@@ -868,7 +869,14 @@ function judgeLtr(ok, el, c){
     S.answered = true;
     el.classList.add('good');
     sfxGood(); confetti(18);
-    if(S.tries === 0){ S.correct++; rec(true); bumpStreak(t.en, true); if(S.qStart) S.times.push((performance.now()-S.qStart)/1000); }
+    if(S.tries === 0){
+      S.correct++; rec(true); bumpStreak(t.en, true);
+      if(S.qStart){
+        const sec = (performance.now()-S.qStart)/1000;
+        S.times.push(sec);
+        recPace(L('gr_' + t.g) || t.g, t.en, sec);
+      }
+    }
     $$('#opts .opt').forEach(b => b.style.pointerEvents = 'none');
     /* עכשיו נחשפת האות הכתובה, גדולה וקטנה */
     const low = t.ch.toLowerCase();
@@ -949,7 +957,14 @@ function sayJudge(w, el){
     S.answered = true;
     el.classList.add('good');
     sfxGood(); confetti(18);
-    if(S.tries === 0){ S.correct++; rec(true); bumpStreak(t.en, true); if(S.qStart) S.times.push((performance.now()-S.qStart)/1000); }
+    if(S.tries === 0){
+      S.correct++; rec(true); bumpStreak(t.en, true);
+      if(S.qStart){
+        const sec = (performance.now()-S.qStart)/1000;
+        S.times.push(sec);
+        recPace(L('gr_' + t.g) || t.g, t.en, sec);
+      }
+    }
     $$('#opts .wopt').forEach(b => b.style.pointerEvents = 'none');
     coach(t.en + ' — ' + t.he, 'ok');
     /* "נכון, CAT זה חתול — חתול, CAT" */
@@ -1402,7 +1417,7 @@ function renderLetters(){
 }
 /* אימון של אות אחת שנבחרה ביד */
 function startOneLetter(ch){
-  S.game = 'write'; S.tries = 0; S.answered = false;
+  S.game = 'write'; S.tries = 0; S.answered = false; S.quitRec = 0;
   LV = mlv('write');
   S.times = []; S.roundStart = performance.now();
   S.snap = {game:'write', rec:JSON.parse(JSON.stringify(mrec('write'))), stats:JSON.parse(JSON.stringify(P.stats||{}))};
@@ -1413,6 +1428,23 @@ function startOneLetter(ch){
   $('#trail').innerHTML = '';
   $('#opts').innerHTML = '';
   buildWrite(ch, 'cap');
+}
+
+
+/* קצב: כמה זמן לוקח לפתור, כשפתר נכון בניסיון הראשון. ראו הערה
+   ב-patch-pace — ניחוש מהיר איננו מהירות, ולכן לא נרשם כאן. */
+function recPace(skill, item, sec){
+  if(!(sec > 0) || item == null || item === '' || !skill) return;
+  const t = Math.max(0.3, Math.min(60, sec));
+  if(!P.stats) P.stats = freshStats();
+  if(!P.stats.pace) P.stats.pace = {};
+  const k = String(skill) + '|' + String(item);
+  const bag = P.stats.pace;
+  if(!bag[k]){
+    if(Object.keys(bag).length >= 240) return;      /* גבול גודל */
+    bag[k] = {n:0, t:0};
+  }
+  bag[k].n++; bag[k].t += t;
 }
 
 function rec(ok){
@@ -1433,6 +1465,25 @@ function rec(ok){
   bump(P.stats.levels, LV);
 }
 
+/* ---- יציאה באמצע שאלה --------------------------------------
+   ילד שיצא כששאלה פתוחה על המסך כנראה לא ידע לפתור אותה. זו עדות
+   אמיתית, אבל חשד ולא ידיעה — אפשר גם שקראו לו — ולכן היא נשמרת
+   בנפרד ב-P.stats.quit ולא מתחזה לתשובה שגויה. כמיס אמיתית היא
+   נרשמת רק כשיש תימוכין: הילד כבר ניסה וטעה, או ישב על השאלה
+   יותר מפי שניים וחצי מהזמן הצפוי לרמה שלו. */
+function recQuit(){
+  if(S.answered || S.quitRec) return;
+  const t = S.cur; if(!t || !t.en) return;
+  S.quitRec = 1;
+  if(!P.stats) P.stats = freshStats();
+  if(!P.stats.quit) P.stats.quit = {};
+  const k = String(t.en);
+  if(P.stats.quit[k] === undefined && Object.keys(P.stats.quit).length >= 60) return;
+  P.stats.quit[k] = (P.stats.quit[k] | 0) + 1;
+  const on = S.qStart ? (performance.now() - S.qStart) / 1000 : 0;
+  if(S.tries > 0 || on >= 2.5 * baseOf(S.game, mlv(S.game))) rec(false);
+}
+
 function judge(ok, el, w){
   if(S.answered) return;
   ac();
@@ -1441,7 +1492,14 @@ function judge(ok, el, w){
     S.answered = true;
     el.classList.add('good');
     sfxGood(); confetti(18);
-    if(S.tries === 0){ S.correct++; rec(true); bumpStreak(t.en, true); if(S.qStart) S.times.push((performance.now()-S.qStart)/1000); }
+    if(S.tries === 0){
+      S.correct++; rec(true); bumpStreak(t.en, true);
+      if(S.qStart){
+        const sec = (performance.now()-S.qStart)/1000;
+        S.times.push(sec);
+        recPace(L('gr_' + t.g) || t.g, t.en, sec);
+      }
+    }
     $$('#opts .opt').forEach(b => b.style.pointerEvents = 'none');
     /* עכשיו, ורק עכשיו, המילה הכתובה — חשיפה בלי דרישה */
     const q = $('#q');
@@ -1547,6 +1605,13 @@ if(HOSTED){
   });
   try{ window.parent.postMessage({type:'ns-ready'}, '*'); }catch(e){}
 } else if(P.player){ toMenu(); } else { show('who'); }
+
+/* ילד שסוגר את האפליקציה באמצע שאלה הוא המקרה השכיח יותר מכפתור
+   החזרה — הוא פשוט מניח את הטאבלט. כאן נרשם החשד בלבד, בלי לשנות
+   רמה: חזרה מהמסך הבית אחרי שנייה היא לא כישלון. */
+window.addEventListener('pagehide', function(){
+  try{ if(document.getElementById('play').classList.contains('on')){ recQuit(); save(); } }catch(e){}
+});
 </script>
 </body>
 </html>

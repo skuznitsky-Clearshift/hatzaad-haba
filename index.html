@@ -15,6 +15,8 @@
   --ink:#3B2C20; --soft:#7A6455; --faint:#A08D79;
   --line:#E7D8B8; --line2:#F0E5CC;
   --green:#6FA05B; --green-d:#5A8449;
+  /* דרגה בהירה של אותו ירוק — המסלול הלא-מלא במטר הרמות */
+  --green-t:#E4EFDC;
   --orange:#E08A3E; --blue:#4E82A0; --purple:#9C71B4;
   --pink:#D88585; --gold:#C99A2E; --teal:#4F9689;
   --sh:0 1px 0 rgba(59,44,32,.05), 0 8px 24px -14px rgba(59,44,32,.4);
@@ -351,6 +353,40 @@ select.input{width:100%;padding:12px;border-radius:14px;border:1.5px solid var(-
 .hleg{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:11px}
 .hd{width:9px;height:9px;border-radius:3px;display:inline-block;margin-left:4px}
 .hd.hg{background:#5FA98A}.hd.hm{background:#D8A657}.hd.hb{background:#D97A6C}.hd.hn{background:#D8D2C4}
+
+/* ---- מטר הרמות: איפה הילד מול מה שמצפים ---- */
+.lvm{margin-top:12px}
+.lvm .lvhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.lvm .lvnow{font-size:26px;font-weight:700;line-height:1;color:var(--ink)}
+.lvm .lvwhat{font-size:14px;color:var(--soft)}
+.lvm svg{display:block;width:100%;height:auto;overflow:visible}
+.lvm .lvseg{fill:var(--green-t)}
+.lvm .lvseg.on{fill:var(--green)}
+.lvm .lvnum{font-size:9px;fill:var(--faint);text-anchor:middle;font-weight:700}
+.lvm .lvnum.on{fill:#fff}
+.lvm .lvhalo{stroke:var(--surface);stroke-width:5;stroke-linecap:round}
+.lvm .lvtgt{stroke:var(--ink);stroke-width:2;stroke-dasharray:3 2.5;opacity:.8}
+.lvm .lvtl{font-size:8.5px;fill:var(--soft);text-anchor:middle;font-weight:700}
+.lvm .lvst{stroke:var(--faint);stroke-width:2}
+.lvm .lvsay{font-size:15px;line-height:1.55;margin:10px 0 0;color:var(--ink)}
+.lvm .lvsay b{color:var(--green-d)}
+.lvm .lvgrew{font-size:14.5px;line-height:1.55;margin:6px 0 0;color:var(--soft)}
+.verdict .pace{color:var(--ink)}
+.lvm .lvsrc{font-size:12.5px;line-height:1.5;margin:8px 0 0;color:var(--faint)}
+/* ---- שכבת הגיל: שאלה אחת, וגלגול קדימה ואחורה ---- */
+.grq{background:var(--paper2);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-top:12px}
+.grq .grt{font-size:15px;font-weight:700;margin:0 0 3px}
+.grq .grw{font-size:14px;color:var(--soft);margin:0 0 10px}
+.grq .grpick{display:flex;align-items:center;gap:10px}
+.grq .grpick button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);
+  background:var(--surface);font-size:19px;font-weight:700;color:var(--ink);flex:none}
+.grq .grpick button:disabled{opacity:.35}
+.grq .grv{flex:1;text-align:center;font-size:16px;font-weight:700}
+.grq .grv small{display:block;font-size:12.5px;font-weight:400;color:var(--soft)}
+.grq .gract{display:flex;gap:8px;margin-top:11px}
+.grq .gract button{flex:1;border-radius:13px;padding:9px;font-size:14.5px;font-weight:700;border:1px solid var(--line)}
+.grq .gract .ok{background:var(--green);color:#fff;border-color:var(--green)}
+.grq .gract .skip{background:transparent;color:var(--soft)}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -2866,6 +2902,87 @@ function stageOf(k){
   const m = ageMonths(k.dob);
   return STAGES.find(s => m >= s.a && m < s.b) || STAGES[STAGES.length-1];
 }
+
+/* ---------------------------------------------------------------
+   שכבת גיל חינוכית
+   ---------------------------------------------------------------
+   שנת הלימודים נפתחת בספטמבר, ולכן עד אוגוסט אנחנו עדיין בשנה
+   שנפתחה בספטמבר שעבר. */
+function schoolYear(d){ d = d || new Date(); return d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1; }
+
+/* ארבעה רבעונים על פני עשרה חודשי לימוד. בחופש הגדול נשארים על
+   יעד סוף השנה ולא מאפסים — ילד לא נסוג באוגוסט. */
+function schoolQuarter(d){
+  const m = (d || new Date()).getMonth();
+  if(m >= 8 && m <= 10) return 1;            /* ספטמבר–נובמבר */
+  if(m === 11 || m <= 1) return 2;            /* דצמבר–פברואר  */
+  if(m === 2  || m === 3) return 3;           /* מרץ–אפריל     */
+  return 4;                                   /* מאי–יוני, וגם החופש */
+}
+const QNAME = ['', 'תחילת השנה', 'אמצע השנה', 'אחרי חנוכה ופסח', 'סוף השנה'];
+
+const GRADES = [
+  {i:3, t:'טרום-טרום חובה', s:'גן של בני שלוש'},
+  {i:4, t:'טרום חובה',      s:'גן של בני ארבע'},
+  {i:5, t:'גן חובה',        s:'השנה שלפני כיתה א׳'},
+  {i:6, t:'כיתה א׳',        s:'לומדים לקרוא ולחשב'},
+  {i:7, t:'כיתה ב׳',        s:''},
+  {i:8, t:'כיתה ג׳ ומעלה',  s:''}
+];
+/* ההערכה: שנתון אחד שלם הוא שכבה אחת, בדיוק כמו ברישום. */
+function gradeGuess(k){
+  const by = +String(k.dob || '').slice(0, 4);
+  if(!by) return null;
+  return schoolYear() - by;
+}
+function gradeIdx(k){
+  const g = (k && k.grade != null) ? +k.grade : gradeGuess(k);
+  if(g == null || isNaN(g)) return null;
+  return Math.max(2, Math.min(8, g));
+}
+function gradeOf(k){
+  const i = gradeIdx(k);
+  if(i == null || i < 3) return null;          /* צעיר מדי לשכבה */
+  return GRADES.find(g => g.i === i) || GRADES[GRADES.length - 1];
+}
+function gradeText(k){ const g = gradeOf(k); return g ? g.t : ''; }
+/* האם צריך לשאול את ההורה. שואלים פעם אחת בלבד, ומי שדילג לא נשאל שוב. */
+function gradeAsk(k){ return !k.gradeAsked && gradeIdx(k) != null && gradeIdx(k) >= 3; }
+
+/* ---------------------------------------------------------------
+   הרמה המצופה
+   ---------------------------------------------------------------
+   [שכבה] → ארבעה רבעונים. null = אין קו בשלב הזה, בכוונה.
+   ראו ההערה בראש הקובץ: קו קיים רק במספרים, כי רק שם יש מקור. */
+const EXPECT = {
+  numbers: {3:[1,1,2,2], 4:[2,2,3,3], 5:[3,3,4,4], 6:[4,5,6,7], 7:[7,7,7,7], 8:[7,7,7,7]},
+  letters: null, objects: null, english: null
+};
+function expectLevel(gid, k){
+  const tbl = EXPECT[gid]; if(!tbl) return null;
+  const i = gradeIdx(k); if(i == null) return null;
+  const row = tbl[i]; if(!row) return null;
+  return row[schoolQuarter() - 1] || null;
+}
+
+/* ---------------------------------------------------------------
+   מה כל רמה שווה במונחי שכבה
+   ---------------------------------------------------------------
+   זה הצד המשמח, והוא קיים בכל המשחקים ולא רק במספרים: הוא לא
+   אומר מה מצפים מהילד אלא מה הוא **הגיע אליו**. ילד בן ארבע שמגיע
+   לרמה 4 באותיות רואה "אמצע כיתה א׳", וזה בדיוק מה שהורה רוצה
+   לראות. באנגלית אין שכבות — המשרד מתחיל אותה בכיתה ג׳ — ולכן שם
+   הסולם מתואר לפי התוכן. */
+const LADDER = {
+  numbers: ['גיל שלוש', 'סוף טרום-טרום חובה', 'סוף טרום חובה', 'סוף גן חובה',
+            'אמצע כיתה א׳', 'כיתה א׳', 'סוף כיתה א׳'],
+  letters: ['גיל הגן', 'גן חובה', 'סוף גן חובה', 'אמצע כיתה א׳',
+            'כיתה א׳', 'סוף כיתה א׳'],
+  objects: ['להכיר', 'לדייק', 'להבחין', 'לקרוא מילה'],
+  english: ['ארבע תמונות', 'לפי נושא', 'מסיחים קרובים', 'שמונה מילים',
+            'מילים שנשמעות דומה', 'קריאה באנגלית']
+};
+function ladderTop(gid){ return (LADDER[gid] || []).length || 4; }
 function domainName(dm, stId){
   const al = DOMAIN_ALIAS[dm.id];
   if(al && al[stId]) return al[stId];
@@ -3159,9 +3276,49 @@ function renderChild(){
 }
 
 /* --- לשונית 2: משחקים --- */
+function gradeCard(k){
+  const i = gradeIdx(k);
+  if(i == null || i < 3) return '';          /* צעיר מדי משכבת גן */
+  const g = gradeOf(k);
+  const min = 3, max = GRADES[GRADES.length-1].i;
+  if(gradeAsk(k)){
+    return '<div class="grq" id="grq">' +
+      '<p class="grt">באיזו שכבה ' + esc(k.name) + ' השנה?</p>' +
+      '<p class="grw">מילאנו לפי תאריך הלידה, כמו ברישום לגנים. אם ' + gx('{נשאר|נשארה}', k) +
+      ' שנה או ' + gx('{הקדים|הקדימה}', k) + ' — גללו.</p>' +
+      '<div class="grpick">' +
+        '<button data-grd="-1" aria-label="שכבה אחת אחורה"' + (i <= min ? ' disabled' : '') + '>‹</button>' +
+        '<span class="grv" id="grv">' + esc(g.t) + (g.s ? '<small>' + esc(g.s) + '</small>' : '') + '</span>' +
+        '<button data-grd="1" aria-label="שכבה אחת קדימה"' + (i >= max ? ' disabled' : '') + '>›</button>' +
+      '</div>' +
+      '<div class="gract"><button class="ok" data-grok="1">זו השכבה</button>' +
+      '<button class="skip" data-grskip="1">לא עכשיו</button></div></div>';
+  }
+  return '<div class="grq"><div class="grpick">' +
+    '<button data-grd="-1" aria-label="שכבה אחת אחורה"' + (i <= min ? ' disabled' : '') + '>‹</button>' +
+    '<span class="grv" id="grv">' + esc(g.t) + '<small>' + esc(QNAME[schoolQuarter()]) + '</small></span>' +
+    '<button data-grd="1" aria-label="שכבה אחת קדימה"' + (i >= max ? ' disabled' : '') + '>›</button>' +
+    '</div></div>';
+}
+function bindGrade(k){
+  const box = $('#ch-body');
+  box.querySelectorAll('[data-grd]').forEach(b => b.onclick = () => {
+    const cur = gradeIdx(k);
+    k.grade = Math.max(3, Math.min(GRADES[GRADES.length-1].i, cur + (+b.dataset.grd)));
+    save(); renderChild();
+  });
+  box.querySelectorAll('[data-grok]').forEach(b => b.onclick = () => {
+    if(k.grade == null) k.grade = gradeIdx(k);      /* מקבעים את ההערכה */
+    k.gradeAsked = 1; save(); renderChild();
+  });
+  box.querySelectorAll('[data-grskip]').forEach(b => b.onclick = () => {
+    k.gradeAsked = 1; save(); renderChild();        /* בלי לקבוע שכבה */
+  });
+}
+
 function renderTabGames(){
   const k = CUR;
-  let html = '';
+  let html = gradeCard(k);
   GAMES.forEach(g => {
     const on   = gameEnabled(k, g);
     const auto = ageMonths(k.dob) >= g.from;
@@ -3178,6 +3335,8 @@ function renderTabGames(){
         ${o.sub  ? `<p>${esc(o.sub)}</p>` : ''}
         ${o.trend ? `<p class="up">${esc(o.trend)}</p>` : ''}
         ${o.skill ? `<p>${esc(o.skill)}</p>` : ''}
+        ${o.pace ? `<p class="pace">${o.pace}</p>` : ''}
+        ${o.quit ? `<p class="calm">${o.quit}</p>` : ''}
         ${o.age  ? `<p class="calm">${esc(o.age)}</p>` : ''}
         ${o.act  ? `<div class="todo"><span>${esc(o.act.t)}</span>${esc(o.act.d)}</div>` : ''}
       </div>`;
@@ -3192,6 +3351,7 @@ function renderTabGames(){
         <button class="tgl ${on?'on':''}" data-gt="${g.id}" role="switch" aria-checked="${on}"><i></i></button>
       </div>
       ${body}
+      ${has ? lvChart(g.id, st, k) : ''}
       ${has ? `<button class="datalink" data-open="${g.id}">כל המספרים והאותיות, אחד אחד</button>
                <div class="databox" id="dbx-${g.id}" hidden>${gameInsight(g, st)}</div>` : ''}
     </div>`;
@@ -3199,6 +3359,7 @@ function renderTabGames(){
   $('#ch-body').innerHTML = html +
     `<div class="note">מה שכתוב כאן נבנה ממה שהילד באמת עשה במשחק. פריט שנבדק פחות מ-${SURE} פעמים לא נכנס למסקנה.</div>`;
 
+  bindGrade(k);
   $('#ch-body').querySelectorAll('[data-gt]').forEach(b => b.onclick = () => {
     const g = GAMES.find(x => x.id === b.dataset.gt);
     setGameEnabled(k, g.id, !gameEnabled(k, g));
@@ -3791,6 +3952,22 @@ function mergeGames(x, y){
         b[sk] = mergeCounters((ps.bySkill||{})[sk], (qs.bySkill||{})[sk]);
       });
       s.stats.bySkill = b;
+    }
+    /* החשד מנטישה והקצב — שני דברים חדשים שאי אפשר לאבד במיזוג,
+       כמו שקרה פעם ל-bySkill. */
+    if(ps.quit || qs.quit){
+      const qt = Object.assign({}, ps.quit || {});
+      Object.keys(qs.quit || {}).forEach(kk => { qt[kk] = Math.max(qt[kk]|0, qs.quit[kk]|0); });
+      s.stats.quit = qt;
+    }
+    if(ps.pace || qs.pace){
+      const pc = {};
+      Object.keys(Object.assign({}, ps.pace || {}, qs.pace || {})).forEach(kk => {
+        const u = (ps.pace||{})[kk] || {n:0,t:0}, v = (qs.pace||{})[kk] || {n:0,t:0};
+        /* שני מכשירים = שני מדגמים נפרדים, ולכן מחברים ולא לוקחים מקסימום */
+        pc[kk] = {n: (u.n|0) + (v.n|0), t: (+u.t || 0) + (+v.t || 0)};
+      });
+      s.stats.pace = pc;
     }
     if(ps.conf || qs.conf){
       const cf = Object.assign({}, ps.conf || {});
@@ -4722,9 +4899,44 @@ function trendSnap(k, gid, st){
   while(arr.length > TREND_KEEP) arr.shift();
 }
 
+/* ---------------------------------------------------------------
+   תצלום חודשי של הרמה
+   ---------------------------------------------------------------
+   האפליקציה שמרה עד היום רק את הרמה **הנוכחית**, ולכן לא היה אפשר
+   לספר את הסיפור שההורה רוצה לשמוע: התחיל כאן, הגיע לכאן. תצלום
+   אחד לחודש מספיק — התקדמות של רמה היא עניין של שבועות, לא של
+   שעות — ושנתיים של היסטוריה נשמרות בפחות מ-300 בתים.
+
+   החציון ולא הממוצע ולא הגבוהה: משחקון אחד קל שנפרץ לא אמור להזיז
+   את כל התמונה, ומשחקון אחד שנזנח לא אמור להוריד אותה. */
+const LVH_KEEP = 24;
+function monthKey(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function medOf(a){
+  if(!a.length) return null;
+  const t = a.slice().sort((x,y)=>x-y);
+  return t.length % 2 ? t[(t.length-1)/2] : (t[t.length/2 - 1] + t[t.length/2]) / 2;
+}
+function curLevel(gid, st){
+  const rows = mgLevels(gid, st);
+  if(!rows.length) return null;
+  return medOf(rows.map(r => r.lv));
+}
+function lvSnap(k, gid, st){
+  const lv = curLevel(gid, st); if(lv == null) return;
+  if(!k.lvh) k.lvh = {};
+  const arr = k.lvh[gid] || (k.lvh[gid] = []);
+  const m = monthKey();
+  /* החודש הנוכחי מתעדכן, ונשמרת הרמה הגבוהה שהושגה בו — אחרת
+     ירידה זמנית בסוף החודש מוחקת את מה שהילד הגיע אליו. */
+  if(arr.length && arr[arr.length-1].m === m) arr[arr.length-1].l = Math.max(arr[arr.length-1].l, lv);
+  else arr.push({m:m, l:lv});
+  while(arr.length > LVH_KEEP) arr.shift();
+}
+
 function setGameState(k, id, st){
   if(!k.games) k.games = {};
   try{ trendSnap(k, id, st); }catch(e){}
+  try{ lvSnap(k, id, st); }catch(e){}
   stampHist(st);
   /* הניטור נגזר מההפרש מול המצב הקודם, ולכן חייב לרוץ לפני הדריסה */
   try{ evFromGame(k, id, k.games[id], st); }catch(e){}
@@ -5009,6 +5221,67 @@ function weeksAgoText(d){
   return w === 1 ? 'שבוע' : w === 2 ? 'שבועיים' : w + ' שבועות';
 }
 
+/* ---------------- קצב: מה יושב, ומה עוד דורש מאמץ ------------- */
+const PACE_MIN_N = 3;      /* מדגמים לפריט */
+const PACE_MIN_IT = 5;     /* פריטים במיומנות, אחרת אין ממה לגזור חציון */
+const PACE_SLOW = 1.7;     /* פי כמה מהחציון נחשב "עוצר לחשוב" */
+const PACE_REST = 3;       /* כמה פריטים "רגילים" צריך כדי שתהיה השוואה */
+function paceLine(st, k){
+  const pc = (st && st.stats && st.stats.pace) || null;
+  if(!pc) return '';
+  const bySkill = {};
+  Object.keys(pc).forEach(key => {
+    const i = key.indexOf('|'); if(i < 1) return;
+    const sk = key.slice(0, i), it = key.slice(i+1), v = pc[key];
+    if(!v || (v.n|0) < PACE_MIN_N) return;
+    (bySkill[sk] || (bySkill[sk] = [])).push({it: it, avg: v.t / v.n, n: v.n});
+  });
+  let best = null;
+  Object.keys(bySkill).forEach(sk => {
+    const rows = bySkill[sk];
+    if(rows.length < PACE_MIN_IT) return;
+    const med = medOf(rows.map(r => r.avg));
+    if(!med) return;
+    const slow = rows.filter(r => r.avg >= PACE_SLOW * med).sort((a,b) => b.avg - a.avg);
+    /* "מהיר" אינו סף מול החציון אלא פשוט המהירים ביותר. ילד שיודע
+       היטב עשרה פריטים מייצר אשכול צפוף סביב החציון, ושום דבר בו
+       לא עובר סף של 0.8× — כך שהשורה הייתה נעלמת בדיוק במקרה
+       שהיא נועדה לו. */
+    const rest = rows.filter(r => r.avg < PACE_SLOW * med).sort((a,b) => a.avg - b.avg);
+    /* בלי צד מהיר אין מול מה להשוות: "הכול לוקח זמן" זה לא ממצא
+       אלא ילד שרק התחיל. */
+    if(!slow.length || rest.length < PACE_REST) return;
+    const fast = rest;
+    const score = slow[0].avg / med;
+    if(!best || score > best.score) best = {sk: sk, slow: slow.slice(0,3), fast: fast.slice(0,3), med: med, score: score};
+  });
+  if(!best) return '';
+  const f = gx('{פותר|פותרת}', k), stp = gx('{עוצר|עוצרת}', k);
+  return 'את ' + esc(heList(best.fast.map(r=>r.it))) + ' ' + esc(k.name) + ' ' + f +
+         ' מיד. על ' + esc(heList(best.slow.map(r=>r.it))) + ' ' + stp +
+         ' לחשוב — בערך פי ' + (best.score < 2.2 ? 'שניים' : 'שלושה') +
+         ' יותר זמן, גם כשהתשובה נכונה. זה לא פער בידע אלא בשליפה, והוא נסגר בתרגול קצר וחוזר.';
+}
+
+/* ---------------- נטישה: יצא מהשאלה בלי לענות ---------------- */
+function quitLine(st, k){
+  const q = (st && st.stats && st.stats.quit) || null;
+  if(!q) return '';
+  const rows = Object.keys(q).map(key => ({k: key, n: q[key]|0}))
+                             .filter(r => r.n >= 2)
+                             .sort((a,b) => b.n - a.n);
+  if(!rows.length) return '';
+  const top = rows[0], more = rows.slice(1, 3);
+  const out = gx('{יצא|יצאה}', k);
+  let t = 'על ' + esc(top.k) + ' ' + esc(k.name) + ' ' + out + ' מהמשחק באמצע השאלה ' +
+          timesHe(top.n) + ', בלי לענות.';
+  if(more.length) t += ' זה קרה גם על ' + esc(heList(more.map(r => r.k))) + '.';
+  return t + ' יציאה כזו היא לא תשובה שגויה, אבל היא בדרך כלל סימן שהשאלה הייתה גדולה מדי באותו רגע.';
+}
+const TIMES_HE = {2:'פעמיים', 3:'שלוש פעמים', 4:'ארבע פעמים', 5:'חמש פעמים',
+                  6:'שש פעמים', 7:'שבע פעמים', 8:'שמונה פעמים'};
+function timesHe(n){ return TIMES_HE[n] || (n + ' פעמים'); }
+
 /* ---------------- הרכבת המסקנה ---------------- */
 function readOut(g, st, k){
   if(!st || !st.stats) return {empty:'עוד לא שיחקתם, אז אין לי על מה לספר.'};
@@ -5033,6 +5306,8 @@ function readOut(g, st, k){
     if(!o.head) o.head = 'הדבר האחד שכדאי לחזק עכשיו: ' + sk.k + '.';
   }
   o.trend = tr;
+  try{ o.pace = paceLine(st, k); }catch(e){}
+  try{ o.quit = quitLine(st, k); }catch(e){}
   o.total = total;
   return o;
 }
@@ -5105,6 +5380,107 @@ function histChart(st){
 }
 
 /* ---------------------------------------------------------------
+   מטר הרמות: איפה הילד, מול מה שמצפים, ומאיפה התחיל
+   ---------------------------------------------------------------
+   שלוש שורות טקסט מתחת לגרף, וכל אחת עונה על שאלה אחרת:
+     • מה הרמה הזאת שווה — "רמה 5, אמצע כיתה א׳". זו השורה שנותנת
+       את הרגע המשמח, וילד בן ארבע ברמה 5 מקבל אותה בדיוק כמו ילד
+       בכיתה א׳.
+     • מול מה שמצפים — רק במספרים, ורק אם ידועה השכבה.
+     • מאיפה התחיל — מהתצלום החודשי.
+
+   ובמכוון: אין כאן את המילה "מתחת". ילד שעוד לא הגיע ליעד מקבל
+   "היעד לרבעון הזה הוא רמה 4, ונועה ברמה 3 — רמה אחת" ולא ציון
+   שלילי. ההורה צריך לדעת איפה לעזור, לא להיבהל.
+   --------------------------------------------------------------- */
+function heNum(n){ return String(n).replace(/\.5$/, '.5'); }
+function lvChart(gid, st, k){
+  const cur = curLevel(gid, st);
+  if(cur == null) return '';
+  const N = ladderTop(gid);
+  const lad = LADDER[gid] || [];
+  const tgt = expectLevel(gid, k);
+  const hist = ((k && k.lvh) || {})[gid] || [];
+  const start = hist.length > 1 ? hist[0] : null;
+
+  /* --- גיאומטריה. עברית: המקטעה הראשונה בימין. --- */
+  const W = 300, TOP = 13, TH = 16, GAP = 2;
+  const sw = (W - GAP * (N - 1)) / N;
+  const xOf = i => W - (i + 1) * sw - i * GAP;       /* i = 0..N-1 */
+  let segs = '', marks = '';
+  for(let i = 0; i < N; i++){
+    const lv = i + 1, on = lv <= Math.round(cur), x = xOf(i);
+    segs += '<rect class="lvseg' + (on ? ' on' : '') + '" x="' + x.toFixed(1) + '" y="' + TOP +
+            '" width="' + sw.toFixed(1) + '" height="' + TH + '" rx="4"></rect>' +
+            '<text class="lvnum' + (on ? ' on' : '') + '" x="' + (x + sw/2).toFixed(1) +
+            '" y="' + (TOP + TH/2 + 3.2) + '">' + lv + '</text>';
+  }
+  /* הסף: קו מקווקו בצבע טקסט עם תווית ישירה — לא גוון שני, כי שתי
+     דרגות בהירות של אותו ירוק לא נבדלות זו מזו בעין. */
+  if(tgt){
+    /* הקו יושב על **הגבול** של מקטעת היעד ולא במרכזה: "להגיע עד
+       כאן". באמצע המקטעה הוא חוצה את הספרה ומסתיר אותה, וכשהילד
+       כבר מעל היעד הוא גם נופל על ירוק. טבעת בצבע הרקע מתחתיו
+       מפרידה אותו משני המצבים. */
+    const x = xOf(tgt - 1);
+    const y1 = TOP - 4, y2 = TOP + TH + 4;
+    marks += '<line class="lvhalo" x1="' + x.toFixed(1) + '" y1="' + y1 +
+             '" x2="' + x.toFixed(1) + '" y2="' + y2 + '"></line>' +
+             '<line class="lvtgt" x1="' + x.toFixed(1) + '" y1="' + y1 +
+             '" x2="' + x.toFixed(1) + '" y2="' + y2 + '"></line>' +
+             '<text class="lvtl" x="' + Math.min(W - 22, Math.max(22, x)).toFixed(1) + '" y="7">היעד עכשיו</text>';
+  }
+  const grew = start != null && Math.round(start.l) < Math.round(cur);
+  if(grew){
+    const x = xOf(Math.round(start.l) - 1) + sw / 2;
+    marks += '<line class="lvst" x1="' + x.toFixed(1) + '" y1="' + (TOP + TH + 1) +
+             '" x2="' + x.toFixed(1) + '" y2="' + (TOP + TH + 7) + '"></line>' +
+             '<text class="lvtl" x="' + Math.min(W - 18, Math.max(18, x)).toFixed(1) +
+             '" y="' + (TOP + TH + 16) + '">התחלנו</text>';
+  }
+
+  /* --- הטקסט --- */
+  const what = lad[Math.round(cur) - 1] || '';
+  let say = '', grewT = '', src = '';
+  const nm = k ? k.name : '';
+  if(tgt){
+    const g = gradeOf(k), gt = g ? g.t : '';
+    if(Math.round(cur) > tgt)
+      say = '<b>מעל מה שמצפים</b> ב' + esc(gt) + ' בתקופה הזאת — היעד עכשיו הוא רמה ' + tgt +
+            ', ו' + esc(nm) + ' ברמה ' + heNum(cur) + '.';
+    else if(Math.round(cur) === tgt)
+      say = '<b>בדיוק מה שמצפים</b> ב' + esc(gt) + ' בתקופה הזאת.';
+    else
+      say = 'היעד לתקופה הזאת ב' + esc(gt) + ' הוא רמה ' + tgt + ', ו' + esc(nm) +
+            ' ברמה ' + heNum(cur) + ' — ' + (tgt - Math.round(cur) === 1 ? 'רמה אחת' : (tgt - Math.round(cur)) + ' רמות') + '.';
+    src = 'היעדים לפי תוכנית הליבה במתמטיקה של משרד החינוך. החלוקה לאורך השנה היא הערכה שלנו.';
+  }else if(what){
+    say = 'זו הרמה של <b>' + esc(what) + '</b>.';
+  }
+  if(grew) grewT = 'התחלנו ברמה ' + heNum(start.l) + ' ב' + monthName(start.m) +
+                   ', עכשיו רמה ' + heNum(cur) + '.';
+
+  const rows = mgLevels(gid, st);
+  const lo = Math.min.apply(null, rows.map(r=>r.lv)), hi = Math.max.apply(null, rows.map(r=>r.lv));
+  const spread = (hi > lo) ? ' · בין ' + lo + ' ל-' + hi + ' לפי המשחקון' : '';
+
+  return '<div class="lvm">' +
+    '<div class="lvhead"><span class="lvnow">רמה ' + heNum(cur) + '</span>' +
+    (what ? '<span class="lvwhat">' + esc(what) + spread + '</span>' : (spread ? '<span class="lvwhat">' + spread.replace(' · ','') + '</span>' : '')) +
+    '</div>' +
+    '<svg viewBox="0 0 ' + W + ' ' + (TOP + TH + (grew ? 20 : 4)) + '" role="img" aria-label="רמה ' +
+      heNum(cur) + ' מתוך ' + N + (tgt ? ', היעד ' + tgt : '') + '">' +
+      segs + marks +
+    '</svg>' +
+    (say  ? '<p class="lvsay">'  + say  + '</p>' : '') +
+    (grewT ? '<p class="lvgrew">' + esc(grewT) + '</p>' : '') +
+    (src  ? '<p class="lvsrc">'  + esc(src) + '</p>' : '') +
+  '</div>';
+}
+const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+function monthName(m){ const p = String(m).split('-'); return MONTHS_HE[(+p[1] || 1) - 1] || m; }
+
+/* ---------------------------------------------------------------
    רמות לפי משחקון
    ---------------------------------------------------------------
    אין יותר רמה אחת לכל משחק. לכל משחקון רמה משלו, שנקבעת לבד
@@ -5117,15 +5493,29 @@ const MG_NAMES = {
   letters: {snd:'חרוזים וצלילים', trc:'מסלול האותיות', wrd:'בונים מילה',
             typ:'מקלידים', nkd:'ניקוד', read:'קוראים מילה'},
   english: {pick:'איפה זה?', say:'איזו מילה?', lpick:'איפה האות?', write:'לכתוב אותיות'},
-  objects: {}   /* "מה זה?" עדיין על רמה אחת גלובלית, בלי רמה למשחקון */
+  /* ב"מה זה?" הדרגה נשמרת לכל נושא בנפרד, והמפתח הוא 'lv'+מספר
+     הנושא. בלי התרגום הזה ההורה היה רואה "lv3" כשם משחקון. */
+  objects: null
 };
-const MLV_MAXP = 7;   /* המספרים הגיעו לשבע רמות; השאר עדיין בארבע */
+/* שמות הנושאים ב"מה זה?", בסדר המספור של המשחק */
+const OBJ_TOPICS = {1:'לקטנים', 2:'צורות', 3:'מזג האוויר', 4:'הגוף שלי', 5:'דגלים', 6:'סמלי רכב'};
+function mgName(gid, id){
+  const t = MG_NAMES[gid];
+  if(t) return t[id] || id;
+  if(gid === 'objects'){
+    const n = /^lv(\d+)$/.exec(id);
+    if(n){ const d = (typeof OBJ_TOPICS !== 'undefined' && OBJ_TOPICS[+n[1]]) || null; return d || ('נושא ' + n[1]); }
+  }
+  return id;
+}
+/* תקרת הרמות אינה זהה בכל משחק, ולכן אין מספר אחד */
+const MLV_CAP = {numbers:7, letters:6, english:6, objects:4};
 function mgLevels(gid, st){
   const m = (st && st.m) || {};
-  const names = MG_NAMES[gid] || {};
+  const cap = MLV_CAP[gid] || 7;
   return Object.keys(m)
     .filter(id => m[id] && m[id].lv)
-    .map(id => ({id, name: names[id] || id, lv: Math.max(1, Math.min(MLV_MAXP, m[id].lv|0)),
+    .map(id => ({id, name: mgName(gid, id), lv: Math.max(1, Math.min(cap, m[id].lv|0)),
                  at: m[id].at || 0}))
     .sort((a,b) => b.lv - a.lv);
 }

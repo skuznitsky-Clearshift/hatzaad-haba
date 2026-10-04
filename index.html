@@ -367,11 +367,24 @@ select.input{width:100%;padding:12px;border-radius:14px;border:1.5px solid var(-
 .lvm .lvnum.on{fill:#fff}
 .lvm .lvhalo{stroke:var(--surface);stroke-width:5;stroke-linecap:round}
 .lvm .lvtgt{stroke:var(--ink);stroke-width:2;stroke-dasharray:3 2.5;opacity:.8}
-.lvm .lvtl{font-size:8.5px;fill:var(--soft);text-anchor:middle;font-weight:700}
-.lvm .lvst{stroke:var(--faint);stroke-width:2}
+
+.lvm .lvstc{fill:none;stroke:var(--ink);stroke-width:1.6;opacity:.55}
 .lvm .lvsay{font-size:15px;line-height:1.55;margin:10px 0 0;color:var(--ink)}
 .lvm .lvsay b{color:var(--green-d)}
-.lvm .lvgrew{font-size:14.5px;line-height:1.55;margin:6px 0 0;color:var(--soft)}
+/* המקרא: שורה לכל סימן, בגודל שאפשר לקרוא. התוויות ישבו קודם
+   בתוך ה-SVG באות 8.5px ודרסו זו את זו. */
+.lvm .lvleg{margin-top:10px;display:flex;flex-direction:column;gap:4px}
+.lvm .lvr{display:flex;align-items:baseline;gap:7px;font-size:14.5px;line-height:1.5}
+.lvm .lvr i{font-style:normal;width:13px;flex:none;text-align:center;font-size:13px;color:var(--soft)}
+.lvm .lvr .lvrl{color:var(--soft);flex:none}
+.lvm .lvr .lvrv{color:var(--ink);font-weight:700;min-width:0}
+.lvm .lvnowr i{color:var(--green);font-size:15px}
+.lvm .lvnowr .lvrv{color:var(--green-d)}
+.lvm .lvstr .lvrv{font-weight:600;color:var(--soft)}
+/* משחק בלי ציפייה ובלי תנועה: שורה אחת במקום גרף ריק */
+.lvm.lvflat{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:14px}
+.lvm.lvflat .lvnow{font-size:21px}
+.lvm.lvflat .lvnow em{font-size:16px}
 .verdict .pace{color:var(--ink)}
 .lvm .lvsrc{font-size:12.5px;line-height:1.5;margin:8px 0 0;color:var(--faint)}
 /* ---- שלוש האמירות החזקות, בראש הלשונית ---- */
@@ -3358,8 +3371,10 @@ function topFindings(k){
     /* בלי "הוא/היא" כאן: הנושא הוא שם המיומנות ולא הילד, ו"חיסור"
        זכר בעוד ש"ספירה" נקבה — כל ניסוח עם אוגד היה שגוי בחצי
        מהמקרים. הצורה הזאת נכונה לכולן וגם קצרה יותר. */
+    /* "30% מתוך 20" הוא ניסוח של מי שמסתכל בנתונים. הורה קורא
+       "6 מתוך 20" מהר יותר ובלי לחשב. */
     if(sk) out.push({w: 4 + (1 - sk.s), t: nm + ': הכי קשה כרגע — ' + sk.k +
-      ', ' + Math.round(sk.s * 100) + '% מתוך ' + sk.n + '.'});
+      ', ' + Math.round(sk.s * sk.n) + ' מתוך ' + sk.n + '.'});
 
     /* 4. נטישה — סימן חזק, ולכן נכנס רק מ-3 פעמים */
     const q = (st.stats.quit) || {};
@@ -3384,9 +3399,19 @@ function findingsCard(k){
     '<div class="meta">מתוך כל המשחקים יחד. הפירוט לכל משחק למטה.</div></div>';
 }
 
+/* הקישור לפירוט אמר "כל המספרים והאותיות" גם מתחת לאנגלית
+   ול"מה זה?", שאין בהם לא מספרים ולא אותיות. */
+const DETAIL_LINK = {
+  numbers: 'כל המספרים, אחד אחד',
+  letters: 'כל האותיות, אחת אחת',
+  english: 'כל המילים באנגלית, אחת אחת',
+  objects: 'כל התמונות, אחת אחת'
+};
 function renderTabGames(){
   const k = CUR;
-  let html = gradeCard(k) + findingsCard(k);
+  /* הסיכום לפני השאלה: הורה שפותח את המסך צריך לפגוש קודם את
+     התשובה ורק אחר כך בקשה לדייק את שכבת הגן. */
+  let html = findingsCard(k) + gradeCard(k);
   GAMES.forEach(g => {
     const on   = gameEnabled(k, g);
     const auto = ageMonths(k.dob) >= g.from;
@@ -3420,7 +3445,7 @@ function renderTabGames(){
       </div>
       ${body}
       ${has ? lvChart(g.id, st, k) : ''}
-      ${has ? `<button class="datalink" data-open="${g.id}">כל המספרים והאותיות, אחד אחד</button>
+      ${has ? `<button class="datalink" data-open="${g.id}">${DETAIL_LINK[g.id] || 'כל הפריטים, אחד אחד'}</button>
                <div class="databox" id="dbx-${g.id}" hidden>${gameInsight(g, st)}</div>` : ''}
     </div>`;
   });
@@ -3436,7 +3461,7 @@ function renderTabGames(){
   $('#ch-body').querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
     const box = $('#dbx-' + b.dataset.open);
     box.hidden = !box.hidden;
-    b.textContent = box.hidden ? 'כל המספרים והאותיות, אחד אחד' : 'לסגור את הפירוט';
+    b.textContent = box.hidden ? (DETAIL_LINK[b.dataset.open] || 'כל הפריטים, אחד אחד') : 'לסגור את הפירוט';
   });
 }
 
@@ -5341,10 +5366,13 @@ function quitLine(st, k){
   if(!rows.length) return '';
   const top = rows[0], more = rows.slice(1, 3);
   const out = gx('{יצא|יצאה}', k);
+  /* קודם נגררו כאן עוד שתי שורות הסבר על מה זו יציאה באמצע שאלה.
+     הורה שקורא ארבע שורות על נושא אחד מפסיק לקרוא; מה שחשוב הוא
+     המשפט הראשון, וההסבר מתכווץ לחצי משפט. */
   let t = 'על ' + esc(top.k) + ' ' + esc(k.name) + ' ' + out + ' מהמשחק באמצע השאלה ' +
-          timesHe(top.n) + ', בלי לענות.';
-  if(more.length) t += ' זה קרה גם על ' + esc(heList(more.map(r => r.k))) + '.';
-  return t + ' יציאה כזו היא לא תשובה שגויה, אבל היא בדרך כלל סימן שהשאלה הייתה גדולה מדי באותו רגע.';
+          timesHe(top.n) + ', בלי לענות';
+  if(more.length) t += ' (גם על ' + esc(heList(more.map(r => r.k))) + ')';
+  return t + gx(' — בדרך כלל סימן שהשאלה גדולה {עליו|עליה} כרגע.', k);
 }
 const TIMES_HE = {2:'פעמיים', 3:'שלוש פעמים', 4:'ארבע פעמים', 5:'חמש פעמים',
                   6:'שש פעמים', 7:'שבע פעמים', 8:'שמונה פעמים'};
@@ -5366,12 +5394,18 @@ function readOut(g, st, k){
 
   const o = pat ? Object.assign({}, pat) : {id:'skill', head:'', sub:'', age:'', act:null};
   if(sk){
-    o.skill = sk.k + ' הוא הדבר הכי קשה כרגע — מתוך ' + sk.n + ' תרגילים ' +
-              gx('{פתר|פתרה}', k) + ' ' + Math.round(sk.s * sk.n) + '. ' +
+    /* בלי אוגד: "ספירה הוא הדבר הכי קשה" היה שגוי בכל מיומנות
+       שהיא ממין נקבה, ו"תרגילים" לא מתאים לכתיבת אות. הצורה
+       הזאת נכונה לכל המיומנויות בשני המשחקים. */
+    o.skill = 'הכי קשה כרגע: ' + sk.k + ' — ' + gx('{הצליח|הצליחה}', k) + ' ב-' +
+              Math.round(sk.s * sk.n) + ' מתוך ' + sk.n + '. ' +
               sk.bestK + ' כבר במקום טוב.';
     if(!o.act && SKILL_ACT[sk.k]) o.act = {t:'הערב, שלוש דקות', d:SKILL_ACT[sk.k]};
     if(o.act && SKILL_ACT[sk.k] && o.id === 'skill') o.act = {t:'הערב, שלוש דקות', d:SKILL_ACT[sk.k]};
-    if(!o.head) o.head = 'הדבר האחד שכדאי לחזק עכשיו: ' + sk.k + '.';
+    /* קודם הייתה כאן גם כותרת "הדבר האחד שכדאי לחזק עכשיו: חיסור."
+       מעל המשפט "חיסור הוא הדבר הכי קשה כרגע..." — אותו מידע
+       פעמיים בתוך אותו כרטיס, ובפעם שלישית בכרטיס העליון. נשארת
+       השורה המלאה, שגם אומרת במה הילד כן חזק. */
   }
   o.trend = tr;
   try{ o.pace = paceLine(st, k); }catch(e){}
@@ -5464,6 +5498,32 @@ function histChart(st){
 function heNum(n){ return String(n).replace(/\.5$/, '.5'); }
 /* באיזה נושא הרמה. בלי זה "רמה 5" מרחף בלי הקשר. */
 const LV_SUBJ = {numbers:'במספרים', letters:'באותיות', english:'באנגלית', objects:'בזיהוי'};
+/* ---------------------------------------------------------------
+   למה הגרף הזה נראה ככה
+   ---------------------------------------------------------------
+   הגרסה הקודמת הייתה שבעה ריבועים ממוספרים ושתי תוויות זעירות
+   ("הגיל שלה", "התחלנו") דחוקות על אותו קו. הורה שהסתכל עליה לא
+   ידע מה שווה "רמה 4", איפה בדיוק יושב הגיל, ולמה שתי מילים
+   באות 8px מרחפות מעל הפס. אז:
+
+   · מה שכתוב על הפס יצא מהפס. שלוש השורות שמתחתיו — עכשיו,
+     הגיל, ההתחלה — הן טקסט בגודל קריא, כל אחת עם הסימן שלה,
+     ולידה שם השלב מהסולם: "רמה 4 · סוף גן חובה". המספר לבדו
+     הוא סולם פנימי; השם הוא מה שהורה באמת מבין.
+   · הגרף מצויר רק כשיש לו מה להגיד — כלומר כשיש ציפייה להשוות
+     אליה או שיש תנועה מההתחלה. באנגלית וב"מה זה?", שבהם אין
+     ציפייה ואין היסטוריה, נשארת שורה אחת במקום כרטיס גרף ריק.
+   · "בין 1 ל-6 לפי המשחקון" ליד המספר 4 סתר את עצמו. הפיזור
+     ירד לשורה נפרדת ובמילים.
+   --------------------------------------------------------------- */
+function lvRow(cls, mark, lab, lv, gid){
+  const lad = LADDER[gid] || [];
+  const nameOf = l => lad[Math.round(l) - 1] || '';
+  const nm = nameOf(lv);
+  return '<div class="lvr ' + cls + '"><i>' + mark + '</i>' +
+         '<span class="lvrl">' + lab + '</span>' +
+         '<span class="lvrv">רמה ' + heNum(lv) + (nm ? ' · ' + esc(nm) : '') + '</span></div>';
+}
 function lvChart(gid, st, k){
   const cur = curLevel(gid, st);
   if(cur == null) return '';
@@ -5472,9 +5532,17 @@ function lvChart(gid, st, k){
   const tgt = expectLevel(gid, k);
   const hist = ((k && k.lvh) || {})[gid] || [];
   const start = hist.length > 1 ? hist[0] : null;
+  const grew = start != null && Math.round(start.l) < Math.round(cur);
+  const what = lad[Math.round(cur) - 1] || '';
 
-  /* --- גיאומטריה. עברית: המקטעה הראשונה בימין. --- */
-  const W = 300, TOP = 13, TH = 16, GAP = 2;
+  /* בלי ציפייה ובלי תנועה אין מה להשוות, ופס ריק הוא רעש. */
+  if(!tgt && !grew)
+    return '<div class="lvm lvflat"><span class="lvnow">רמה ' + heNum(cur) +
+           (LV_SUBJ[gid] ? ' <em>' + LV_SUBJ[gid] + '</em>' : '') + '</span>' +
+           (what ? '<span class="lvwhat">' + esc(what) + '</span>' : '') + '</div>';
+
+  /* --- הפס. עברית: המקטעה הראשונה בימין. --- */
+  const W = 300, TOP = 2, TH = 18, GAP = 2;
   const sw = (W - GAP * (N - 1)) / N;
   const xOf = i => W - (i + 1) * sw - i * GAP;       /* i = 0..N-1 */
   let segs = '', marks = '';
@@ -5483,42 +5551,36 @@ function lvChart(gid, st, k){
     segs += '<rect class="lvseg' + (on ? ' on' : '') + '" x="' + x.toFixed(1) + '" y="' + TOP +
             '" width="' + sw.toFixed(1) + '" height="' + TH + '" rx="4"></rect>' +
             '<text class="lvnum' + (on ? ' on' : '') + '" x="' + (x + sw/2).toFixed(1) +
-            '" y="' + (TOP + TH/2 + 3.2) + '">' + lv + '</text>';
+            '" y="' + (TOP + TH/2 + 3.6) + '">' + lv + '</text>';
   }
-  /* הסף: קו מקווקו בצבע טקסט עם תווית ישירה — לא גוון שני, כי שתי
-     דרגות בהירות של אותו ירוק לא נבדלות זו מזו בעין. */
+  /* נקודת ההתחלה יושבת **מתחת** לפס ולא בתוכו: בתוך המקטעה היא
+     הסתירה את המספר שעליו היא עומדת. */
+  if(grew){
+    const x = xOf(Math.round(start.l) - 1) + sw / 2;
+    marks += '<circle class="lvstc" cx="' + x.toFixed(1) + '" cy="' + (TOP + TH + 4.5) + '" r="3"></circle>';
+  }
+  /* הציפייה: קו מקווקו על **הגבול** של המקטעה — "להגיע עד כאן".
+     באמצע המקטעה הוא חוצה את הספרה; טבעת ברקע מפרידה אותו מהירוק. */
   if(tgt){
-    /* הקו יושב על **הגבול** של מקטעת היעד ולא במרכזה: "להגיע עד
-       כאן". באמצע המקטעה הוא חוצה את הספרה ומסתיר אותה, וכשהילד
-       כבר מעל היעד הוא גם נופל על ירוק. טבעת בצבע הרקע מתחתיו
-       מפרידה אותו משני המצבים. */
-    const x = xOf(tgt - 1);
-    const y1 = TOP - 4, y2 = TOP + TH + 4;
+    const x = xOf(tgt - 1), y1 = TOP - 5, y2 = TOP + TH + 5;
     marks += '<line class="lvhalo" x1="' + x.toFixed(1) + '" y1="' + y1 +
              '" x2="' + x.toFixed(1) + '" y2="' + y2 + '"></line>' +
              '<line class="lvtgt" x1="' + x.toFixed(1) + '" y1="' + y1 +
-             '" x2="' + x.toFixed(1) + '" y2="' + y2 + '"></line>' +
-             '<text class="lvtl" x="' + Math.min(W - 24, Math.max(24, x)).toFixed(1) +
-             '" y="7">' + gx('הגיל {שלו|שלה}', k) + '</text>';
-  }
-  const grew = start != null && Math.round(start.l) < Math.round(cur);
-  if(grew){
-    const x = xOf(Math.round(start.l) - 1) + sw / 2;
-    marks += '<line class="lvst" x1="' + x.toFixed(1) + '" y1="' + (TOP + TH + 1) +
-             '" x2="' + x.toFixed(1) + '" y2="' + (TOP + TH + 7) + '"></line>' +
-             '<text class="lvtl" x="' + Math.min(W - 18, Math.max(18, x)).toFixed(1) +
-             '" y="' + (TOP + TH + 16) + '">התחלנו</text>';
+             '" x2="' + x.toFixed(1) + '" y2="' + y2 + '"></line>';
   }
 
-  /* --- הטקסט --- */
-  const what = lad[Math.round(cur) - 1] || '';
-  let say = '', grewT = '', src = '';
+  /* --- המקרא, בגודל שאפשר לקרוא --- */
+  let legend = lvRow('lvnowr', '●', (k && k.name ? esc(k.name) + ' עכשיו' : 'עכשיו'), cur, gid);
+  if(tgt)  legend += lvRow('lvtgtr', '┊', gx('הגיל {שלו|שלה}', k), tgt, gid);
+  if(grew) legend += lvRow('lvstr', '○', 'התחלנו ב' + monthName(start.m), start.l, gid);
+
+  /* --- המשפט --- */
+  let say = '', src = '';
   const nm = k ? k.name : '';
   if(tgt){
     /* שלוש הגרסאות פותחות באותו משפט — "הציפייה בגיל של נועה היא
        רמה 3" — ורק הסיפא משתנה. כך ההורה קורא קודם כל מה מצופה,
-       ורק אחר כך איפה הילד, במקום לפגוש "יעד" שלא ברור של מי הוא.
-       שם השכבה עבר לשורת המקור, כדי שהמשפט יישאר קצר. */
+       ורק אחר כך איפה הילד, במקום לפגוש "יעד" שלא ברור של מי הוא. */
     const g = gradeOf(k), gt = g ? g.t : '';
     const base = 'הציפייה בגיל של ' + esc(nm) + ' היא רמה ' + tgt + ', ו' + gx('{הוא|היא}', k);
     const gap = tgt - Math.round(cur);
@@ -5528,27 +5590,25 @@ function lvChart(gid, st, k){
                              (gap === 1 ? 'חסרה רמה אחת.' : 'חסרות ' + gap + ' רמות.');
     src = 'הציפייה לפי תוכנית הליבה במתמטיקה של משרד החינוך ל' + gt +
           '. החלוקה לאורך השנה היא הערכה שלנו.';
-  }else if(what && LADDER_IS_GRADE[gid]){
-    say = 'זו הרמה של <b>' + esc(what) + '</b>.';
   }
-  if(grew) grewT = 'התחלנו ברמה ' + heNum(start.l) + ' ב' + monthName(start.m) +
-                   ', עכשיו רמה ' + heNum(cur) + '.';
 
   const rows = mgLevels(gid, st);
   const lo = Math.min.apply(null, rows.map(r=>r.lv)), hi = Math.max.apply(null, rows.map(r=>r.lv));
-  const spread = (hi > lo) ? ' · בין ' + lo + ' ל-' + hi + ' לפי המשחקון' : '';
+  const spread = (hi > lo)
+    ? 'המספר הוא ממוצע המשחקונים. בפועל הם נעים בין רמה ' + lo + ' לרמה ' + hi + '.' : '';
 
   return '<div class="lvm">' +
     '<div class="lvhead"><span class="lvnow">רמה ' + heNum(cur) +
       (LV_SUBJ[gid] ? ' <em>' + LV_SUBJ[gid] + '</em>' : '') + '</span>' +
-    (what ? '<span class="lvwhat">' + esc(what) + spread + '</span>' : (spread ? '<span class="lvwhat">' + spread.replace(' · ','') + '</span>' : '')) +
+      (what ? '<span class="lvwhat">' + esc(what) + '</span>' : '') +
     '</div>' +
-    '<svg viewBox="0 0 ' + W + ' ' + (TOP + TH + (grew ? 20 : 4)) + '" role="img" aria-label="רמה ' +
-      heNum(cur) + ' מתוך ' + N + (tgt ? ', היעד ' + tgt : '') + '">' +
+    '<svg viewBox="0 0 ' + W + ' ' + (TOP + TH + 9) + '" role="img" aria-label="רמה ' +
+      heNum(cur) + ' מתוך ' + N + (tgt ? ', הציפייה לגיל ' + tgt : '') + '">' +
       segs + marks +
     '</svg>' +
+    '<div class="lvleg">' + legend + '</div>' +
     (say  ? '<p class="lvsay">'  + say  + '</p>' : '') +
-    (grewT ? '<p class="lvgrew">' + esc(grewT) + '</p>' : '') +
+    (spread ? '<p class="lvsrc">' + esc(spread) + '</p>' : '') +
     (src  ? '<p class="lvsrc">'  + esc(src) + '</p>' : '') +
   '</div>';
 }

@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#FDF6E3">
@@ -31,6 +31,10 @@ body{
   font-size:16px; line-height:1.6;
   -webkit-font-smoothing:antialiased;
   overscroll-behavior-y:none;
+  /* אין באפליקציה שום מקום שבו זום עושה משהו רצוי. manipulation
+     מכבה את ההקשה הכפולה ומשאיר גלילה רגילה של אצבע אחת; את
+     הצביטה מכבה המאזין ב-part2. */
+  touch-action:manipulation;
 }
 button,input,select{font-family:inherit;color:inherit;font-size:inherit}
 button{border:none;background:none;cursor:pointer;padding:0}
@@ -4173,7 +4177,15 @@ async function cloudSync(quiet){
       body: JSON.stringify(DB)
     });
     const j = await r.json().catch(()=>({}));
+    if(r.status === 401){
+      /* המכשיר הזה אינו רשום על הקוד. הודעה שאפשר לפעול לפיה, ולא
+         "הסנכרון נכשל: unauthorized". */
+      SYNC_LOCKED = 1;
+      if(!quiet) toast('הקוד ' + UID + ' שייך למכשיר אחר — בהגדרות יש "חיבור מכשיר נוסף"');
+      return false;
+    }
     if(!r.ok || !j.ok){ if(!quiet) toast('הסנכרון נכשל: ' + (j.error || r.status)); return false; }
+    SYNC_LOCKED = 0;
     /* חדרי הילדים המשותפים — כל ילד בנפרד, אחרי הפרופיל */
     try{ await roomsSync(true); }catch(e){}
     if(typeof renderShelf === 'function') renderShelf();
@@ -4205,11 +4217,68 @@ async function cloudFetch(code){
   const c = syncCfg();
   if(!syncOn()) return null;
   const r = await fetch(c.url.replace(/\/+$/,'') + '/p/' + cleanCode(code), {headers: syncHeaders(code)});
+  /* 401 אינו "אין נתונים" אלא "הקוד הזה שייך למכשיר אחר" —
+     ההבדל הוא בין שקט לבין מסך שאפשר לפעול לפיו. */
+  if(r.status === 401){ SYNC_LOCKED = 1; return null; }
   if(!r.ok) return null;
   const j = await r.json().catch(()=>null);
-  if(!j || !j.ok || !j.data || !Array.isArray(j.data.kids)) return null;
+  if(!j || !j.ok) return null;
+  SYNC_LOCKED = 0;
+  if(!j.data || !Array.isArray(j.data.kids)) return null;
   return j.data;
 }
+
+/* ---------------------------------------------------------------
+   מכשיר שני על אותו פרופיל
+   ---------------------------------------------------------------
+   לכל מכשיר מפתח אקראי משלו, והשרת רושם את הראשון שכתב כבעלים
+   של הקוד. זה נכון מבחינת אבטחה — שכן שניחש קוד בן שש אותיות לא
+   מקבל את היומן של הילד — אבל זה אומר שהמכשיר השני של אותו הורה,
+   שהזין בדיוק את אותו קוד, מייצר מפתח אחר ונחסם. הוא קיבל 401
+   גם בקריאה וגם בכתיבה, כלומר הסנכרון פשוט לא קרה לאף כיוון,
+   ובשקט: cloudFetch החזיר null כאילו אין נתונים בענן.
+
+   בשרת כבר היה מה שצריך — /p/<CODE>/invite ו-/p/<CODE>/join —
+   ופשוט לא היה מי שיקרא להם. זה מה שנוסף כאן: המכשיר המחובר
+   מנפיק קוד חיבור חד-פעמי, והשני מוסר אותו ומקבל מפתח משלו.
+   אותו דפוס בדיוק כמו שיתוף ילד עם גננת, רק ברמת הפרופיל.
+   --------------------------------------------------------------- */
+let SYNC_LOCKED = 0;        /* הקוד שייך למכשיר אחר, וזה המכשיר השני */
+
+async function profInvite(code){
+  const id = cleanCode(code || UID);
+  if(!syncOn() || id.length !== 6) return null;
+  const r = await fetch(syncBase() + '/p/' + id + '/invite', {method:'POST', headers: syncHeaders(id)});
+  const j = await r.json().catch(()=>null);
+  return (j && j.ok && j.inv) ? j.inv : null;
+}
+const JOIN_ERR = {
+  invite_used:    'קוד החיבור כבר נוצל. צרו חדש במכשיר הראשון.',
+  invite_expired: 'קוד החיבור פג תוקף. צרו חדש במכשיר הראשון.',
+  no_invite:      'לא הוזן קוד חיבור.',
+  no_profile:     'אין עדיין פרופיל כזה בענן.',
+  profile_full:   'הפרופיל הגיע למספר המכשירים המרבי.',
+  room_full:      'הפרופיל הגיע למספר המכשירים המרבי.'
+};
+async function profJoin(code, inv){
+  const id = cleanCode(code);
+  const token = String(inv || '').trim();
+  if(!syncOn() || id.length !== 6 || !token) return {ok:0, error:'no_invite'};
+  let j = null;
+  try{
+    const r = await fetch(syncBase() + '/p/' + id + '/join', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({inv: token, who: 'מכשיר נוסף'})
+    });
+    j = await r.json().catch(()=>null);
+  }catch(e){ return {ok:0, error:'net'}; }
+  if(!j || !j.ok || !j.key) return {ok:0, error:(j && j.error) || 'net'};
+  /* המפתח נשמר לפני הכול — בלעדיו גם הסנכרון הראשון ייחסם */
+  setProfKey(id, j.key);
+  SYNC_LOCKED = 0;
+  return {ok:1, data: (j.data && Array.isArray(j.data.kids)) ? j.data : null};
+}
+function joinErrText(e){ return JOIN_ERR[e] || 'החיבור נכשל. בדקו את הקוד ונסו שוב.'; }
 async function cloudPull(){
   if(!syncOn()) return toast('לא הוגדרה כתובת שרת');
   let state;
@@ -4808,6 +4877,19 @@ function renderSettings(){
         <button class="btn sm" id="sy-now" ${syncOn()?'':'disabled'}>סנכרון עכשיו</button>
         <button class="btn ghost sm" id="sy-up" ${syncOn()?'':'disabled'}>העלאה לענן</button>
         <button class="btn ghost sm" id="sy-down" ${syncOn()?'':'disabled'}>הורדה מהענן</button></div>
+      ${syncOn() ? `<div id="sy-dev" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line2)">
+        ${SYNC_LOCKED
+          ? `<p style="font-size:15px;color:var(--soft)"><b>הקוד ${esc(UID)} שייך כבר למכשיר אחר.</b>
+               לכל מכשיר יש מפתח משלו, כדי שמי שינחש קוד בן שש אותיות לא יגיע לנתונים של הילד.
+               כדי שהשניים יסתנכרנו: במכשיר הראשון, הגדרות · סנכרון בענן · <b>חיבור מכשיר נוסף</b>,
+               ואת הקוד שיתקבל מדביקים כאן.</p>
+             <div class="field" style="margin-top:10px"><label>קוד חיבור</label>
+               <input id="sy-inv" placeholder="הקוד מהמכשיר הראשון" autocomplete="off"></div>
+             <div class="btnrow"><button class="btn sm" id="sy-join">לחבר את המכשיר הזה</button></div>`
+          : `<p style="font-size:15px;color:var(--soft)">כדי שטלפון או מחשב נוסף יראו את אותם ילדים ואת אותה התקדמות — צרו כאן קוד חיבור חד-פעמי והזינו אותו שם.</p>
+             <div class="btnrow"><button class="btn ghost sm" id="sy-inv-new">חיבור מכשיר נוסף</button></div>
+             <div id="sy-inv-box" style="margin-top:12px"></div>`}
+      </div>` : ''}
     </div>
 
     <div class="lbl" style="margin-top:24px">גיבוי לקובץ</div>
@@ -4870,6 +4952,57 @@ function renderSettings(){
   const su = $('#sy-up'), sd = $('#sy-down');
   if(su) su.onclick = cloudPush;
   if(sd) sd.onclick = cloudPull;
+
+  const sin = $('#sy-inv-new');
+  if(sin) sin.onclick = async () => {
+    sin.disabled = true;
+    let inv = null;
+    try{ inv = await profInvite(UID); }catch(e){}
+    sin.disabled = false;
+    if(!inv) return toast('לא הצלחתי ליצור קוד חיבור');
+    const link = WEB_URL + '#pj=' + UID + '.' + inv;
+    const box = $('#sy-inv-box');
+    if(!box) return;
+    box.innerHTML =
+      `<div class="card" style="background:var(--paper2)">
+         <p style="font-size:14.5px;color:var(--soft)">פתחו את הלינק במכשיר השני — או הזינו שם את הקוד ידנית, בהגדרות. הוא תקף לפעם אחת.</p>
+         <div class="field" style="margin-top:10px"><label>לינק</label><input id="sy-inv-link" readonly value="${esc(link)}"></div>
+         <div class="field"><label>קוד חיבור</label><input readonly value="${esc(inv)}" style="font-family:monospace;letter-spacing:1px"></div>
+         <div class="btnrow"><button class="btn sm" id="sy-inv-copy">העתקת הלינק</button></div>
+       </div>`;
+    const cp = $('#sy-inv-copy');
+    if(cp) cp.onclick = async () => {
+      try{ await navigator.clipboard.writeText(link); toast('הלינק הועתק'); }
+      catch(e){ const f = $('#sy-inv-link'); if(f){ f.select(); } toast('בחרו והעתיקו ידנית'); }
+    };
+  };
+
+  const sj = $('#sy-join');
+  if(sj) sj.onclick = async () => {
+    const f = $('#sy-inv'), inv = f ? f.value.trim() : '';
+    if(!inv) return toast('צריך להזין קוד חיבור');
+    sj.disabled = true;
+    const res = await profJoin(UID, inv);
+    sj.disabled = false;
+    if(!res.ok) return toast(joinErrText(res.error));
+    /* מה שכבר יש במכשיר הזה לא נמחק — הוא מתמזג עם מה שבענן */
+    if(res.data) DB = mergeDB(DB, res.data);
+    save();
+    try{ await cloudSync(true); }catch(e){}
+    renderSettings(); renderShelf();
+    toast('המכשיר חובר · ' + DB.kids.length + ' ילדים');
+  };
+
+  /* מצב החיבור נבדק ברקע, כדי שהמסך יראה את הכפתור הנכון גם
+     כשנכנסים להגדרות בלי לסנכרן קודם. */
+  if(syncOn()) (async () => {
+    const was = SYNC_LOCKED;
+    try{
+      const r = await fetch(syncBase() + '/p/' + UID, {headers: syncHeaders(UID)});
+      SYNC_LOCKED = (r.status === 401) ? 1 : 0;
+    }catch(e){ return; }
+    if(SYNC_LOCKED !== was && $('#s-settings') && $('#s-settings').classList.contains('on')) renderSettings();
+  })();
   $('#b-exp').onclick = exportFile;
   $('#b-imp').onclick = () => $('#f-imp').click();
   $('#f-imp').onchange = e => {
@@ -6037,6 +6170,28 @@ async function consumeTransfer(p){
   const p = hashParams();
   if(p.d){ let bad; try{ bad = await consumeTransfer(p); }catch(e){ bad = 1; } if(!bad) return; }
 
+  /* #pj=<קוד>.<קוד חיבור> — חיבור מכשיר שני לאותו פרופיל.
+     נצרב בשימוש אחד, ולכן זה קורה כאן ולא בכל טעינה. */
+  if(p.pj){
+    const bits = String(p.pj).split('.');
+    const code = cleanCode(bits[0]), inv = (bits[1] || '').trim();
+    if(code.length === 6 && inv){
+      let res = {ok:0};
+      try{ res = await profJoin(code, inv); }catch(e){}
+      if(res.ok){
+        UID = code;
+        const mine = load(code);
+        DB = res.data ? mergeDB(mine || emptyDB(), res.data) : (mine || emptyDB());
+        save(); setHash(code);
+        renderShelf(); renderRoot(); show('s-root');
+        toast('המכשיר חובר · ' + DB.kids.length + ' ילדים');
+        try{ await cloudSync(true); renderShelf(); renderRoot(); }catch(e){}
+        return;
+      }
+      toast(joinErrText(res.error));
+    }
+  }
+
   /* קישור שיתוף. הפרופיל נטען קודם — הילדים שנכנסים מתווספים
      למה שכבר יש, ולא מחליפים אותו. */
   if(p.j){
@@ -6071,6 +6226,24 @@ async function consumeTransfer(p){
     setTimeout(()=> toast('הקוד שלך: ' + c + ' — נמצא גם בהגדרות'), 700);
     return;
   }
+
+
+/* ---------------------------------------------------------------
+   אין צביטה
+   ---------------------------------------------------------------
+   ילד מחזיק את הטלפון באצבע אחת ולוחץ בשנייה. הדפדפן קורא לזה
+   צביטה, מזיז את התצוגה ומבטל את הלחיצה האמיתית. אין באפליקציה
+   שום מקום שבו זום עושה משהו רצוי, אז הוא מכובה — אבל רק כששתי
+   אצבעות על המסך, כדי שהגלילה של אצבע אחת תישאר כרגיל. */
+(function(){
+  const stop = e => { if(e.cancelable) e.preventDefault(); };
+  ['gesturestart','gesturechange','gestureend'].forEach(function(n){
+    document.addEventListener(n, stop, {passive:false});
+  });
+  document.addEventListener('touchmove', function(e){
+    if(e.touches && e.touches.length > 1) stop(e);
+  }, {passive:false});
+})();
 
   renderWelcome();
   show('s-welcome');

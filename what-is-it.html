@@ -1119,6 +1119,23 @@ if(HOSTED){
   renderWho();
   if(P.player){ toMenu(); } else { show('who'); }
 }
+
+/* ---------------------------------------------------------------
+   אין צביטה ואין הקשה כפולה
+   ---------------------------------------------------------------
+   אין באפליקציה שום מקום שבו זום עושה משהו רצוי, ובמכשיר של ילד
+   שמחזיק את הטלפון בשתי ידיים הוא רק מזיז את התצוגה ומבטל את
+   הלחיצה האמיתית. touch-action:manipulation כבר מכבה הקשה כפולה;
+   כאן מכבים גם את הצביטה — בלי לפגוע בגלילה של אצבע אחת. */
+(function(){
+  const stop = e => { if(e.cancelable) e.preventDefault(); };
+  ['gesturestart','gesturechange','gestureend'].forEach(function(n){
+    document.addEventListener(n, stop, {passive:false});
+  });
+  document.addEventListener('touchmove', function(e){
+    if(e.touches && e.touches.length > 1) stop(e);
+  }, {passive:false});
+})();
 document.addEventListener('pointerdown', function once(){ ac(); }, {once:true});
 window.addEventListener('beforeunload', speakStop);
 /* שער הורים לפני ההגדרות. שתי טעויות = חוזרים אחורה, מתוך הנחה

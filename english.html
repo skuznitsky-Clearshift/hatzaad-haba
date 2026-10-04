@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>אנגלית ראשונה</title>
 <style>
 :root{
@@ -442,7 +442,7 @@ function levelDecide(){
   if(next > lv){ r.lv = next; r.at = 0; r.cool = 0; r.bad = 0; r.p = 0; r.mid = 0; }
   else if(next < lv){ r.lv = next; r.at = 0; r.cool = 2; r.bad = 0; r.p = 0; r.mid = 0; }
   else { r.at++; if(r.cool) r.cool--; }
-  r.seeded = 0;
+  r.seeded = 0; r.flee = 0;
 
   return {dir: next - lv, acc:acc, ratio:ratio, med:med,
           rocket: med <= (ROCKET[id] || 1.7) && (timeOnly || acc >= 0.9)};
@@ -453,6 +453,10 @@ function levelDecide(){
    בלי המדידה הזאת אפשר להיתקע לנצח: סבב שלא נגמר לא נמדד,
    והרמה נשארת גבוהה מדי לתמיד. יציאה בלי אף טעות לא נחשבת —
    אז הילד פשוט הלך. */
+/* בריחה מהשאלה: כמה זמן על המסך נחשב ניסיון אמיתי, וכמה
+   בריחות צריך כדי להוריד רמה. ראו abandonRound. */
+const FLEE_MIN_MS = 3000;
+const FLEE_NEED = 2;
 function abandonRound(){
   if(!S.game) return;
   const tot = S.total || QPER;
@@ -466,6 +470,19 @@ function abandonRound(){
   if(wrong >= 1){
     if(r.lv > 1){ r.lv--; r.at = 0; r.cool = 2; }
     r.bad = 0; r.p = 0; r.mid = 0;
+  }
+  /* ילדה שנכנסה, ראתה את השאלה, לא ידעה מה לעשות ויצאה —
+     אין לה אף טעות בנתונים, אבל זה בדיוק הסימן. שתי בריחות
+     כאלה מהשאלה הראשונה או השנייה מורידות רמה; אחת לא, כי
+     ילד גם קם לשתות באמצע. ראו FLEE_MIN_MS ו-FLEE_NEED. */
+  const quick = S.q <= 1 && wrong === 0 &&
+                (performance.now() - (S.roundStart || performance.now())) >= FLEE_MIN_MS;
+  if(quick){
+    r.flee = (r.flee || 0) + 1;
+    if(r.flee >= FLEE_NEED && r.lv > 1){
+      r.lv--; r.at = 0; r.cool = 2; r.flee = 0;
+      r.bad = 0; r.p = 0; r.mid = 0;
+    }
   }
   S.game = null;
   save();
@@ -1171,11 +1188,43 @@ function wrPoint(p){
     coach(L('wr_edge'), 'oops');
   }
 }
+
+/* ---------------------------------------------------------------
+   אצבע שמחזיקה את הטלפון מול האצבע שמציירת
+   ---------------------------------------------------------------
+   ילד מחזיק את הטלפון באגודל שנשען על המסך ומצייר באצבע השנייה.
+   לדפדפן אלה שתי נגיעות שוות, ולכן קודם כל נגיעה חדשה חטפה את
+   הציור והרמה של האגודל סיימה את המשיכה.
+
+   ההבחנה היא תנועה: אצבע שמחזיקה לא זזה. נגיעה נוספת נרשמת בצד
+   ולא נוגעת בכלום; אם היא זזה מעבר לסף בזמן שהנוכחית עדיין לא
+   זזה בכלל, היא זו שמציירת והיא מחליפה אותה. WR_HOLD_SLOP הוא
+   ביחידות ה-viewBox של הפד, לא בפיקסלים, כך שהסף זהה בכל מסך.
+   --------------------------------------------------------------- */
+const WR_HOLD_SLOP = 4;
+function wrHoldClaim(ev, p){
+  if(T.ptr == null){ T.ptr = ev.pointerId; T.pmoved = 0; T.pfrom = p; T.palt = null; return true; }
+  if(ev.pointerId === T.ptr) return true;
+  if(!T.palt) T.palt = {};
+  T.palt[ev.pointerId] = p;        /* מחכה בצד עד שתוכיח שהיא זזה */
+  return false;
+}
+function wrHoldSteal(ev, p){
+  if(!T.palt || !T.palt[ev.pointerId]) return false;
+  if(T.pmoved > WR_HOLD_SLOP) return false;                    /* הנוכחית באמת מציירת */
+  if(wrDist(p, T.palt[ev.pointerId]) <= WR_HOLD_SLOP) return false;
+  delete T.palt[ev.pointerId];
+  T.ptr = ev.pointerId; T.pmoved = 0; T.pfrom = p;
+  T.okBreak = true; T.offBreak = true;
+  return true;
+}
 function wrDown(ev){
   if(!T || T.cur >= T.strokes.length) return;
-  ac(); ev.preventDefault();
   const p = wrToSvg(ev); if(!p) return;
-  T.drawing = true; T.ptr = ev.pointerId; T.outside = false;
+  /* אצבע שמחזיקה את הטלפון לא פותחת משיכה */
+  if(!wrHoldClaim(ev, p)){ if(ev.cancelable) ev.preventDefault(); return; }
+  ac(); ev.preventDefault();
+  T.drawing = true; T.outside = false;
   try{ T.svg.setPointerCapture(ev.pointerId); }catch(e){}
   const s = T.strokes[T.cur];
   if(T.prog === 0 && wrDist(p, s.pts[0]) > WR_NEAR && !T.hinted){
@@ -1184,14 +1233,29 @@ function wrDown(ev){
   wrPoint(p);
 }
 function wrMove(ev){
-  if(!T || !T.drawing || ev.pointerId !== T.ptr) return;
-  ev.preventDefault();
-  if(T.cur >= T.strokes.length) return;
+  if(!T || T.cur >= T.strokes.length) return;
   const p = wrToSvg(ev); if(!p) return;
+  if(ev.pointerId !== T.ptr){
+    /* אצבע שנייה שזזה בזמן שהראשונה עומדת — היא המציירת */
+    if(!wrHoldSteal(ev, p)) return;
+    T.drawing = true;
+    try{ T.svg.setPointerCapture(ev.pointerId); }catch(e){}
+  }else{
+    T.pmoved += wrDist(p, T.pfrom || p); T.pfrom = p;
+  }
+  if(!T.drawing) return;
+  ev.preventDefault();
   wrPoint(p);
 }
-function wrUp(){
-  if(!T || !T.drawing) return;
+function wrUp(ev){
+  if(!T) return;
+  /* הרמה של האצבע שמחזיקה לא מסיימת את המשיכה ולא נספרת */
+  if(ev && ev.pointerId != null && ev.pointerId !== T.ptr){
+    if(T.palt) delete T.palt[ev.pointerId];
+    return;
+  }
+  T.ptr = null; T.palt = null;
+  if(!T.drawing) return;
   if(T.failed) return;
   T.drawing = false; T.outside = false;
   T.okBreak = true; T.offBreak = true;
@@ -1217,6 +1281,10 @@ function wrDemo(){
   const t0 = performance.now(), dur = 1500;
   (function step(now){
     const k = Math.min(1, (now - t0)/dur), p = s.pts[Math.round(k*WR_SAMPLES)];
+    /* ההדגמה רצה על פריימים, והשאלה יכולה להתחלף באמצעה. אז
+       הנקודה כבר לא קיימת והאנימציה נפלה על undefined — באג
+       נדיר שהתגלה בהרצת לחיצות אקראיות. עוצרים בשקט. */
+    if(!p || !T){ gh.style.display = 'none'; wrDemoRun = false; return; }
     gh.setAttribute('cx', p.x); gh.setAttribute('cy', p.y);
     wrPaint(s, k);
     if(k < 1) requestAnimationFrame(step);
@@ -1591,6 +1659,23 @@ $('#pga').addEventListener('keydown', e => { if(e.key === 'Enter') pgSubmit(); }
 /* =========================================================
    הפעלה
    ========================================================= */
+
+/* ---------------------------------------------------------------
+   אין צביטה ואין הקשה כפולה
+   ---------------------------------------------------------------
+   אין באפליקציה שום מקום שבו זום עושה משהו רצוי, ובמכשיר של ילד
+   שמחזיק את הטלפון בשתי ידיים הוא רק מזיז את התצוגה ומבטל את
+   הלחיצה האמיתית. touch-action:manipulation כבר מכבה הקשה כפולה;
+   כאן מכבים גם את הצביטה — בלי לפגוע בגלילה של אצבע אחת. */
+(function(){
+  const stop = e => { if(e.cancelable) e.preventDefault(); };
+  ['gesturestart','gesturechange','gestureend'].forEach(function(n){
+    document.addEventListener(n, stop, {passive:false});
+  });
+  document.addEventListener('touchmove', function(e){
+    if(e.touches && e.touches.length > 1) stop(e);
+  }, {passive:false});
+})();
 document.addEventListener('pointerdown', ()=>ac(), {once:true});
 renderWho();
 if(HOSTED){
